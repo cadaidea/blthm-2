@@ -1,0 +1,378 @@
+import { useState } from "react";
+import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, randomCode, type PayLink } from "../../data";
+import { CodeBlock, CopyBtn, I } from "../ui";
+import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
+import { StatusChip } from "./Panel";
+
+/* ================= Contabilidad ================= */
+export function Contabilidad() {
+  const max = Math.max(...CASHFLOW.map((c) => c.in));
+
+  const exportCsv = () => {
+    const rows = [
+      ["Numero", "Fecha", "Cliente", "RUC", "Base", "IVA_15", "Total", "Autorizacion_SRI", "Estado"],
+      ...INVOICES.map((f) => [f.number, f.date, f.customer, f.ruc, f.base.toFixed(2), f.iva.toFixed(2), f.total.toFixed(2), f.auth, f.status]),
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "bletia_facturacion_2026-02.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  return (
+    <div className="fade-in space-y-6">
+      <SectionTitle
+        title="Contabilidad · Ecuador"
+        sub="Facturación electrónica SRI, IVA 15% y retenciones. Cada pago PayPhone genera su asiento."
+        right={
+          <button onClick={exportCsv} className={btnGhost}>
+            <I n="doc" s={14} /> Exportar CSV para el contador
+          </button>
+        }
+      />
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <Stat label="Ingresos febrero" value="$48.600" sub={<span className="text-ok font-semibold">▲ 8,2% vs enero</span>} />
+        <Stat label="IVA por declarar" value="$6.348" sub="Declaración mensual SRI" />
+        <Stat label="Retenciones emitidas" value="$1.214" sub="A proveedores de transporte" />
+        <Stat label="Margen bruto" value="41,3%" sub="Mezcla taller + curaduría" />
+      </div>
+
+      {/* Flujo de caja */}
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight">Flujo de caja · 6 meses</h3>
+            <p className="text-[12px] text-stone mt-0.5">Valores en USD · Ecuador no tiene moneda propia que mover, solo disciplina.</p>
+          </div>
+          <div className="flex items-center gap-4 text-[11.5px] font-semibold">
+            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-ink" /> Ingresos</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-linedark" /> Egresos</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-6 gap-3 sm:gap-5 items-end h-44">
+          {CASHFLOW.map((c) => (
+            <div key={c.m} className="flex flex-col items-center gap-2 h-full justify-end group">
+              <div className="w-full flex items-end justify-center gap-1.5 flex-1">
+                <div className="w-1/3 max-w-[26px] bg-ink group-hover:bg-maroon transition-colors duration-300 relative" style={{ height: `${(c.in / max) * 100}%` }}>
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold tnum opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{Math.round(c.in / 1000)}k</span>
+                </div>
+                <div className="w-1/3 max-w-[26px] bg-linedark" style={{ height: `${(c.out / max) * 100}%` }} />
+              </div>
+              <span className="text-[11px] font-bold text-stone uppercase tracking-wider">{c.m}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Facturas SRI */}
+      <Card className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-line flex items-center justify-between">
+          <h3 className="font-bold text-[15px] tracking-tight">Facturación electrónica · SRI</h3>
+          <Chip tone="ok" dot>Ambiente: producción</Chip>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead><tr><Th>N° documento</Th><Th>Fecha</Th><Th>Cliente · RUC/Cédula</Th><Th>Base</Th><Th>IVA 15%</Th><Th>Total</Th><Th>Autorización</Th><Th>Estado</Th></tr></thead>
+            <tbody>
+              {INVOICES.map((f) => (
+                <tr key={f.id} className="hover:bg-paper2/50 transition-colors">
+                  <Td className="font-mono text-[12px] font-semibold whitespace-nowrap">{f.number}</Td>
+                  <Td className="whitespace-nowrap">{f.date}</Td>
+                  <Td>
+                    <span className="font-medium block">{f.customer}</span>
+                    <span className="text-[11px] text-stone font-mono">{f.ruc}</span>
+                  </Td>
+                  <Td className="tnum">{fmt2(f.base)}</Td>
+                  <Td className="tnum">{fmt2(f.iva)}</Td>
+                  <Td className="tnum font-semibold">{fmt2(f.total)}</Td>
+                  <Td>
+                    <span className="flex items-center gap-2">
+                      <code className="text-[11px] font-mono text-ink2">{f.auth.slice(0, 10)}…</code>
+                      <CopyBtn text={f.auth} label="" />
+                    </span>
+                  </Td>
+                  <Td><StatusChip s={f.status} /></Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 border-t border-line text-[11.5px] text-stone flex items-center gap-2">
+          <I n="shield" s={13} />
+          Clave de acceso de 49 dígitos validada contra el SRI. Las facturas en contingencia se re-autorizan solas cuando vuelve el servicio.
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ================= Enlaces de un solo uso ================= */
+const LINK_TYPES: PayLink["type"][] = ["Pago PayPhone", "Acceso al panel", "Catálogo mayorista", "Seguimiento de pedido"];
+
+export function Enlaces() {
+  const [links, setLinks] = useState<PayLink[]>(LINKS_SEED);
+  const [form, setForm] = useState({ type: "Pago PayPhone" as PayLink["type"], who: "", amount: "", expires: "24 h" });
+  const [lastNew, setLastNew] = useState<string | null>(null);
+
+  const create = () => {
+    if (form.who.trim().length < 2) return;
+    const code = randomCode();
+    const nl: PayLink = {
+      id: `l${Date.now()}`, code, type: form.type, who: form.who.trim(),
+      amount: form.type === "Pago PayPhone" ? parseFloat(form.amount) || 0 : null,
+      expires: form.expires, status: "Activo",
+    };
+    setLinks((l) => [nl, ...l]);
+    setLastNew(code);
+    setForm({ ...form, who: "", amount: "" });
+    setTimeout(() => setLastNew(null), 2500);
+  };
+
+  const revoke = (id: string) =>
+    setLinks((l) => l.map((x) => (x.id === id ? { ...x, status: "Revocado" } : x)));
+
+  return (
+    <div className="fade-in space-y-6">
+      <SectionTitle
+        title="Enlaces de un solo uso"
+        sub="Pagos, accesos al panel, catálogos y seguimientos. Se usan una vez — o caducan — y nadie más puede abrirlos."
+      />
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <Stat label="Activos" value={links.filter((l) => l.status === "Activo").length} sub="Monitoreados en tiempo real" />
+        <Stat label="Usados" value={links.filter((l) => l.status === "Usado").length} sub="Consumo único verificado" />
+        <Stat label="Revocados" value={links.filter((l) => l.status === "Revocado").length} sub="Muerte instantánea del token" />
+        <Stat label="Monto en links de pago" value={fmt2(links.filter((l) => l.status === "Activo" && l.amount).reduce((a, l) => a + (l.amount || 0), 0))} sub="Por cobrar vía PayPhone" />
+      </div>
+
+      {/* Generador */}
+      <Card className="p-5 sm:p-6">
+        <h3 className="font-bold text-[15px] tracking-tight mb-4">Generar enlace</h3>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <label className="block">
+            <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Tipo</span>
+            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as PayLink["type"] })} className={inp}>
+              {LINK_TYPES.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Destinatario</span>
+            <input value={form.who} onChange={(e) => setForm({ ...form, who: e.target.value })} className={inp} placeholder="Cliente o colaborador" />
+          </label>
+          {form.type === "Pago PayPhone" && (
+            <label className="block">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Monto USD</span>
+              <input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={inp} placeholder="0.00" inputMode="decimal" />
+            </label>
+          )}
+          <label className="block">
+            <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Expiración</span>
+            <select value={form.expires} onChange={(e) => setForm({ ...form, expires: e.target.value })} className={inp}>
+              {["24 h", "7 días", "1 uso"].map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <button onClick={create} className={btnDark}><I n="link" s={14} /> Crear enlace</button>
+          {lastNew && (
+            <span className="flex items-center gap-2.5 text-[12.5px] font-semibold text-ok bg-okbg px-3 py-2 fade-in">
+              <I n="check" s={13} /> Creado: <code className="font-mono">bletia.ec/l/{lastNew}</code>
+              <CopyBtn text={`https://bletia.ec/l/${lastNew}`} label="Copiar" />
+            </span>
+          )}
+        </div>
+      </Card>
+
+      {/* Lista */}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[820px]">
+            <thead><tr><Th>Enlace</Th><Th>Tipo</Th><Th>Destinatario</Th><Th>Monto</Th><Th>Expira</Th><Th>Estado</Th><Th>Acciones</Th></tr></thead>
+            <tbody>
+              {links.map((l) => (
+                <tr key={l.id} className="hover:bg-paper2/50 transition-colors fade-in">
+                  <Td>
+                    <span className="flex items-center gap-2.5">
+                      <code className="font-mono text-[12px] font-semibold">bletia.ec/l/{l.code}</code>
+                      <CopyBtn text={`https://bletia.ec/l/${l.code}`} label="" />
+                    </span>
+                  </Td>
+                  <Td>
+                    <Chip tone={l.type === "Pago PayPhone" ? "maroon" : "neutral"}>
+                      {l.type === "Pago PayPhone" ? "Pago" : l.type === "Acceso al panel" ? "Acceso" : l.type === "Catálogo mayorista" ? "Catálogo" : "Seguimiento"}
+                    </Chip>
+                  </Td>
+                  <Td className="text-[12.5px]">{l.who}</Td>
+                  <Td className="tnum font-semibold">{l.amount ? fmt2(l.amount) : "—"}</Td>
+                  <Td className="text-[12px] text-stone">{l.expires}</Td>
+                  <Td><StatusChip s={l.status} /></Td>
+                  <Td>
+                    {l.status === "Activo" ? (
+                      <button onClick={() => revoke(l.id)}
+                        className="text-[11.5px] font-semibold px-3 py-1.5 border border-linedark text-bad hover:bg-bad hover:text-paper hover:border-bad transition-colors whitespace-nowrap">
+                        Revocar
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-stone">—</span>
+                    )}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-3 border-t border-line text-[11.5px] text-stone flex items-center gap-2">
+          <I n="link" s={13} />
+          El primer clic consume el token (transacción atómica en PostgreSQL). Los links de pago rebotan a PayPhone con el monto bloqueado.
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ================= Infraestructura ================= */
+const STACK = [
+  { n: "React + Vite", r: "Tienda & panel", d: "SPA compilada a estáticos: navegación instantánea, sin recargas." },
+  { n: "Node.js + Fastify", r: "API", d: "Responde en ~8 ms y delega todo trabajo pesado a la cola." },
+  { n: "PostgreSQL 16", r: "Base de datos", d: "Pedidos, clientes, fichas, facturas. Respaldos diarios automáticos." },
+  { n: "Redis + BullMQ", r: "Motor de eventos", d: "Absorbe +2.000 eventos simultáneos sin que la web se entere." },
+  { n: "MinIO", r: "DAM / objetos", d: "Almacenamiento S3 open source para fotos y documentos." },
+  { n: "Nginx + Let's Encrypt", r: "Entrada segura", d: "HTTPS automático y cambio de versión atómico (cero caída)." },
+  { n: "PM2 cluster", r: "Procesos", d: "Un worker por núcleo del VPS; si uno cae, renace en segundos." },
+  { n: "Docker Compose", r: "Entorno", d: "Staging y producción idénticos: si funciona ahí, funciona acá." },
+];
+
+export function Infra() {
+  return (
+    <div className="fade-in space-y-6">
+      <SectionTitle
+        title="Infraestructura & despliegue"
+        sub="Stack 100% open source sobre tu VPS de OVH Cloud. Staging primero, producción después, datos siempre intactos."
+        right={<Chip tone="ok" dot>VPS OVH · operativo</Chip>}
+      />
+
+      {/* Arquitectura de eventos */}
+      <Card className="p-5 sm:p-6">
+        <h3 className="font-bold text-[15px] tracking-tight">Cómo soporta +2.000 eventos simultáneos</h3>
+        <p className="text-[12.5px] text-stone mt-1 mb-5">La web nunca procesa trabajo pesado: solo recibe, agradece y encola.</p>
+        <div className="flex flex-wrap items-stretch gap-2">
+          {[
+            ["Web / PayPhone / SRI", "eventos entrantes"],
+            ["Nginx", "TLS + balanceo"],
+            ["Fastify", "valida y responde (ACK ~8 ms)"],
+            ["Redis · BullMQ", "cola durable, +2.000 ev/s"],
+            ["Workers ×4", "OMS · PIM · CRM · Contabilidad"],
+            ["PostgreSQL / MinIO", "verdad única + archivos"],
+          ].map(([t, d], i, arr) => (
+            <div key={t} className="flex items-center gap-2">
+              <div className={`border px-3.5 py-3 min-w-[128px] ${i === 3 ? "border-maroon bg-maroon/5" : "border-linedark bg-card"}`}>
+                <p className="text-[12px] font-bold leading-tight">{t}</p>
+                <p className="text-[10.5px] text-stone mt-0.5 leading-snug">{d}</p>
+              </div>
+              {i < arr.length - 1 && <I n="chev-r" s={13} className="text-stone shrink-0" />}
+            </div>
+          ))}
+        </div>
+        <p className="text-[11.5px] text-stone mt-4 flex items-start gap-2">
+          <I n="pulse" s={13} className="mt-0.5 shrink-0 text-maroon" />
+          Si PayPhone manda 300 webhooks de golpe o el SRI autoriza 500 facturas, todo entra a la cola y se procesa en orden.
+          El cliente navega la tienda a 60 fps pase lo que pase. Pruébalo en «Visión general → Simular pico».
+        </p>
+      </Card>
+
+      {/* Stack */}
+      <div>
+        <h3 className="font-bold text-[15px] tracking-tight mb-4">Stack open source (licencias permisivas)</h3>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {STACK.map((s) => (
+            <Card key={s.n} className="p-4.5 p-5 hover:border-maroon/40 transition-colors group">
+              <p className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-maroon">{s.r}</p>
+              <p className="font-bold text-[14.5px] mt-1.5">{s.n}</p>
+              <p className="text-[12px] text-stone leading-relaxed mt-1.5">{s.d}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Guía de despliegue */}
+      <div>
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight">Despliegue en tu VPS OVH</h3>
+            <p className="text-[12.5px] text-stone mt-1">Copias el .zip, pegas los comandos en SSH y listo. Copia cada bloque con un clic.</p>
+          </div>
+          <div className="flex items-center gap-2 text-[11.5px] font-semibold text-ink2">
+            <span className="w-5 h-5 bg-warnbg text-warn flex items-center justify-center text-[10px] font-bold">1</span> staging
+            <I n="arrow" s={12} className="text-stone" />
+            <span className="w-5 h-5 bg-okbg text-ok flex items-center justify-center text-[10px] font-bold">2</span> producción
+          </div>
+        </div>
+
+        <div className="grid xl:grid-cols-2 gap-5">
+          <div className="space-y-5">
+            <CodeBlock title="Paso 0 · subir el .zip al VPS" code={`# Desde tu computador (o usa el gestor de archivos de OVH)
+scp bletia-staging.zip ubuntu@TU_IP_OVH:/home/ubuntu/releases/
+
+# Luego conectas por SSH:
+ssh ubuntu@TU_IP_OVH`} />
+            <CodeBlock title="Paso 1 · desplegar en STAGING (pruebas)" code={`cd /home/ubuntu/releases
+unzip -o bletia-staging.zip -d bletia-staging
+
+# Apuntar staging a la nueva versión y recargar sin caída
+cd /home/ubuntu/bletia
+ln -sfn /home/ubuntu/releases/bletia-staging/dist staging-dist
+pm2 reload ecosystem.staging.js --update-env || pm2 start ecosystem.staging.js
+sudo nginx -t && sudo systemctl reload nginx
+
+# Probar en https://staging.bletia.ec`} />
+            <CodeBlock title="Paso 3 · rollback en 10 segundos (si hiciera falta)" code={`cd /home/ubuntu/bletia
+ln -sfn /home/ubuntu/releases/VERSION_ANTERIOR current
+sudo systemctl reload nginx
+# La base de datos NUNCA se toca: todo sigue intacto.`} />
+          </div>
+          <div className="space-y-5">
+            <CodeBlock title="Paso 2 · pasar a PRODUCCIÓN (cero caída)" code={`# 1) Respaldo primero (30 segundos, siempre)
+pg_dump -U bletia bletia_prod | gzip > /home/ubuntu/backups/bletia_$(date +%F_%H%M).sql.gz
+
+# 2) Subir y descomprimir la versión probada en staging
+cd /home/ubuntu/releases
+unzip -o bletia-prod.zip -d bletia-prod-$(date +%Y%m%d)
+
+# 3) Cambio atómico de versión (el truco del symlink)
+cd /home/ubuntu/bletia
+ln -sfn /home/ubuntu/releases/bletia-prod-$(date +%Y%m%d) current
+pm2 reload ecosystem.prod.js --update-env
+sudo nginx -t && sudo systemctl reload nginx
+pm2 save`} />
+            <Card className="p-5 bg-coal border-coal text-cream">
+              <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-cream/40 mb-3">Garantías del proceso</p>
+              <ul className="space-y-2.5 text-[12.5px] text-cream/80">
+                {[
+                  "Clientes y colaboradores no notan el cambio: la URL no cambia y no hay pantalla de mantenimiento.",
+                  "La información cargada queda intacta: el deploy solo reemplaza código, jamás toca PostgreSQL ni MinIO.",
+                  "Staging y producción corren el mismo zip: lo que aprobaste es exactamente lo que se publica.",
+                  "PM2 recarga en caliente (cluster): siempre hay workers atendiendo mientras otros se actualizan.",
+                ].map((t) => (
+                  <li key={t} className="flex gap-2.5">
+                    <I n="check" s={14} className="text-ok shrink-0 mt-0.5" /> {t}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+            <Card className="p-4 flex items-start gap-3 text-[12px] text-ink2 border-warn/40 bg-warnbg/40">
+              <I n="alert" s={15} className="text-warn shrink-0 mt-0.5" />
+              <span>
+                <strong className="text-ink">Regla de oro:</strong> ningún .zip pasa a producción sin haber sido probado en
+                staging con datos reales replicados. El respaldo del paso 2 se guarda 30 días en /home/ubuntu/backups.
+              </span>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

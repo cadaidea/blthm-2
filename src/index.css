@@ -1,1 +1,273 @@
 @import "tailwindcss";
+
+/* Geomanest con licencia — los @font-face apuntan a public/fonts/ (coloca ahí tus .woff2).
+   font-display: swap garantiza que la navegación jamás se bloquee por fuentes. */
+@font-face {
+  font-family: "Geomanest";
+  src:
+    local("Geomanest Book"),
+    local("Geomanest-Book"),
+    url("/fonts/Geomanest-Book.woff2") format("woff2");
+  font-weight: 300 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geomanest";
+  src:
+    local("Geomanest Regular"),
+    local("Geomanest-Regular"),
+    url("/fonts/Geomanest-Regular.woff2") format("woff2");
+  font-weight: 400 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geomanest";
+  src:
+    local("Geomanest Medium"),
+    local("Geomanest-Medium"),
+    url("/fonts/Geomanest-Medium.woff2") format("woff2");
+  font-weight: 500 700;
+  font-display: swap;
+}
+
+@theme {
+  --font-display: "Geomanest", "Outfit", "Inter", system-ui, sans-serif;
+  --font-dash: "Inter", system-ui, sans-serif;
+
+  --color-paper: #f4f2ed;
+  --color-paper2: #edeae2;
+  --color-card: #fcfbf8;
+  --color-ink: #1c1a16;
+  --color-ink2: #403b32;
+  --color-stone: #8b8578;
+  --color-line: #e2ded4;
+  --color-linedark: #d4cfc2;
+  --color-maroon: #800000;
+  --color-maroon2: #5e0000;
+  --color-coal: #171511;
+  --color-coal2: #221f1a;
+  --color-cream: #ece8df;
+  --color-ok: #2e7d4f;
+  --color-okbg: #e5f0e9;
+  --color-warn: #96690a;
+  --color-warnbg: #f5ecd6;
+  --color-bad: #a32c2c;
+  --color-badbg: #f6e3e0;
+  --color-payphone: #ffdd00;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-dash);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #800000;
+  color: #f4f2ed;
+}
+
+/* ---- Scrollbar sutil ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c9c3b4 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #c9c3b4;
+  border-radius: 8px;
+}
+
+/* ---- Utilidades de marca ---- */
+.font-display {
+  font-family: var(--font-display);
+}
+.font-dash {
+  font-family: var(--font-dash);
+}
+
+.eyebrow {
+  font-family: var(--font-dash);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-stone);
+}
+
+/* grano de papel muy leve */
+.grain {
+  position: relative;
+}
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---- Reveal on scroll ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal-on {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Marquee ---- */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 36s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ---- Ken burns (hero respira) ---- */
+@keyframes kenburns {
+  from {
+    transform: scale(1.04) translate(0, 0);
+  }
+  to {
+    transform: scale(1.13) translate(-1.5%, 1.5%);
+  }
+}
+.kenburns {
+  animation: kenburns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* ---- pulso de estado ---- */
+@keyframes pulseDot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 125, 79, 0.5);
+  }
+  60% {
+    box-shadow: 0 0 0 6px rgba(46, 125, 79, 0);
+  }
+}
+.pulse-ok {
+  animation: pulseDot 1.8s ease-out infinite;
+}
+@keyframes pulseMaroon {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(128, 0, 0, 0.45);
+  }
+  60% {
+    box-shadow: 0 0 0 7px rgba(128, 0, 0, 0);
+  }
+}
+.pulse-maroon {
+  animation: pulseMaroon 1.6s ease-out infinite;
+}
+
+/* ---- subrayado que crece ---- */
+.u-grow {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  padding-bottom: 2px;
+}
+.u-grow:hover {
+  background-size: 100% 1px;
+}
+
+/* ---- barra de evento ---- */
+@keyframes barIn {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.bar-in {
+  transform-origin: bottom;
+  animation: barIn 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+.slide-in-right {
+  animation: slideInRight 0.45s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+@keyframes slideUp {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+/* skeleton shimmer para DAM */
+@keyframes shimmer {
+  from {
+    background-position: -400px 0;
+  }
+  to {
+    background-position: 400px 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, #eae7de 25%, #f5f3ec 50%, #eae7de 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* número tabular en dash */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
