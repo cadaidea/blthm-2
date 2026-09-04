@@ -298,6 +298,102 @@ export function Infra() {
         </div>
       </div>
 
+      {/* Flujo Git */}
+      <div>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight">Flujo Git: dónde subes cada cosa</h3>
+            <p className="text-[12.5px] text-stone mt-1">
+              Nada llega a <code className="font-mono font-semibold text-ink">main</code> sin haber pasado por{" "}
+              <code className="font-mono font-semibold text-warn">staging</code>. Producción solo se toca con tags versionados.
+            </p>
+          </div>
+          <button onClick={() => {
+            const content = ["node_modules/", "dist/", ".env", ".env.*", "!.env.example", "*.zip", "*.p12", "*.pem", "*.key", "backups/", "*.log", ".DS_Store", ""].join("\n");
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = ".gitignore";
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }} className={btnGhost}>
+            <I n="doc" s={14} /> Descargar .gitignore
+          </button>
+        </div>
+
+        <Card className="p-5 sm:p-6">
+          <div className="flex flex-col md:flex-row md:items-stretch gap-2">
+            {[
+              ["feat/lo-tuyo", "rama de trabajo", "Aquí preparas el cambio. Commits chicos, mensajes claros.", "border-linedark bg-card", "text-ink2"],
+              ["staging", "rama de pruebas", "El VPS de staging hace checkout de esta rama. Se prueba con datos reales.", "border-warn/50 bg-warnbg/50", "text-warn"],
+              ["main + tag v2.4.x", "producción", "Solo merges aprobados. El VPS de producción hace checkout del tag.", "border-ok/50 bg-okbg/50", "text-ok"],
+            ].map(([t, s, d, cls, tc], i, arr) => (
+              <div key={t} className="flex items-center gap-2 flex-1">
+                <div className={`border px-4 py-3.5 flex-1 ${cls}`}>
+                  <p className={`text-[12.5px] font-bold font-mono ${tc}`}>{t}</p>
+                  <p className="text-[10.5px] font-bold tracking-[0.12em] uppercase text-stone mt-0.5">{s}</p>
+                  <p className="text-[11.5px] text-ink2 leading-snug mt-1.5">{d}</p>
+                </div>
+                {i < arr.length - 1 && <I n="chev-r" s={14} className="text-stone shrink-0 hidden md:block" />}
+                {i < arr.length - 1 && <I n="arrow" s={14} className="text-stone shrink-0 md:hidden rotate-90 mx-auto" />}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <div className="grid xl:grid-cols-3 gap-5 mt-5">
+          <div className="xl:col-span-2">
+            <CodeBlock title="Ciclo completo de un cambio (copia y pega)" code={`# 1) Trabaja en tu rama — nunca directo a main
+git checkout -b feat/checkout-payphone
+git add . && git commit -m "feat: pago PayPhone directo y por link"
+git push origin feat/checkout-payphone
+
+# 2) Pásala a staging y pruébala en el VPS
+git checkout staging && git merge feat/checkout-payphone
+git push origin staging
+# En el VPS (staging):
+#   cd /home/ubuntu/bletia-app && git checkout staging && git pull
+#   npm ci && npm run build
+#   pm2 reload ecosystem.staging.js
+# Prueba en https://staging.bletia.ec
+
+# 3) Si staging aprobó → main + tag de producción
+git checkout main && git merge staging
+git tag v2.4.1 && git push origin main --tags
+# En el VPS (producción):
+#   git fetch --tags && git checkout v2.4.1
+#   npm ci && npm run build → symlink atomico → sudo systemctl reload nginx`} />
+          </div>
+          <div className="space-y-5">
+            <Card className="p-4 border-bad/35 bg-badbg/40">
+              <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-bad mb-2.5 flex items-center gap-1.5">
+                <I n="alert" s={13} /> Nunca va al repositorio
+              </p>
+              <ul className="space-y-2 text-[12px] text-ink2 leading-snug">
+                <li className="flex gap-2"><span className="text-bad font-bold">✕</span> <span><code className="font-mono">.env</code> y claves de PayPhone / API keys</span></li>
+                <li className="flex gap-2"><span className="text-bad font-bold">✕</span> <span>Firma electrónica SRI (<code className="font-mono">.p12</code>) — vive solo en el VPS</span></li>
+                <li className="flex gap-2"><span className="text-bad font-bold">✕</span> <span><code className="font-mono">node_modules/</code>, <code className="font-mono">dist/</code>, <code className="font-mono">*.zip</code> y respaldos del VPS</span></li>
+              </ul>
+              <p className="text-[11px] text-stone mt-3 pt-3 border-t border-bad/15">
+                En su lugar sube un <code className="font-mono">.env.example</code> sin valores reales y un{" "}
+                <code className="font-mono">.gitignore</code> que cubra lo anterior.
+              </p>
+            </Card>
+            <Card className="p-4 border-warn/35 bg-warnbg/40">
+              <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-warn mb-2 flex items-center gap-1.5">
+                <I n="doc" s={13} /> Geomanest y el repo público
+              </p>
+              <p className="text-[12px] text-ink2 leading-relaxed">
+                Si el repo será público (para que yo lo lea), deja tus <code className="font-mono">.woff2</code> licenciados{" "}
+                <strong className="text-ink">fuera del repo</strong>: en{" "}
+                <code className="font-mono text-[11px]">/home/ubuntu/bletia/private/fonts</code> en el VPS, servidos con un alias de nginx hacia{" "}
+                <code className="font-mono text-[11px]">/fonts/</code>. La licencia no viaja por internet y la web carga igual.
+              </p>
+            </Card>
+          </div>
+        </div>
+      </div>
+
       {/* Guía de despliegue */}
       <div>
         <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
