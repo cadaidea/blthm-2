@@ -303,7 +303,7 @@ export function Infra() {
         <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
           <div>
             <h3 className="font-bold text-[15px] tracking-tight">Despliegue en tu VPS OVH</h3>
-            <p className="text-[12.5px] text-stone mt-1">Copias el .zip, pegas los comandos en SSH y listo. Copia cada bloque con un clic.</p>
+            <p className="text-[12.5px] text-stone mt-1">Con .zip o directo desde GitHub: pegas los comandos en SSH y listo. Cada bloque se copia con un clic.</p>
           </div>
           <div className="flex items-center gap-2 text-[11.5px] font-semibold text-ink2">
             <span className="w-5 h-5 bg-warnbg text-warn flex items-center justify-center text-[10px] font-bold">1</span> staging
@@ -314,23 +314,47 @@ export function Infra() {
 
         <div className="grid xl:grid-cols-2 gap-5">
           <div className="space-y-5">
-            <CodeBlock title="Paso 0 · subir el .zip al VPS" code={`# Desde tu computador (o usa el gestor de archivos de OVH)
+            <CodeBlock title="Opción A · subir el .zip al VPS" code={`# Desde tu computador (o usa el gestor de archivos de OVH)
 scp bletia-staging.zip ubuntu@TU_IP_OVH:/home/ubuntu/releases/
 
 # Luego conectas por SSH:
 ssh ubuntu@TU_IP_OVH`} />
-            <CodeBlock title="Paso 1 · desplegar en STAGING (pruebas)" code={`cd /home/ubuntu/releases
-unzip -o bletia-staging.zip -d bletia-staging
+            <CodeBlock title="Opción B · desde GitHub (recomendado)" code={`# 1) En el VPS: crea una llave de solo lectura para GitHub
+ssh-keygen -t ed25519 -C "deploy-bletia" -f ~/.ssh/bletia_deploy -N ""
+cat ~/.ssh/bletia_deploy.pub
+# Copia la salida a GitHub → Repo → Settings → Deploy keys (sin marcar "Allow write")
+
+# 2) Clona el proyecto
+git clone git@github.com:TU_USUARIO/bletia.git /home/ubuntu/bletia-app
+
+# 3) Staging siempre apunta a la rama staging
+cd /home/ubuntu/bletia-app && git checkout staging && git pull origin staging
+
+# Ventaja: cada release es un tag (v2.4.1), el rollback es un checkout
+# y no hay .zip flotando por ahí. Sigue con el Paso 1 de abajo.`} />
+            <Card className="p-4.5 p-5 border-maroon/40 bg-maroon/5 flex items-start gap-3 text-[12px] text-ink2">
+              <I n="spark" s={15} className="text-maroon shrink-0 mt-0.5" />
+              <span>
+                <strong className="text-ink">¿Por qué GitHub le gana al .zip?</strong> Historial auditable de cada cambio,
+                versiones con tags (v2.4.0, v2.4.1…), rollback de un comando y staging/producción corriendo el mismo commit.
+                El asistente puede leer tu repo público archivo por archivo y ayudarte a desplegar sin tocar los datos.
+              </span>
+            </Card>
+            <CodeBlock title="Paso 1 · desplegar en STAGING (pruebas)" code={`# Opción A: cd /home/ubuntu/releases && unzip -o bletia-staging.zip -d bletia-staging
+# Opción B: cd /home/ubuntu/bletia-app && git checkout staging && git pull origin staging
 
 # Apuntar staging a la nueva versión y recargar sin caída
 cd /home/ubuntu/bletia
 ln -sfn /home/ubuntu/releases/bletia-staging/dist staging-dist
+# (Opción B: ln -sfn /home/ubuntu/bletia-app/dist staging-dist)
 pm2 reload ecosystem.staging.js --update-env || pm2 start ecosystem.staging.js
 sudo nginx -t && sudo systemctl reload nginx
 
 # Probar en https://staging.bletia.ec`} />
             <CodeBlock title="Paso 3 · rollback en 10 segundos (si hiciera falta)" code={`cd /home/ubuntu/bletia
 ln -sfn /home/ubuntu/releases/VERSION_ANTERIOR current
+# Opción B: cd /home/ubuntu/bletia-app && git checkout v2.4.0
+# (el symlink 'current' ya apunta al repo: se refleja solo, sin mover nada)
 sudo systemctl reload nginx
 # La base de datos NUNCA se toca: todo sigue intacto.`} />
           </div>
@@ -338,13 +362,14 @@ sudo systemctl reload nginx
             <CodeBlock title="Paso 2 · pasar a PRODUCCIÓN (cero caída)" code={`# 1) Respaldo primero (30 segundos, siempre)
 pg_dump -U bletia bletia_prod | gzip > /home/ubuntu/backups/bletia_$(date +%F_%H%M).sql.gz
 
-# 2) Subir y descomprimir la versión probada en staging
-cd /home/ubuntu/releases
-unzip -o bletia-prod.zip -d bletia-prod-$(date +%Y%m%d)
+# 2) Preparar la versión probada en staging
+#    Opción A: cd /home/ubuntu/releases && unzip -o bletia-prod.zip -d bletia-prod-$(date +%Y%m%d)
+#    Opción B: cd /home/ubuntu/bletia-app && git fetch --tags && git checkout v2.4.1
 
 # 3) Cambio atómico de versión (el truco del symlink)
 cd /home/ubuntu/bletia
 ln -sfn /home/ubuntu/releases/bletia-prod-$(date +%Y%m%d) current
+# (Opción B: ln -sfn /home/ubuntu/bletia-app current)
 pm2 reload ecosystem.prod.js --update-env
 sudo nginx -t && sudo systemctl reload nginx
 pm2 save`} />
