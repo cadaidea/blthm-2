@@ -381,7 +381,7 @@ git tag v2.4.1 && git push origin main --tags
             </Card>
             <Card className="p-4 border-warn/35 bg-warnbg/40">
               <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-warn mb-2 flex items-center gap-1.5">
-                <I n="doc" s={13} /> Geomanest y el repo público
+                <I n="doc" s={13} /> Geomanist y el repo público
               </p>
               <p className="text-[12px] text-ink2 leading-relaxed">
                 Si el repo será público (para que yo lo lea), deja tus <code className="font-mono">.woff2</code> licenciados{" "}

@@ -1,37 +1,38 @@
 @import "tailwindcss";
 
-/* Geomanest con licencia — los @font-face apuntan a public/fonts/ (coloca ahí tus .woff2).
+/* Geomanist con licencia — los @font-face apuntan a public/fonts/ (coloca ahí tus .woff2).
+   Nomenclatura alineada con github.com/cadaidea/blthm: Regular / Medium / Bold.
    font-display: swap garantiza que la navegación jamás se bloquee por fuentes. */
 @font-face {
-  font-family: "Geomanest";
+  font-family: "Geomanist";
   src:
-    local("Geomanest Book"),
-    local("Geomanest-Book"),
-    url("/fonts/Geomanest-Book.woff2") format("woff2");
-  font-weight: 300 400;
+    local("Geomanist Regular"),
+    local("Geomanist-Regular"),
+    url("/fonts/Geomanist-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: "Geomanest";
+  font-family: "Geomanist";
   src:
-    local("Geomanest Regular"),
-    local("Geomanest-Regular"),
-    url("/fonts/Geomanest-Regular.woff2") format("woff2");
-  font-weight: 400 500;
+    local("Geomanist Medium"),
+    local("Geomanist-Medium"),
+    url("/fonts/Geomanist-Medium.woff2") format("woff2");
+  font-weight: 500;
   font-display: swap;
 }
 @font-face {
-  font-family: "Geomanest";
+  font-family: "Geomanist";
   src:
-    local("Geomanest Medium"),
-    local("Geomanest-Medium"),
-    url("/fonts/Geomanest-Medium.woff2") format("woff2");
-  font-weight: 500 700;
+    local("Geomanist Bold"),
+    local("Geomanist-Bold"),
+    url("/fonts/Geomanist-Bold.woff2") format("woff2");
+  font-weight: 700;
   font-display: swap;
 }
 
 @theme {
-  --font-display: "Geomanest", "Outfit", "Inter", system-ui, sans-serif;
+  --font-display: "Geomanist", "Outfit", "Inter", system-ui, sans-serif;
   --font-dash: "Inter", system-ui, sans-serif;
 
   --color-paper: #f4f2ed;
