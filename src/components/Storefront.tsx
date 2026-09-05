@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { CITIES, IMG, PRODUCTS, fmt, fmt2, randomCode, type Product } from "../data";
-import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
 type CartLine = { id: string; qty: number };
@@ -556,10 +555,10 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const docV = detectarDocumento(form.doc);
+  const validDoc = /^\d{10}$|^\d{13}$/.test(form.doc.replace(/\s/g, ""));
   const validate = () => {
     if (form.nombre.trim().length < 3) return setErr("Ingresa el nombre completo o razón social.");
-    if (!docV.valido) return setErr(`Documento inválido: ${docV.detalle}`);
+    if (!validDoc) return setErr("La cédula debe tener 10 dígitos y el RUC 13.");
     if (form.dir.trim().length < 6) return setErr("Necesitamos una dirección de entrega precisa.");
     setErr("");
     setStep("pago");
@@ -607,13 +606,7 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
               </Field>
               <Field label="Cédula o RUC">
                 <input value={form.doc} onChange={(e) => setForm({ ...form, doc: e.target.value })}
-                  className={`${inp} font-mono`} placeholder="10 o 13 dígitos" inputMode="numeric" />
-                {form.doc.trim().length >= 10 && (
-                  <span className={`mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold ${docV.valido ? "text-ok" : "text-bad"}`}>
-                    <I n={docV.valido ? "check" : "alert"} s={12} />
-                    {docV.tipo} · {docV.valido ? "válido" : "revisar"}
-                  </span>
-                )}
+                  className={inp} placeholder="10 o 13 dígitos" inputMode="numeric" />
               </Field>
               <Field label="Teléfono / WhatsApp">
                 <input value={form.tel} onChange={(e) => setForm({ ...form, tel: e.target.value })}
