@@ -62,8 +62,8 @@ function NoEncontrado({ que }: { que: string }) {
     <div className="min-h-screen bg-paper flex flex-col">
       <Barra titulo="No encontrado" />
       <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24">
-        <p className="eyebrow">404</p>
-        <h1 className="font-display font-medium text-4xl mt-4">Ese {que} no existe.</h1>
+        <p className="font-display font-medium text-[64px] leading-none text-linedark select-none">404</p>
+        <h1 className="font-display font-medium text-4xl mt-5">Ese {que} no existe.</h1>
         <p className="text-stone text-[14px] mt-3 max-w-[40ch]">Puede que el enlace haya cambiado o la pieza ya no esté disponible.</p>
         <a href="#/" className="mt-8 inline-flex items-center gap-2 bg-ink text-paper px-6 py-3.5 text-[13px] font-semibold hover:bg-maroon transition-colors">
           <I n="back" s={14} /> Volver a la tienda
@@ -241,8 +241,7 @@ export function CategoriaPage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-paper flex flex-col">
       <Barra titulo={cat} />
       <main className="flex-1 max-w-[1200px] mx-auto px-5 sm:px-8 py-10 w-full">
-        <p className="eyebrow">Colección</p>
-        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.8rem)] mt-3">{cat}</h1>
+        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.8rem)]">{cat}</h1>
         <p className="text-stone text-[13px] mt-2">{items.length} {items.length === 1 ? "pieza" : "piezas"} · hechas en Cuenca</p>
 
         <div className="flex flex-wrap gap-2 mt-7">
@@ -295,8 +294,7 @@ export function BlogPage({ kind, value }: { kind?: "categoria" | "etiqueta" | "a
     <div className="min-h-screen bg-paper flex flex-col">
       <Barra titulo="Diario" />
       <main className="flex-1 max-w-[900px] mx-auto px-5 sm:px-8 py-10 w-full">
-        <p className="eyebrow">Blog</p>
-        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.8rem)] mt-3">{titulo}</h1>
+        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.8rem)]">{titulo}</h1>
         <p className="text-stone text-[13px] mt-2">{filtrados.length} {filtrados.length === 1 ? "artículo" : "artículos"}</p>
 
         {!kind && (
@@ -361,7 +359,7 @@ export function ArticuloPage({ slug }: { slug: string }) {
           <a href="#/blog" className="hover:text-ink">Diario</a> <I n="chev-r" s={11} />
           <a href={`#/blog/categoria/${slugDe(p.tag)}`} className="hover:text-ink">{p.tag}</a>
         </nav>
-        <p className="eyebrow">{p.num} · {p.fecha}</p>
+        <p className="text-[12.5px] font-semibold text-maroon tracking-wide">{p.num} · {p.fecha}</p>
         <h1 className="font-display font-medium text-[clamp(1.8rem,3.6vw,2.9rem)] leading-[1.1] mt-4">{p.titulo}</h1>
 
         <div className="flex items-center gap-3 mt-7 pb-7 border-b border-line">
@@ -411,8 +409,7 @@ export function PaginaPage({ slug }: { slug: string }) {
     <div className="min-h-screen bg-paper flex flex-col">
       <Barra titulo={pag.titulo} />
       <main className="flex-1 max-w-[700px] mx-auto px-5 sm:px-8 py-14 w-full">
-        <p className="eyebrow">BLETIA</p>
-        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.7rem)] mt-3">{pag.titulo}</h1>
+        <h1 className="font-display font-medium text-[clamp(1.8rem,3.4vw,2.7rem)]">{pag.titulo}</h1>
         <p className="font-display text-[18px] leading-relaxed text-ink2 mt-8 whitespace-pre-line">{pag.cuerpo}</p>
         {pag.slug === "contacto" && (
           <a href="#/" className="mt-9 inline-flex items-center gap-2 bg-ink text-paper px-6 py-3.5 text-[13px] font-semibold hover:bg-maroon transition-colors">

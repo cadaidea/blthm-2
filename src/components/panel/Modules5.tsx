@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { ORDERS, fmt2 } from "../../data";
-import { I, Modal } from "../ui";
+import { I, Modal, toast } from "../ui";
 import { Card, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -77,7 +77,12 @@ export function OMS15() {
   const cerrados = rows.filter((r) => r.state >= 13).length;
 
   const advance = (id: string) =>
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, state: Math.min(r.state + 1, ST15.length - 1) } : r)));
+    setRows((rs) => rs.map((r) => {
+      if (r.id !== id) return r;
+      const next = Math.min(r.state + 1, ST15.length - 1);
+      toast(`${r.code} → ${ST15[next]}`, next >= 13 ? "ok" : "info");
+      return { ...r, state: next };
+    }));
 
   const fotosAdjuntas = useMemo(() => Object.values(fotos).filter(Boolean).length, [fotos]);
 
@@ -170,8 +175,7 @@ export function OMS15() {
         <div className="p-6 sm:p-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="eyebrow">Pedido bajo specs</p>
-              <h3 className="font-bold text-[19px] mt-1">Personalización con fotos por campo</h3>
+              <h3 className="font-bold text-[17px]">Pedido bajo specs · personalización con fotos</h3>
             </div>
             <button onClick={() => setOpenSpec(false)} className="p-2 hover:bg-paper2" aria-label="Cerrar"><I n="close" s={16} /></button>
           </div>

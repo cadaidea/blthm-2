@@ -110,15 +110,9 @@ body {
 .font-display { font-family: var(--font-display); }
 .font-dash { font-family: var(--font-dash); }
 
-.eyebrow {
-  font-family: var(--font-dash);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--color-stone);
-}
-
 .tnum { font-variant-numeric: tabular-nums; }
 .tracked { letter-spacing: 0.28em; }
+.num { font-variant-numeric: tabular-nums; }
 
 /* grano de papel muy leve */
 .grain { position: relative; }

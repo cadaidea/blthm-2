@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ORDERS, EVENT_TYPES, fmt2 } from "../../data";
-import { I, type IconName } from "../ui";
+import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
 import { DAM, Proveedores, Taller } from "./Modules2";
@@ -182,12 +182,19 @@ export default function Panel() {
   const [userMenu, setUserMenu] = useState(false);
   const [workerLogin, setWorkerLogin] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("bletia-theme") === "dark");
+  const [splash, setSplash] = useState(true);
   const engine = useEventEngine();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("bletia-theme", dark ? "dark" : "light");
   }, [dark]);
+
+  /* splash de arranque (firma de TALLER UNO) */
+  useEffect(() => {
+    const t = setTimeout(() => setSplash(false), 900);
+    return () => clearTimeout(t);
+  }, []);
 
   /* al entrar, asegura que el rol esté viendo un módulo permitido */
   useEffect(() => {
@@ -206,6 +213,21 @@ export default function Panel() {
 
   return (
     <div className="min-h-screen bg-paper text-ink font-dash transition-colors">
+      {/* splash de arranque */}
+      <div className={`fixed inset-0 z-[99] bg-coal grid place-items-center transition-opacity duration-500 ${splash ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto bg-maroon grid place-items-center text-cream anim-pop">
+            <BletiaMark light size={30} />
+          </div>
+          <div className="font-display font-semibold text-[20px] text-cream tracking-[0.3em] mt-4">BLETIA</div>
+          <div className="font-mono text-[10px] tracking-[0.3em] text-cream/40 uppercase mt-1.5">Suite mueblera · ERP · CRM · PIM · OMS · MES</div>
+          <div className="mt-5 w-44 h-1 mx-auto bg-cream/10 overflow-hidden">
+            <div className={`h-full bg-maroon transition-transform duration-700 origin-left ${splash ? "scale-x-100" : "scale-x-0"}`} />
+          </div>
+        </div>
+      </div>
+
+      <ToastHost />
       {/* ---------- Sidebar ---------- */}
       <aside className={`fixed inset-y-0 left-0 z-[70] w-[248px] bg-coal text-cream flex flex-col transition-transform duration-300 lg:translate-x-0 ${nav ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="h-16 px-5 flex items-center justify-between border-b border-cream/10 shrink-0">

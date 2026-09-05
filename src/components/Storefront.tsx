@@ -172,8 +172,7 @@ export default function Storefront() {
           <div className="fixed z-[85] top-[4.4rem] right-4 sm:right-8 w-[300px] bg-card border border-line shadow-[0_24px_60px_rgba(20,16,10,0.22)] slide-up">
             {cuenta ? (
               <div className="p-5">
-                <p className="eyebrow">Hola de nuevo</p>
-                <p className="font-display font-medium text-[20px] mt-2">{cuenta}</p>
+                <p className="font-display font-medium text-[20px]">Hola, {cuenta}</p>
                 <p className="text-[12.5px] text-stone mt-1">Tus pedidos y deseos quedan guardados en este dispositivo.</p>
                 <button onClick={() => { setCuenta(""); localStorage.removeItem("bletia-cuenta"); setAccountOpen(false); }}
                   className="w-full mt-4 border border-linedark text-[12.5px] font-semibold py-2.5 hover:bg-paper2 transition-colors">
@@ -182,8 +181,8 @@ export default function Storefront() {
               </div>
             ) : (
               <div className="p-5">
-                <p className="eyebrow">Mi cuenta</p>
-                <p className="text-[13px] text-ink2 mt-2 mb-4">Guarda tu nombre para agilizar tus próximas compras.</p>
+                <p className="font-display font-medium text-[20px]">Mi cuenta</p>
+                <p className="text-[13px] text-ink2 mt-1.5 mb-4">Guarda tu nombre para agilizar tus próximas compras.</p>
                 <input value={accForm.nombre} onChange={(e) => setAccForm({ ...accForm, nombre: e.target.value })}
                   className={`${inp} mb-2.5`} placeholder="Nombre" />
                 <input value={accForm.email} onChange={(e) => setAccForm({ ...accForm, email: e.target.value })}
@@ -258,13 +257,7 @@ export default function Storefront() {
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-0 items-stretch min-h-[calc(100vh-4rem)]">
             <div className="lg:col-span-7 flex flex-col justify-center py-12 lg:py-0 lg:pr-14 grain">
               <Reveal>
-                <p className="eyebrow flex items-center gap-3">
-                  <span className="w-1.5 h-1.5 bg-maroon inline-block" />
-                  Muebles hechos a mano — Cuenca · Ecuador
-                </p>
-              </Reveal>
-              <Reveal delay={90}>
-                <h1 className="font-display font-medium text-[clamp(2.7rem,6.2vw,5.4rem)] leading-[1.0] tracking-[-0.015em] mt-6">
+                <h1 className="font-display font-medium text-[clamp(2.7rem,6.2vw,5.4rem)] leading-[1.0] tracking-[-0.015em]">
                   Cada pieza<br />define <em className="not-italic relative">tu espacio<span className="absolute left-0 -bottom-1 w-full h-[2px] bg-maroon/70" /></em>.
                 </h1>
               </Reveal>
@@ -325,8 +318,7 @@ export default function Storefront() {
         <Reveal>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
             <div>
-              <p className="eyebrow flex items-center gap-3"><span className="w-1.5 h-1.5 bg-maroon inline-block" />La colección</p>
-              <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05] mt-4">
+              <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05]">
                 Objetos serenos,<br className="hidden sm:block" /> líneas exactas.
               </h2>
             </div>
@@ -402,7 +394,7 @@ export default function Storefront() {
               </div>
             </Reveal>
             <div>
-              <Reveal><p className="eyebrow flex items-center gap-3 !text-cream/50"><span className="w-1.5 h-1.5 bg-maroon inline-block" />Taller BLETIA</p></Reveal>
+
               <Reveal delay={80}>
                 <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05] mt-4">
                   De la tabla<br />al objeto.
@@ -442,8 +434,7 @@ export default function Storefront() {
         <div className="grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-4">
             <Reveal>
-              <p className="eyebrow flex items-center gap-3"><span className="w-1.5 h-1.5 bg-maroon inline-block" />Servicios</p>
-              <h2 className="font-display font-medium text-[clamp(1.9rem,3.4vw,2.8rem)] leading-[1.05] mt-4">
+              <h2 className="font-display font-medium text-[clamp(1.9rem,3.4vw,2.8rem)] leading-[1.05]">
                 Comprar es la parte fácil.
               </h2>
               <p className="text-ink2 text-[14.5px] leading-relaxed mt-5 max-w-[40ch]">
@@ -483,8 +474,7 @@ export default function Storefront() {
           <Reveal>
             <div className="flex items-end justify-between gap-6 mb-10">
               <div>
-                <p className="eyebrow flex items-center gap-3"><span className="w-1.5 h-1.5 bg-maroon inline-block" />Diario de taller</p>
-                <h2 className="font-display font-medium text-[clamp(1.7rem,3vw,2.4rem)] mt-4">Notas que huelen a aserrín.</h2>
+                <h2 className="font-display font-medium text-[clamp(1.7rem,3vw,2.4rem)]">Notas que huelen a aserrín.</h2>
               </div>
               <a href="#diario" className="hidden sm:inline-flex items-center gap-2 text-[13px] font-semibold u-grow">Todo el diario <I n="arrow" s={14} /></a>
             </div>

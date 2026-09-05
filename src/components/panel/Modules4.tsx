@@ -66,8 +66,8 @@ export function Logistica() {
           <div className="p-6 sm:p-8">
             <div className="flex items-center justify-between">
               <div>
-                <p className="eyebrow">Guía de remisión SRI</p>
-                <h3 className="font-bold text-[19px] mt-1 font-mono">{sel.num}</h3>
+                <h3 className="font-bold text-[17px]">Guía de remisión SRI</h3>
+                <p className="text-[12.5px] text-stone font-mono mt-0.5">{sel.num}</p>
               </div>
               <button onClick={() => setSel(null)} className="p-2 hover:bg-paper2" aria-label="Cerrar"><I n="close" s={16} /></button>
             </div>

@@ -83,8 +83,7 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
       <div className="hidden lg:flex flex-col justify-between bg-coal text-cream p-12 grain relative overflow-hidden">
         <BletiaMark light size={26} />
         <div>
-          <p className="eyebrow !text-cream/40">Panel interno · TALLER UNO</p>
-          <h1 className="font-display font-medium text-[clamp(2rem,3.4vw,3rem)] leading-[1.05] mt-4">
+          <h1 className="font-display font-medium text-[clamp(2rem,3.4vw,3rem)] leading-[1.05]">
             Cada rol ve su área.<br />Gerencia lo ve todo.
           </h1>
           <p className="text-cream/60 text-[14px] leading-relaxed max-w-[44ch] mt-5">
@@ -109,8 +108,7 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
               <I n="back" s={13} /> Volver al panel de Gerencia
             </button>
           )}
-          <p className="eyebrow">Acceso de colaboradores</p>
-          <h2 className="font-display font-medium text-[28px] mt-3">Buen día. Entra a tu área.</h2>
+          <h2 className="font-display font-medium text-[28px]">Buen día. Entra a tu área.</h2>
           <p className="text-[13px] text-stone mt-2">
             Selecciona tu rol: verás solo los módulos que te corresponden.
           </p>

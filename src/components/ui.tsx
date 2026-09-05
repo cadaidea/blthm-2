@@ -135,3 +135,47 @@ export function CodeBlock({ title, code }: { title: string; code: string }) {
     </div>
   );
 }
+
+/* ---------- Toasts globales (feedback de acciones, como TALLER UNO) ----------
+   Uso: toast("Factura autorizada", "ok") desde cualquier módulo.
+   El <ToastHost /> se monta una sola vez (en el Panel). */
+export type ToastTone = "ok" | "warn" | "bad" | "info";
+type ToastMsg = { id: number; text: string; tone: ToastTone };
+
+export function toast(text: string, tone: ToastTone = "ok") {
+  window.dispatchEvent(new CustomEvent("bletia-toast", { detail: { text, tone } }));
+}
+
+const TONE_STYLE: Record<ToastTone, string> = {
+  ok: "border-ok/40 text-ok",
+  warn: "border-warn/40 text-warn",
+  bad: "border-bad/40 text-bad",
+  info: "border-linedark text-ink",
+};
+const TONE_ICON: Record<ToastTone, IconName> = { ok: "check", warn: "alert", bad: "alert", info: "spark" };
+
+export function ToastHost() {
+  const [items, setItems] = useState<ToastMsg[]>([]);
+  useEffect(() => {
+    let id = 0;
+    const on = (e: Event) => {
+      const { text, tone } = (e as CustomEvent).detail as { text: string; tone: ToastTone };
+      const tid = ++id;
+      setItems((l) => [...l, { id: tid, text, tone }]);
+      setTimeout(() => setItems((l) => l.filter((t) => t.id !== tid)), 3200);
+    };
+    window.addEventListener("bletia-toast", on);
+    return () => window.removeEventListener("bletia-toast", on);
+  }, []);
+  return (
+    <div className="fixed bottom-5 right-5 z-[95] flex flex-col gap-2 items-end pointer-events-none">
+      {items.map((t) => (
+        <div key={t.id}
+          className={`pointer-events-auto anim-drawer flex items-center gap-2.5 bg-card border ${TONE_STYLE[t.tone]} shadow-[0_14px_40px_rgba(20,16,10,0.25)] px-4 py-3 max-w-[340px]`}>
+          <I n={TONE_ICON[t.tone]} s={15} className="shrink-0" />
+          <p className="text-[12.5px] font-semibold text-ink leading-snug">{t.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
