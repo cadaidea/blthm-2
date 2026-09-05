@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ASSETS, PHASES, SUPPLIERS, WORK_ORDERS, type Asset, type WorkOrder } from "../../data";
+import { ASSETS, IMG, PHASES, SUPPLIERS, WORK_ORDERS, type Asset, type WorkOrder } from "../../data";
 import { CopyBtn, I, Modal } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { StatusChip } from "./Panel";
@@ -173,7 +173,7 @@ export function DAM() {
     setTimeout(() => {
       setAssets((a) => [
         {
-          id: `a${Date.now()}`, name: `nueva-campana_${a.length + 1}.jpg`, img: "img/detalle.jpg",
+          id: `a${Date.now()}`, name: `nueva-campana_${a.length + 1}.jpg`, img: IMG.detalle,
           kind: "Campaña", size: "3,3 MB", tags: ["nuevo", "web"], status: "En revisión", uses: 0, date: "hoy",
         },
         ...a,

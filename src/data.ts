@@ -12,6 +12,21 @@ export const fmt = (n: number): string =>
 export const fmt2 = (n: number): string =>
   "$" + n.toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/* ---------- Imágenes del catálogo ----------
+   En producción: reemplaza cada URL por /img/<nombre>.jpg servido desde tu VPS
+   (coloca las fotos reales en public/img/ y cambia solo este mapa). */
+export const IMG = {
+  hero: "https://image.qwenlm.ai/generated-images/09da4d6b-8efb-4034-abd5-a944d06e99e8/_result.png",
+  sofa: "https://image.qwenlm.ai/generated-images/15788a49-b3f6-4714-b2c6-fe2c2375329b/_result.png",
+  mesa: "https://image.qwenlm.ai/generated-images/0a21d224-ed62-46b0-b372-2528ba5e6c07/_result.png",
+  estanteria: "https://image.qwenlm.ai/generated-images/c5cd9da4-c0db-4188-8385-f4aa3760edc3/_result.png",
+  silla: "https://image.qwenlm.ai/generated-images/1910365a-0b2f-4bca-a629-61765c90981d/_result.png",
+  cama: "https://image.qwenlm.ai/generated-images/6ba1afba-097a-4471-82d1-ee268df9a2a4/_result.png",
+  aparador: "https://image.qwenlm.ai/generated-images/565de814-33d0-46c0-8f6f-1bf68cb12434/_result.png",
+  taller: "https://image.qwenlm.ai/generated-images/02bb7b91-83a7-4a3f-bde3-6e927c3b8951/_result.png",
+  detalle: "https://image.qwenlm.ai/generated-images/7a099c07-d65e-481b-97d3-b1fbd3a433bf/_result.png",
+};
+
 /* ---------- Catálogo (PIM) ---------- */
 export type Product = {
   id: string;
@@ -34,49 +49,49 @@ export const PRODUCTS: Product[] = [
   {
     id: "p1", sku: "BLT-101", name: "Butaca Aura", category: "Asientos",
     price: 1190, material: "Nogal americano · Bouclé crudo", dims: "78 × 82 × 74 cm",
-    img: "img/hero.jpg", stock: 6, state: "Publicado", origin: "Taller BLETIA", lead: "3 semanas",
+    img: IMG.hero, stock: 6, state: "Publicado", origin: "Taller BLETIA", lead: "3 semanas",
     desc: "Curva continua tallada en nogal, cojín en bouclé de lana. Ensamble de espiga a la vista, sin herrajes. Serie numerada y firmada por el maestro de taller.",
     channels: ["Web", "Showroom", "Catálogo"],
   },
   {
     id: "p2", sku: "BLT-204", name: "Sofá Nudo", category: "Asientos",
     price: 2890, material: "Lino avena · Patas de nogal", dims: "228 × 95 × 80 cm",
-    img: "img/sofa.jpg", stock: 4, state: "Publicado", origin: "Proveedor", lead: "5 semanas",
+    img: IMG.sofa, stock: 4, state: "Publicado", origin: "Proveedor", lead: "5 semanas",
     desc: "Tres cuerpos, plumón recuperado y espuma de alta densidad. Funda removible lavable. Estructura garantizada por 10 años.",
     channels: ["Web", "Showroom"],
   },
   {
     id: "p3", sku: "BLT-310", name: "Mesa Raíz", category: "Mesas",
     price: 1750, material: "Roble europeo ahumado", dims: "200 × 100 × 75 cm",
-    img: "img/mesa.jpg", stock: 3, state: "Publicado", origin: "Taller BLETIA", lead: "4 semanas",
+    img: IMG.mesa, stock: 3, state: "Publicado", origin: "Taller BLETIA", lead: "4 semanas",
     desc: "Tablero monolítico de roble ahumado con aceite natural. Patas cónicas torneadas a mano. Admite extensión a 260 cm bajo pedido.",
     channels: ["Web", "Showroom", "Catálogo"],
   },
   {
     id: "p4", sku: "BLT-412", name: "Estantería Trama", category: "Almacenaje",
     price: 1320, material: "Nogal · Entrepaños de 18 mm", dims: "160 × 32 × 190 cm",
-    img: "img/estanteria.jpg", stock: 8, state: "Publicado", origin: "Proveedor", lead: "2 semanas",
+    img: IMG.estanteria, stock: 8, state: "Publicado", origin: "Proveedor", lead: "2 semanas",
     desc: "Sistema modular de entrepaños flotantes. Soporta 40 kg por nivel. Anclaje antisísmico incluido para pared.",
     channels: ["Web", "Catálogo"],
   },
   {
     id: "p5", sku: "BLT-115", name: "Silla Vela", category: "Asientos",
     price: 420, material: "Nogal · Asiento de cuero vegetalizado", dims: "46 × 52 × 81 cm",
-    img: "img/silla.jpg", stock: 24, state: "Publicado", origin: "Taller BLETIA", lead: "2 semanas",
+    img: IMG.silla, stock: 24, state: "Publicado", origin: "Taller BLETIA", lead: "2 semanas",
     desc: "Respaldo curvado al vapor, una sola pieza. Cuero de curtiembre local con sello ambiental. Apilable de a dos.",
     channels: ["Web", "Showroom", "Catálogo"],
   },
   {
     id: "p6", sku: "BLT-521", name: "Cama Duna", category: "Descanso",
     price: 2140, material: "Nogal · Cabecero tapizado marfil", dims: "205 × 190 × 95 cm (king)",
-    img: "img/cama.jpg", stock: 5, state: "Publicado", origin: "Proveedor", lead: "4 semanas",
+    img: IMG.cama, stock: 5, state: "Publicado", origin: "Proveedor", lead: "4 semanas",
     desc: "Plataforma baja sin boxspring. Cabecero flotante tapizado en lino marfil. Ensamble sin herramientas en 10 minutos.",
     channels: ["Web", "Showroom"],
   },
   {
     id: "p7", sku: "BLT-630", name: "Aparador Bruma", category: "Almacenaje",
     price: 1980, material: "Nogal ranurado · Pies de latón", dims: "180 × 45 × 78 cm",
-    img: "img/aparador.jpg", stock: 2, state: "En taller", origin: "Taller BLETIA", lead: "5 semanas",
+    img: IMG.aparador, stock: 2, state: "En taller", origin: "Taller BLETIA", lead: "5 semanas",
     desc: "Puertas ranuradas a mano, interior en cedro aromático. Bisagras de cierre suave. Stock limitado por serie.",
     channels: ["Showroom"],
   },
@@ -205,15 +220,15 @@ export type Asset = {
 };
 
 export const ASSETS: Asset[] = [
-  { id: "a1", name: "butaca-aura_editorial_01.jpg", img: "img/hero.jpg", kind: "Fotografía", size: "4,2 MB", tags: ["aura", "web", "hero"], status: "Aprobado", uses: 14, date: "02 feb 2026" },
-  { id: "a2", name: "sofa-nudo_frontal.jpg", img: "img/sofa.jpg", kind: "Fotografía", size: "3,8 MB", tags: ["nudo", "web", "catálogo"], status: "Aprobado", uses: 9, date: "02 feb 2026" },
-  { id: "a3", name: "mesa-raiz_lateral.jpg", img: "img/mesa.jpg", kind: "Fotografía", size: "3,5 MB", tags: ["raíz", "web"], status: "Aprobado", uses: 7, date: "28 ene 2026" },
-  { id: "a4", name: "estanteria-trama_detalle.jpg", img: "img/estanteria.jpg", kind: "Fotografía", size: "4,0 MB", tags: ["trama", "catálogo"], status: "En revisión", uses: 2, date: "05 feb 2026" },
-  { id: "a5", name: "silla-vela_perfil.jpg", img: "img/silla.jpg", kind: "Fotografía", size: "3,1 MB", tags: ["vela", "web", "ads"], status: "Aprobado", uses: 18, date: "20 ene 2026" },
-  { id: "a6", name: "cama-duna_ambient.jpg", img: "img/cama.jpg", kind: "Fotografía", size: "4,6 MB", tags: ["duna", "web"], status: "Aprobado", uses: 5, date: "22 ene 2026" },
-  { id: "a7", name: "aparador-bruma_front.jpg", img: "img/aparador.jpg", kind: "Fotografía", size: "3,9 MB", tags: ["bruma", "showroom"], status: "En revisión", uses: 1, date: "07 feb 2026" },
-  { id: "a8", name: "materiales_cuero-nogal.jpg", img: "img/detalle.jpg", kind: "Material", size: "2,7 MB", tags: ["materiales", "blog", "prensa"], status: "Aprobado", uses: 11, date: "15 ene 2026" },
-  { id: "a9", name: "taller_proceso-sanded.jpg", img: "img/taller.jpg", kind: "Campaña", size: "5,1 MB", tags: ["taller", "blog", "nosotros"], status: "Aprobado", uses: 8, date: "12 ene 2026" },
+  { id: "a1", name: "butaca-aura_editorial_01.jpg", img: IMG.hero, kind: "Fotografía", size: "4,2 MB", tags: ["aura", "web", "hero"], status: "Aprobado", uses: 14, date: "02 feb 2026" },
+  { id: "a2", name: "sofa-nudo_frontal.jpg", img: IMG.sofa, kind: "Fotografía", size: "3,8 MB", tags: ["nudo", "web", "catálogo"], status: "Aprobado", uses: 9, date: "02 feb 2026" },
+  { id: "a3", name: "mesa-raiz_lateral.jpg", img: IMG.mesa, kind: "Fotografía", size: "3,5 MB", tags: ["raíz", "web"], status: "Aprobado", uses: 7, date: "28 ene 2026" },
+  { id: "a4", name: "estanteria-trama_detalle.jpg", img: IMG.estanteria, kind: "Fotografía", size: "4,0 MB", tags: ["trama", "catálogo"], status: "En revisión", uses: 2, date: "05 feb 2026" },
+  { id: "a5", name: "silla-vela_perfil.jpg", img: IMG.silla, kind: "Fotografía", size: "3,1 MB", tags: ["vela", "web", "ads"], status: "Aprobado", uses: 18, date: "20 ene 2026" },
+  { id: "a6", name: "cama-duna_ambient.jpg", img: IMG.cama, kind: "Fotografía", size: "4,6 MB", tags: ["duna", "web"], status: "Aprobado", uses: 5, date: "22 ene 2026" },
+  { id: "a7", name: "aparador-bruma_front.jpg", img: IMG.aparador, kind: "Fotografía", size: "3,9 MB", tags: ["bruma", "showroom"], status: "En revisión", uses: 1, date: "07 feb 2026" },
+  { id: "a8", name: "materiales_cuero-nogal.jpg", img: IMG.detalle, kind: "Material", size: "2,7 MB", tags: ["materiales", "blog", "prensa"], status: "Aprobado", uses: 11, date: "15 ene 2026" },
+  { id: "a9", name: "taller_proceso-sanded.jpg", img: IMG.taller, kind: "Campaña", size: "5,1 MB", tags: ["taller", "blog", "nosotros"], status: "Aprobado", uses: 8, date: "12 ene 2026" },
 ];
 
 /* ---------- Contabilidad (SRI Ecuador) ---------- */

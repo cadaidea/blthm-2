@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CITIES, PRODUCTS, fmt, fmt2, randomCode, type Product } from "../data";
+import { CITIES, IMG, PRODUCTS, fmt, fmt2, randomCode, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -150,13 +150,13 @@ export default function Storefront() {
 
             <div className="lg:col-span-5 relative lg:min-h-[calc(100vh-4rem)]">
               <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
-                <img src="img/hero.jpg" alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
+                <img src={IMG.hero} alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
                 <button
                   onClick={() => setQuick(PRODUCTS[0])}
                   className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5"
                 >
                   <div className="w-12 h-14 overflow-hidden shrink-0">
-                    <img src="img/hero.jpg" alt="" className="w-full h-full object-cover" />
+                    <img src={IMG.hero} alt="" className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-display font-medium text-[15px] leading-tight">Butaca Aura</p>
@@ -258,7 +258,7 @@ export default function Storefront() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <Reveal>
               <div className="relative overflow-hidden">
-                <img src="img/taller.jpg" alt="Maestro del taller BLETIA trabajando nogal" loading="lazy"
+                <img src={IMG.taller} alt="Maestro del taller BLETIA trabajando nogal" loading="lazy"
                   className="w-full h-[420px] sm:h-[520px] object-cover transition-transform duration-[1200ms] hover:scale-[1.03]" />
                 <span className="absolute bottom-4 left-4 bg-coal/85 backdrop-blur text-cream text-[10.5px] font-semibold tracking-[0.2em] uppercase px-3 py-2 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-maroon pulse-maroon" /> Taller BLETIA · Quito
@@ -314,7 +314,7 @@ export default function Storefront() {
                 Detrás de cada entrega hay una red propia de transporte, proveedores auditados y facturación electrónica al instante.
               </p>
               <div className="mt-8 overflow-hidden border border-line">
-                <img src="img/detalle.jpg" alt="Materiales: cuero vegetalizado y nogal" loading="lazy" className="w-full h-44 object-cover hover:scale-105 transition-transform duration-700" />
+                <img src={IMG.detalle} alt="Materiales: cuero vegetalizado y nogal" loading="lazy" className="w-full h-44 object-cover hover:scale-105 transition-transform duration-700" />
               </div>
             </Reveal>
           </div>
