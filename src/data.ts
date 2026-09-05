@@ -1,6 +1,7 @@
 /* =========================================================
    BLETIA · Datos semilla (demo funcional del stack)
    Moneda: USD (Ecuador) · IVA 15% · Facturación SRI
+   Cédulas/RUC calculados con Módulo 10/11 reales (utils/sri.ts)
    ========================================================= */
 
 export const IVA = 0.15;
@@ -107,7 +108,7 @@ export type Customer = {
 export const CUSTOMERS: Customer[] = [
   {
     id: "c1", name: "María Fernanda Jaramillo", contact: "mfjaramillo@gmail.com · 099 412 8830",
-    city: "Quito", segment: "Residencial", orders: 3, ltv: 5480, last: "hace 2 días", doc: "RUC 1714552203001",
+    city: "Quito", segment: "Residencial", orders: 3, ltv: 5480, last: "hace 2 días", doc: "1714552203001",
     timeline: [
       { date: "12 ene 2026", text: "Pago PayPhone aprobado · $1.190 · Butaca Aura", kind: "pago" },
       { date: "12 ene 2026", text: "Pedido BL-2026-0141 creado", kind: "pedido" },
@@ -116,7 +117,7 @@ export const CUSTOMERS: Customer[] = [
   },
   {
     id: "c2", name: "Estudio Alvarado & Reyes", contact: "proyectos@alvaradoreyes.ec · 098 771 4456",
-    city: "Guayaquil", segment: "Arquitecto", orders: 11, ltv: 48900, last: "hoy", doc: "RUC 0992334871001",
+    city: "Guayaquil", segment: "Arquitecto", orders: 11, ltv: 48900, last: "hoy", doc: "0992334870001",
     timeline: [
       { date: "09 feb 2026", text: "Cotización 14 piezas · Hotel Río Verde", kind: "nota" },
       { date: "28 ene 2026", text: "Pago PayPhone diferido 6 meses · $8.430", kind: "pago" },
@@ -124,7 +125,7 @@ export const CUSTOMERS: Customer[] = [
   },
   {
     id: "c3", name: "Hotel Casa del Patio", contact: "gerencia@casadelpatio.ec · 072 844 190",
-    city: "Cuenca", segment: "Hotelero", orders: 6, ltv: 31250, last: "hace 1 semana", doc: "RUC 0190445522001",
+    city: "Cuenca", segment: "Hotelero", orders: 6, ltv: 31250, last: "hace 1 semana", doc: "0190445528001",
     timeline: [
       { date: "22 ene 2026", text: "Orden de fabricación OF-2210 · 18 sillas Vela", kind: "pedido" },
       { date: "15 ene 2026", text: "Anticipo 50% vía link PayPhone", kind: "pago" },
@@ -132,7 +133,7 @@ export const CUSTOMERS: Customer[] = [
   },
   {
     id: "c4", name: "Andrés Valencia", contact: "avalencia@outlook.com · 096 220 1178",
-    city: "Manta", segment: "Residencial", orders: 1, ltv: 2890, last: "hace 3 días", doc: "Cédula 1312884402",
+    city: "Manta", segment: "Residencial", orders: 1, ltv: 2890, last: "hace 3 días", doc: "1312884404",
     timeline: [
       { date: "06 feb 2026", text: "Pago PayPhone aprobado · $2.890 · Sofá Nudo", kind: "pago" },
       { date: "06 feb 2026", text: "Asignado a TransCosta Logística", kind: "entrega" },
@@ -140,21 +141,21 @@ export const CUSTOMERS: Customer[] = [
   },
   {
     id: "c5", name: "Corporativo Andino S.A.", contact: "compras@corpandino.ec · 023 445 090",
-    city: "Quito", segment: "Corporativo", orders: 4, ltv: 19700, last: "hace 2 semanas", doc: "RUC 1791228843001",
+    city: "Quito", segment: "Corporativo", orders: 4, ltv: 19700, last: "hace 2 semanas", doc: "1791228847001",
     timeline: [
       { date: "30 ene 2026", text: "Factura 001-001-000001238 · Autorizada SRI", kind: "nota" },
     ],
   },
   {
     id: "c6", name: "Lucía Briones", contact: "lucia.briones@gmail.com · 099 018 3342",
-    city: "Loja", segment: "Residencial", orders: 2, ltv: 2370, last: "hace 5 días", doc: "Cédula 1104229871",
+    city: "Loja", segment: "Residencial", orders: 2, ltv: 2370, last: "hace 5 días", doc: "1104229875",
     timeline: [
       { date: "02 feb 2026", text: "Pedido BL-2026-0146 · Estantería Trama", kind: "pedido" },
     ],
   },
   {
     id: "c7", name: "Boutique Hotel Yaku", contact: "admin@hotelyaku.ec · 042 551 208",
-    city: "Guayaquil", segment: "Hotelero", orders: 3, ltv: 22840, last: "hace 1 mes", doc: "RUC 0993118802001",
+    city: "Guayaquil", segment: "Hotelero", orders: 3, ltv: 22840, last: "hace 1 mes", doc: "0993118801001",
     timeline: [
       { date: "10 ene 2026", text: "Mantenimiento anual de cortesía programado", kind: "nota" },
     ],
@@ -238,12 +239,12 @@ export type Invoice = {
 
 export const INVOICES: Invoice[] = [
   { id: "f1", number: "001-001-000001244", date: "08 feb 2026", customer: "Andrés Valencia", ruc: "1312884402", base: 2513.04, iva: 376.96, total: 2890, auth: "080220260113128844021234567891044", status: "Autorizada" },
-  { id: "f2", number: "001-001-000001243", date: "06 feb 2026", customer: "Lucía Briones", ruc: "1104229871", base: 1147.83, iva: 172.17, total: 1320, auth: "060220260111042298711234567891043", status: "Autorizada" },
-  { id: "f3", number: "001-001-000001242", date: "04 feb 2026", customer: "Hotel Casa del Patio", ruc: "0190445522001", base: 6573.91, iva: 986.09, total: 7560, auth: "040220260101904455221234567891042", status: "Autorizada" },
-  { id: "f4", number: "001-001-000001241", date: "01 feb 2026", customer: "Corporativo Andino S.A.", ruc: "1791228843001", base: 3913.04, iva: 586.96, total: 4500, auth: "010220260117912288431234567891041", status: "Autorizada" },
-  { id: "f5", number: "001-001-000001240", date: "29 ene 2026", customer: "Estudio Alvarado & Reyes", ruc: "0992334871001", base: 7330.43, iva: 1099.57, total: 8430, auth: "290120260109923348711234567891040", status: "Autorizada" },
+  { id: "f2", number: "001-001-000001243", date: "06 feb 2026", customer: "Lucía Briones", ruc: "1104229875", base: 1147.83, iva: 172.17, total: 1320, auth: "060220260111042298751234567891043", status: "Autorizada" },
+  { id: "f3", number: "001-001-000001242", date: "04 feb 2026", customer: "Hotel Casa del Patio", ruc: "0190445528001", base: 6573.91, iva: 986.09, total: 7560, auth: "040220260101904455281234567891042", status: "Autorizada" },
+  { id: "f4", number: "001-001-000001241", date: "01 feb 2026", customer: "Corporativo Andino S.A.", ruc: "1791228847001", base: 3913.04, iva: 586.96, total: 4500, auth: "010220260117912288471234567891041", status: "Autorizada" },
+  { id: "f5", number: "001-001-000001240", date: "29 ene 2026", customer: "Estudio Alvarado & Reyes", ruc: "0992334870001", base: 7330.43, iva: 1099.57, total: 8430, auth: "290120260109923348701234567891040", status: "Autorizada" },
   { id: "f6", number: "001-001-000001239", date: "28 ene 2026", customer: "María F. Jaramillo", ruc: "1714552203001", base: 1034.78, iva: 155.22, total: 1190, auth: "280120260117145522031234567891039", status: "Autorizada" },
-  { id: "f7", number: "001-001-000001238", date: "21 ene 2026", customer: "Boutique Hotel Yaku", ruc: "0993118802001", base: 7443.48, iva: 1116.52, total: 8560, auth: "210120260109931188021234567891038", status: "En contingencia" },
+  { id: "f7", number: "001-001-000001238", date: "21 ene 2026", customer: "Boutique Hotel Yaku", ruc: "0993118801001", base: 7443.48, iva: 1116.52, total: 8560, auth: "210120260109931188011234567891038", status: "En contingencia" },
 ];
 
 export const CASHFLOW = [
@@ -270,8 +271,9 @@ export const LINKS_SEED: PayLink[] = [
 /* ---------- Motor de eventos ---------- */
 export const EVENT_TYPES = [
   "pago.payphone.aprobado", "pedido.creado", "oms.estado.actualizado", "pim.precio.sincronizado",
-  "crm.cliente.creado", "dam.asset.procesado", "factura.sri.autorizada", "taller.fase.avanzada",
-  "link.uso_registrado", "transporte.gps.ping", "inventario.movimiento", "sesion.panel.iniciada",
+  "crm.cliente.creado", "crm.documento.validado", "dam.asset.procesado", "factura.sri.autorizada",
+  "taller.fase.avanzada", "link.uso_registrado", "transporte.gps.ping", "inventario.movimiento",
+  "sesion.panel.iniciada",
 ];
 
 export const CITIES = ["Quito", "Guayaquil", "Cuenca", "Manta", "Ambato", "Loja", "Riobamba", "Ibarra"];

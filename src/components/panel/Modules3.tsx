@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, randomCode, type PayLink } from "../../data";
 import { CodeBlock, CopyBtn, I } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -7,6 +7,29 @@ import { StatusChip } from "./Panel";
 /* ================= Contabilidad ================= */
 export function Contabilidad() {
   const max = Math.max(...CASHFLOW.map((c) => c.in));
+  const [tab, setTab] = useState<"facturas" | "partida" | "f104">("facturas");
+
+  /* ---- Libro diario (partida doble) derivado de la facturación ---- */
+  const asientos = useMemo(() => {
+    const rows: { fecha: string; cuenta: string; concepto: string; debe: number; haber: number }[] = [];
+    INVOICES.forEach((f) => {
+      rows.push({ fecha: f.date, cuenta: "102.01 Bancos", concepto: `Cobro ${f.number} · ${f.customer}`, debe: f.total, haber: 0 });
+      rows.push({ fecha: f.date, cuenta: "401.01 Ventas locales", concepto: `Venta ${f.number} · ${f.customer}`, debe: 0, haber: f.base });
+      rows.push({ fecha: f.date, cuenta: "201.05 IVA en ventas", concepto: `IVA 15% ${f.number}`, debe: 0, haber: f.iva });
+    });
+    return rows;
+  }, []);
+  const totDebe = asientos.reduce((a, r) => a + r.debe, 0);
+  const totHaber = asientos.reduce((a, r) => a + r.haber, 0);
+
+  /* ---- Formulario 104 (borrador) ---- */
+  const f104 = useMemo(() => {
+    const aut = INVOICES.filter((f) => f.status === "Autorizada");
+    const ventas15 = aut.reduce((a, f) => a + f.base, 0);
+    const ivaVentas = aut.reduce((a, f) => a + f.iva, 0);
+    const retenciones = 1214; // retenciones emitidas a proveedores (demo)
+    return { ventas15, ivaVentas, retenciones, impuesto: Math.max(ivaVentas - retenciones, 0), n: aut.length };
+  }, []);
 
   const exportCsv = () => {
     const rows = [
@@ -68,7 +91,18 @@ export function Contabilidad() {
         </div>
       </Card>
 
+      {/* Pestañas: facturas / partida doble / formulario 104 */}
+      <div className="flex flex-wrap gap-1.5">
+        {([["facturas", "Facturas SRI"], ["partida", "Partida doble"], ["f104", "Formulario 104"]] as const).map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`px-4 py-2 text-[12.5px] font-semibold border transition-colors ${tab === id ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Facturas SRI */}
+      {tab === "facturas" && (
       <Card className="overflow-hidden">
         <div className="px-5 py-4 border-b border-line flex items-center justify-between">
           <h3 className="font-bold text-[15px] tracking-tight">Facturación electrónica · SRI</h3>
@@ -106,6 +140,88 @@ export function Contabilidad() {
           Clave de acceso de 49 dígitos validada contra el SRI. Las facturas en contingencia se re-autorizan solas cuando vuelve el servicio.
         </div>
       </Card>
+      )}
+
+      {/* Partida doble */}
+      {tab === "partida" && (
+      <Card className="overflow-hidden fade-in">
+        <div className="px-5 py-4 border-b border-line flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight">Libro diario · partida doble</h3>
+            <p className="text-[12px] text-stone mt-0.5">Cada factura genera tres líneas: Bancos (debe), Ventas e IVA (haber). Debe = Haber siempre.</p>
+          </div>
+          <Chip tone={Math.abs(totDebe - totHaber) < 0.01 ? "ok" : "bad"} dot>
+            {Math.abs(totDebe - totHaber) < 0.01 ? "Cuadrado" : "Descuadrado"}
+          </Chip>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px]">
+            <thead><tr><Th>Fecha</Th><Th>Cuenta</Th><Th>Concepto</Th><Th>Debe</Th><Th>Haber</Th></tr></thead>
+            <tbody>
+              {asientos.map((a, i) => (
+                <tr key={i} className="hover:bg-paper2/50 transition-colors">
+                  <Td className="whitespace-nowrap text-[12px]">{a.fecha}</Td>
+                  <Td className="font-mono text-[12px] font-semibold">{a.cuenta}</Td>
+                  <Td className="text-[12.5px]">{a.concepto}</Td>
+                  <Td className="tnum">{a.debe ? fmt2(a.debe) : ""}</Td>
+                  <Td className="tnum">{a.haber ? fmt2(a.haber) : ""}</Td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-ink bg-paper2/60 font-bold">
+                <td className="px-4 py-3 text-[12px]" colSpan={3}>Totales del período</td>
+                <Td className="tnum">{fmt2(totDebe)}</Td>
+                <Td className="tnum">{fmt2(totHaber)}</Td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div className="px-4 py-3 border-t border-line text-[11.5px] text-stone flex items-center gap-2">
+          <I n="calc" s={13} />
+          El asiento se genera automáticamente al autorizar la factura en el SRI; no hay registro manual que descuadre.
+        </div>
+      </Card>
+      )}
+
+      {/* Formulario 104 (borrador) */}
+      {tab === "f104" && (
+      <Card className="overflow-hidden fade-in">
+        <div className="px-5 py-4 border-b border-line flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight">Formulario 104 · Declaración de IVA</h3>
+            <p className="text-[12px] text-stone mt-0.5">Borrador calculado del período · RUC 1793442001001 · BLETIA S.A.S.</p>
+          </div>
+          <Chip tone="warn" dot>Borrador — pendiente de envío</Chip>
+        </div>
+        <div className="p-5 grid sm:grid-cols-2 gap-x-10 gap-y-3">
+          {[
+            ["411", "Ventas locales gravadas tarifa 15%", f104.ventas15],
+            ["415", "IVA transferido en ventas (15%)", f104.ivaVentas],
+            ["441", "Retenciones en ventas", f104.retenciones],
+            ["499", "Impuesto a pagar", f104.impuesto],
+          ].map(([campo, label, val]) => (
+            <div key={campo as string} className="flex items-baseline justify-between gap-4 border-b border-line pb-2.5">
+              <span className="text-[12.5px] text-ink2">
+                <code className="font-mono font-bold text-maroon mr-2">{campo}</code>{label}
+              </span>
+              <span className="tnum font-semibold text-[14px]">{fmt2(val as number)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="px-5 pb-5">
+          <div className="bg-paper2/60 border border-line p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <p className="text-[12px] text-ink2">
+              <strong className="text-ink">{f104.n} facturas autorizadas</strong> consideradas · el borrador se arma solo;
+              tu contador revisa y envía al SRI antes del día 10 del mes siguiente.
+            </p>
+            <button className={`${btnDark} !py-2.5 whitespace-nowrap`}>
+              <I n="doc" s={14} /> Descargar borrador XML
+            </button>
+          </div>
+        </div>
+      </Card>
+      )}
     </div>
   );
 }
