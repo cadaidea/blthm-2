@@ -20,9 +20,23 @@ proyecto BLETIA. Cuando terminemos, **esta carpeta se elimina** (no forma parte 
 - ❌ **Secretos**: claves de PayPhone, firma electrónica SRI (`.p12`), contraseñas,
   archivos `.env`. Eso nunca entra al repositorio.
 
-## Cómo funciona
+## ⚠️ Dónde vive esta carpeta
 
-1. Sube tus archivos a esta carpeta.
-2. Dime: *"revisa la carpeta referencia"*.
-3. Los leo, te digo **cuáles voy a usar y cómo**, y los integro al proyecto.
-4. Al final, borramos la carpeta.
+Esta carpeta está en el **workspace del proyecto** (donde se edita el código), **NO** en tu
+repo `cadaidea/blthm` de tu PC. Son lugares distintos: tú no puedes soltar archivos aquí
+directamente. Para que yo los lea, el intercambio se hace por **tu repo de GitHub (público)**.
+
+## Cómo funciona (flujo real)
+
+1. **En tu PC**, dentro de tu repo `blthm`, crea una carpeta `referencia/` y copia ahí tus archivos:
+   ```bash
+   cd ruta/a/tu/repo/blthm
+   mkdir referencia
+   # copia tus archivos dentro de referencia/
+   git add referencia/
+   git commit -m "referencia: archivos reales para integrar"
+   git push
+   ```
+2. Dime: *"revisa la carpeta referencia de mi repo"*.
+3. Los leo desde GitHub, te digo **cuáles voy a usar y cómo**, y los integro al proyecto.
+4. Al final, borramos la carpeta del repo: `git rm -r referencia/ && git commit -m "limpieza" && git push`.
