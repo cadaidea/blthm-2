@@ -43,6 +43,7 @@ export type Product = {
   lead: string;
   desc: string;
   channels: string[];
+  mto?: string; // Made to Order: texto editable, se muestra en detalles y resumen
 };
 
 export const PRODUCTS: Product[] = [
@@ -66,6 +67,7 @@ export const PRODUCTS: Product[] = [
     img: IMG.mesa, stock: 3, state: "Publicado", origin: "Taller BLETIA", lead: "4 semanas",
     desc: "Tablero monolítico de roble ahumado con aceite natural. Patas cónicas torneadas a mano. Admite extensión a 260 cm bajo pedido.",
     channels: ["Web", "Showroom", "Catálogo"],
+    mto: "Extensión a 260 cm bajo pedido · +4 semanas",
   },
   {
     id: "p4", sku: "BLT-412", name: "Estantería Trama", category: "Almacenaje",
@@ -94,6 +96,7 @@ export const PRODUCTS: Product[] = [
     img: IMG.aparador, stock: 2, state: "En taller", origin: "Taller BLETIA", lead: "5 semanas",
     desc: "Puertas ranuradas a mano, interior en cedro aromático. Bisagras de cierre suave. Stock limitado por serie.",
     channels: ["Showroom"],
+    mto: "Serie numerada bajo pedido · se fabrica en 5 semanas",
   },
 ];
 
@@ -290,14 +293,31 @@ export const randomCode = () => {
 export type CMSPost = {
   id: string; num: string; fecha: string; titulo: string; tag: string;
   cuerpo: string; estado: "Borrador" | "Publicado";
+  etiquetas?: string[]; // blog avanzado: cápsulas al final del artículo
+  autor?: string;       // editor con nombre/cargo/bio
 };
 
-export const CMS_POSTS_SEED: CMSPost[] = [
-  { id: "post-14", num: "N° 14", fecha: "08 feb 2026", titulo: "Por qué el nogal se trabaja en luna menguante", tag: "Materia", estado: "Publicado", cuerpo: "La savia baja, la madera se estabiliza y el corte sufre menos. No es superstición: es humedad interna." },
-  { id: "post-13", num: "N° 13", fecha: "24 ene 2026", titulo: "Entrega guante blanco: el último centímetro importa", tag: "Servicio", estado: "Publicado", cuerpo: "Armamos en sitio, retiramos el embalaje y nivelamos cada pata. El mueble se estrena en su lugar final." },
-  { id: "post-12", num: "N° 12", fecha: "10 ene 2026", titulo: "Serie Bruma: ranurar a mano toma 11 horas. Vale cada una", tag: "Taller", estado: "Publicado", cuerpo: "El flautín del aparador Bruma se ranura pieza por pieza. La máquina lo haría en 20 minutos; la mano lo hace irrepetible." },
-  { id: "post-15", num: "N° 15", fecha: "próximamente", titulo: "Cuero vegetalizado: por qué tarda 9 meses en curtirse", tag: "Materia", estado: "Borrador", cuerpo: "Corteza de quebracho, agua y tiempo. El curtido vegetal no se acelera: se espera." },
+export const BLOG_CATEGORIAS = ["Materia", "Taller", "Servicio", "Proyecto"];
+
+export const BLOG_ETIQUETAS = ["nogal", "roble", "cuero", "lino", "entrega", "hecho-a-mano", "serie-bruma"];
+
+export const BLOG_AUTORES = [
+  { id: "dp", nombre: "Diego Pillacela", cargo: "Fundador · Taller", bio: "Tercera generación de carpinteros. Dirige el taller y la curaduría de maderas." },
+  { id: "mj", nombre: "María José Velasco", cargo: "Diseño & Curaduría", bio: "Diseñadora industrial. Firma la Serie Bruma y la paleta de tapices." },
+  { id: "ec", nombre: "Edison Cuarán", cargo: "Maestro de taller", bio: "32 años de oficio. Especialista en ensambles de espiga y acabados a mano." },
 ];
+
+export const CMS_POSTS_SEED: CMSPost[] = [
+  { id: "post-14", num: "N° 14", fecha: "08 feb 2026", titulo: "Por qué el nogal se trabaja en luna menguante", tag: "Materia", estado: "Publicado", etiquetas: ["nogal", "hecho-a-mano"], autor: "dp", cuerpo: "La savia baja, la madera se estabiliza y el corte sufre menos. No es superstición: es humedad interna. Cuando la luna mengua, el árbol concentra sus líquidos en la raíz y la fibra queda más estable. Es el momento exacto para talar, y el que respetamos desde hace tres generaciones." },
+  { id: "post-13", num: "N° 13", fecha: "24 ene 2026", titulo: "Entrega guante blanco: el último centímetro importa", tag: "Servicio", estado: "Publicado", etiquetas: ["entrega"], autor: "mj", cuerpo: "Armamos en sitio, retiramos el embalaje y nivelamos cada pata. El mueble se estrena en su lugar final. La entrega no termina cuando el camión llega: termina cuando tú te sientas por primera vez." },
+  { id: "post-12", num: "N° 12", fecha: "10 ene 2026", titulo: "Serie Bruma: ranurar a mano toma 11 horas. Vale cada una", tag: "Taller", estado: "Publicado", etiquetas: ["serie-bruma", "hecho-a-mano"], autor: "ec", cuerpo: "El flautín del aparador Bruma se ranura pieza por pieza. La máquina lo haría en 20 minutos; la mano lo hace irrepetible. Cada ranura tiene una profundidad que responde a la veta de esa tabla, y ninguna es igual a la anterior." },
+  { id: "post-15", num: "N° 15", fecha: "próximamente", titulo: "Cuero vegetalizado: por qué tarda 9 meses en curtirse", tag: "Materia", estado: "Borrador", etiquetas: ["cuero"], autor: "dp", cuerpo: "Corteza de quebracho, agua y tiempo. El curtido vegetal no se acelera: se espera. Nueve meses de tambor y paciencia dan un cuero que envejece con carácter, no que se deteriora." },
+];
+
+export const minutosLectura = (cuerpo: string): number =>
+  Math.max(1, Math.round(cuerpo.split(/\s+/).filter(Boolean).length / 180));
+
+export const autorDe = (id?: string) => BLOG_AUTORES.find((a) => a.id === id);
 
 export type MenuItem = { label: string; url: string };
 
@@ -367,13 +387,13 @@ export type Variante = {
   id: string; productoId: string; opciones: Record<string, string>; pvp: number; costo: number;
 };
 export const VARIANTES_SEED: Variante[] = [
-  { id: "v1", productoId: "aura", opciones: { "at-tapiz": "op-beige" }, pvp: 1190, costo: 640 },
-  { id: "v2", productoId: "aura", opciones: { "at-tapiz": "op-gris" }, pvp: 1190, costo: 640 },
-  { id: "v3", productoId: "aura", opciones: { "at-tapiz": "op-verde" }, pvp: 1240, costo: 665 },
-  { id: "v4", productoId: "nudo", opciones: { "at-tapiz": "op-beige" }, pvp: 2450, costo: 1310 },
-  { id: "v5", productoId: "nudo", opciones: { "at-tapiz": "op-teja" }, pvp: 2520, costo: 1350 },
-  { id: "v6", productoId: "vela", opciones: { "at-acabado": "op-nogal" }, pvp: 320, costo: 150 },
-  { id: "v7", productoId: "vela", opciones: { "at-acabado": "op-negro" }, pvp: 340, costo: 160 },
+  { id: "v1", productoId: "p1", opciones: { "at-tapiz": "op-beige" }, pvp: 1190, costo: 640 },
+  { id: "v2", productoId: "p1", opciones: { "at-tapiz": "op-gris" }, pvp: 1190, costo: 640 },
+  { id: "v3", productoId: "p1", opciones: { "at-tapiz": "op-verde" }, pvp: 1240, costo: 665 },
+  { id: "v4", productoId: "p2", opciones: { "at-tapiz": "op-beige" }, pvp: 2450, costo: 1310 },
+  { id: "v5", productoId: "p2", opciones: { "at-tapiz": "op-teja" }, pvp: 2520, costo: 1350 },
+  { id: "v6", productoId: "p5", opciones: { "at-acabado": "op-nogal" }, pvp: 320, costo: 150 },
+  { id: "v7", productoId: "p5", opciones: { "at-acabado": "op-negro" }, pvp: 340, costo: 160 },
 ];
 export const variantesDe = (productoId: string) => VARIANTES_SEED.filter((v) => v.productoId === productoId);
 export const nombreOpcion = (atributoId: string, opcionId: string) =>
@@ -415,6 +435,23 @@ export const MOV_STOCK_SEED: MovStock[] = [
   { id: "m4", fecha: "05 feb 2026", tipo: "Entrada", sku: "BLT-041", pieza: "Silla Vela", bodega: "Bodega Central", qty: 18, motivo: "Compra proveedor" },
   { id: "m5", fecha: "03 feb 2026", tipo: "Salida", sku: "BLT-051", pieza: "Cama Duna", bodega: "Bodega Central", qty: -1, motivo: "Despacho BL-2026-0144" },
 ];
+
+/* Suscriptores capturados en el footer de la tienda (opt-in doble: nacen "Pendiente") */
+export type WebSuscriptor = { email: string; fecha: string };
+export function loadWebSuscriptores(): WebSuscriptor[] {
+  try {
+    const s = localStorage.getItem("bletia-suscriptores-web");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; }
+  } catch { /* vacío */ }
+  return [];
+}
+export function saveWebSuscriptor(email: string) {
+  const list = loadWebSuscriptores();
+  if (list.some((w) => w.email.toLowerCase() === email.toLowerCase())) return false;
+  list.unshift({ email, fecha: new Date().toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" }) });
+  localStorage.setItem("bletia-suscriptores-web", JSON.stringify(list));
+  return true;
+}
 
 export function loadSite(): SiteConfig {
   try {
