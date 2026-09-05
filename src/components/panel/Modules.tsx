@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { TTL_CACHE_MS, detectarDocumento } from "../../utils/sri";
 import {
   CITIES, CUSTOMERS, ORDER_FLOW, ORDERS, PRODUCTS, SUPPLIERS,
   fmt, fmt2, type Customer, type Order, type Product,
@@ -111,6 +112,124 @@ export function OMS() {
   );
 }
 
+/* ---- Consulta por documento (SRI / Registro) · caché 5 min · modo offline ---- */
+type DocHit = {
+  limpio: string; tipo: string; valido: boolean; detalle: string;
+  match: Customer | null; cached: boolean; offline: boolean;
+};
+
+function DocLookup() {
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [hit, setHit] = useState<DocHit | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [cacheCount, setCacheCount] = useState(0);
+  const cache = useRef(new Map<string, { r: Omit<DocHit, "cached" | "offline">; ts: number }>());
+
+  const consultar = () => {
+    const limpio = q.replace(/[\s.\-]/g, "");
+    if (!limpio) return;
+    setBusy(true);
+    setTimeout(() => {
+      const now = Date.now();
+      const prev = cache.current.get(limpio);
+      if (prev && now - prev.ts < TTL_CACHE_MS) {
+        setHit({ ...prev.r, cached: true, offline });
+      } else {
+        const v = detectarDocumento(limpio);
+        const match = CUSTOMERS.find((c) => c.doc.replace(/\D/g, "") === limpio) || null;
+        const r = { limpio, tipo: v.tipo, valido: v.valido, detalle: v.detalle, match };
+        cache.current.set(limpio, { r, ts: now });
+        setCacheCount(cache.current.size);
+        setHit({ ...r, cached: false, offline });
+      }
+      setBusy(false);
+    }, offline ? 150 : 700);
+  };
+
+  const limpiarCache = () => {
+    cache.current.clear();
+    setCacheCount(0);
+    setHit(null);
+  };
+
+  const tone = !hit ? "neutral" : hit.valido ? (hit.tipo === "Cédula" ? "neutral" : "maroon") : "bad";
+
+  return (
+    <Card className="p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+            <I n="search" s={16} className="text-stone" /> Consulta por documento
+          </h3>
+          <p className="text-[12px] text-stone mt-0.5">
+            SRI / Registro Civil · Módulo 10 (cédula) y Módulo 11 (sociedades y públicas) · caché de 5 min
+          </p>
+        </div>
+        <button
+          onClick={() => setOffline(!offline)}
+          className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 border transition-colors ${offline ? "border-warn/50 text-warn bg-warnbg" : "border-ok/40 text-ok bg-okbg"}`}
+        >
+          {offline ? "SRI offline · modo local" : "SRI en línea"}
+        </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && consultar()}
+          placeholder="Cédula (10) o RUC (13) · ej. 1710034065 · 1791228847001"
+          className={`${inp} sm:flex-1 font-mono`}
+        />
+        <button onClick={consultar} disabled={busy} className={`${btnDark} !py-2.5 disabled:opacity-60 whitespace-nowrap`}>
+          {busy ? "Consultando…" : "Validar documento"}
+        </button>
+        <button onClick={limpiarCache} className={`${btnGhost} !py-2.5 whitespace-nowrap`}>
+          Limpiar caché <span className="tnum">({cacheCount})</span>
+        </button>
+      </div>
+
+      {hit && (
+        <div className="mt-4 border border-line bg-paper2/40 p-4 fade-in">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Chip tone={tone as "ok" | "warn" | "bad" | "neutral" | "maroon"}>{hit.tipo}</Chip>
+            <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${hit.valido ? "text-ok" : "text-bad"}`}>
+              <I n={hit.valido ? "check" : "alert"} s={13} />
+              {hit.valido ? "Válido" : "Inválido"}
+            </span>
+            {hit.cached && (
+              <span className="text-[10.5px] font-bold uppercase tracking-wider text-stone bg-paper2 px-2 py-1">
+                Respuesta desde caché · TTL 5 min
+              </span>
+            )}
+          </div>
+          <p className="text-[13px] mt-2.5 font-mono">{hit.limpio}</p>
+          <p className={`text-[12.5px] mt-1 ${hit.valido ? "text-ink2" : "text-bad"}`}>{hit.detalle}</p>
+          {hit.offline && (
+            <p className="text-[12px] text-warn font-medium mt-2 flex items-center gap-1.5">
+              <I n="alert" s={13} /> SRI no disponible — se aplicó validación local estricta (sin consulta externa).
+            </p>
+          )}
+          {hit.match ? (
+            <div className="mt-3 pt-3 border-t border-line flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[13px]">
+                <strong>{hit.match.name}</strong>
+                <span className="text-stone"> · {hit.match.city} · {hit.match.segment} · {hit.match.orders} pedidos · LTV {fmt(hit.match.ltv)}</span>
+              </p>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ok bg-okbg px-2 py-1">Cliente en base</span>
+            </div>
+          ) : (
+            <p className="text-[12px] text-stone mt-3 pt-3 border-t border-line">
+              Sin coincidencias en la base local de BLETIA{hit.valido ? " — documento apto para crear ficha nueva." : "."}
+            </p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 /* ================= CRM · Clientes ================= */
 export function CRM() {
   const [list, setList] = useState<Customer[]>(CUSTOMERS);
@@ -120,6 +239,8 @@ export function CRM() {
   const [openNew, setOpenNew] = useState(false);
   const [nf, setNf] = useState({ name: "", doc: "", city: CITIES[0], segment: "Residencial" as Customer["segment"] });
   const [genLink, setGenLink] = useState<string | null>(null);
+  const [nfErr, setNfErr] = useState("");
+  const nfDocV = nf.doc.trim() ? detectarDocumento(nf.doc) : null;
 
   const shown = useMemo(
     () =>
@@ -132,7 +253,12 @@ export function CRM() {
   );
 
   const addCustomer = () => {
-    if (nf.name.trim().length < 3) return;
+    if (nf.name.trim().length < 3) return setNfErr("Ingresa el nombre o razón social.");
+    if (nf.doc.trim()) {
+      const v = detectarDocumento(nf.doc);
+      if (!v.valido) return setNfErr(`Documento inválido: ${v.detalle}`);
+    }
+    setNfErr("");
     const c: Customer = {
       id: `c${Date.now()}`, name: nf.name.trim(), contact: "—", city: nf.city,
       segment: nf.segment, orders: 0, ltv: 0, last: "ahora", doc: nf.doc || "pendiente",
@@ -155,6 +281,8 @@ export function CRM() {
           </button>
         }
       />
+
+      <DocLookup />
 
       <Card className="p-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -279,7 +407,13 @@ export function CRM() {
             </label>
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Cédula / RUC</span>
-              <input value={nf.doc} onChange={(e) => setNf({ ...nf, doc: e.target.value })} className={inp} placeholder="10 o 13 dígitos" />
+              <input value={nf.doc} onChange={(e) => setNf({ ...nf, doc: e.target.value })} className={`${inp} font-mono`} placeholder="10 o 13 dígitos" />
+              {nfDocV && (
+                <span className={`mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold ${nfDocV.valido ? "text-ok" : "text-bad"}`}>
+                  <I n={nfDocV.valido ? "check" : "alert"} s={12} />
+                  {nfDocV.tipo} · {nfDocV.valido ? "válido" : nfDocV.detalle}
+                </span>
+              )}
             </label>
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Ciudad</span>
