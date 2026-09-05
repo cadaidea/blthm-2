@@ -593,13 +593,13 @@ export default function Storefront() {
             <div className="md:col-span-3" id="legal">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Legal · Ecuador</p>
               <p className="text-[12.5px] text-cream/60 leading-relaxed">
-                BLETIA S.A.S. · RUC 1793442001001<br />
-                Taller y showroom en Cuenca, Ecuador<br />
-                Facturación electrónica autorizada por el SRI<br />
-                Precios en USD · IVA 15% incluido
+                {site.legal.razonSocial} · RUC {site.legal.ruc}<br />
+                {site.legal.direccion}<br />
+                {site.legal.sri}<br />
+                {site.legal.moneda}
               </p>
               <p className="text-[11px] text-cream/40 mt-4 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-maroon" /> Pagos procesados por PayPhone
+                <span className="w-1.5 h-1.5 bg-maroon" /> {site.legal.pagos}
               </p>
             </div>
           </div>

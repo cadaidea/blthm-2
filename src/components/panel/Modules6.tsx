@@ -166,6 +166,29 @@ export function SitioPublico() {
             )}
           </Card>
 
+          {/* Datos legales del footer */}
+          <Card className="p-5">
+            <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+              <I n="shield" s={16} className="text-stone" /> Datos legales · footer
+            </h3>
+            <p className="text-[12px] text-stone mt-0.5">Bloque «Legal · Ecuador» al pie de bletia.ec.</p>
+            <div className="space-y-3 mt-4">
+              {([
+                ["razonSocial", "Razón social", "BLETIA S.A.S."],
+                ["ruc", "RUC", "1793442001001"],
+                ["direccion", "Domicilio", "Taller y showroom en Cuenca, Ecuador"],
+                ["sri", "Facturación", "Facturación electrónica autorizada por el SRI"],
+                ["moneda", "Precios", "Precios en USD · IVA 15% incluido"],
+                ["pagos", "Pagos", "Pagos procesados por PayPhone"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="block">
+                  <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">{label}</span>
+                  <input value={draft.legal[key]} onChange={(e) => setDraft({ ...draft, legal: { ...draft.legal, [key]: e.target.value } })} className={inp} />
+                </label>
+              ))}
+            </div>
+          </Card>
+
           <Card className="p-4 bg-coal border-coal text-cream">
             <p className="text-[11px] text-cream/60 leading-relaxed flex items-start gap-2">
               <I n="shield" s={14} className="text-ok shrink-0 mt-0.5" />

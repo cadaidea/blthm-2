@@ -425,6 +425,15 @@ export const autorDe = (id?: string) => loadEmpleados().find((e) => e.id === id)
 
 export type MenuItem = { label: string; url: string };
 
+export type LegalInfo = {
+  razonSocial: string;
+  ruc: string;
+  direccion: string;
+  sri: string;
+  moneda: string;
+  pagos: string;
+};
+
 export type SiteConfig = {
   anuncioActivo: boolean;
   anuncioTexto: string;
@@ -435,14 +444,15 @@ export type SiteConfig = {
   pagoDirecto: boolean;
   colecciones: Record<string, boolean>;
   menus: { tienda: MenuItem[]; empresa: MenuItem[] };
+  legal: LegalInfo;
 };
 
 export const SITE_DEFAULTS: SiteConfig = {
   anuncioActivo: true,
   anuncioTexto: "Entrega guante blanco en todo el Ecuador · factura electrónica SRI al instante",
-  destacadoId: "aura",
+  destacadoId: "p1",
   seoTitulo: "BLETIA — Mueblería de autor · Ecuador",
-  seoDesc: "Muebles de lujo minimalista fabricados en Quito. Pago seguro con PayPhone y entrega nacional.",
+  seoDesc: "Muebles de lujo minimalista hechos a mano en Cuenca. Pago seguro con PayPhone y entrega nacional.",
   pagoLink: true,
   pagoDirecto: true,
   colecciones: { "Sofás": true, "Sillones": true, "Mesas": true, "Sillas": true, "Centros": true, "Almacenaje": true, "Descanso": true },
@@ -459,6 +469,14 @@ export const SITE_DEFAULTS: SiteConfig = {
       { label: "Contacto", url: "#/pagina/contacto" },
       { label: "Políticas", url: "#/pagina/politicas" },
     ],
+  },
+  legal: {
+    razonSocial: "BLETIA S.A.S.",
+    ruc: "1793442001001",
+    direccion: "Taller y showroom en Cuenca, Ecuador",
+    sri: "Facturación electrónica autorizada por el SRI",
+    moneda: "Precios en USD · IVA 15% incluido",
+    pagos: "Pagos procesados por PayPhone",
   },
 };
 
@@ -633,7 +651,10 @@ export function savePaginas(pags: Pagina[]) { localStorage.setItem("bletia-pagin
 export function loadSite(): SiteConfig {
   try {
     const s = localStorage.getItem("bletia-sitio");
-    if (s) return { ...SITE_DEFAULTS, ...JSON.parse(s) };
+    if (s) {
+      const saved = JSON.parse(s);
+      return { ...SITE_DEFAULTS, ...saved, legal: { ...SITE_DEFAULTS.legal, ...(saved.legal || {}) } };
+    }
   } catch { /* defaults */ }
   return SITE_DEFAULTS;
 }
