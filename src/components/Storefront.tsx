@@ -74,7 +74,7 @@ export default function Storefront() {
             <a href="#diario" className="u-grow hover:text-ink">Diario</a>
           </nav>
           <div className="flex items-center gap-2.5">
-            <a href="#/panel" className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone hover:text-ink transition-colors px-2.5 py-1.5 border border-line bg-card/60">
+            <a href="#/dash" className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone hover:text-ink transition-colors px-2.5 py-1.5 border border-line bg-card/60">
               <I n="shield" s={13} /> Panel interno
             </a>
             <button onClick={() => setCartOpen(true)} className="relative p-2.5 hover:bg-paper2 transition-colors" aria-label="Abrir carrito">
@@ -100,7 +100,7 @@ export default function Storefront() {
             <button onClick={() => setMenu(false)} className="p-2.5" aria-label="Cerrar"><I n="close" s={20} /></button>
           </div>
           <nav className="flex flex-col p-8 gap-6 font-display text-3xl">
-            {[["#coleccion", "Colección"], ["#taller", "Taller"], ["#servicios", "Servicios"], ["#diario", "Diario"], ["#/panel", "Panel interno"]].map(([h, t]) => (
+            {[["#coleccion", "Colección"], ["#taller", "Taller"], ["#servicios", "Servicios"], ["#diario", "Diario"], ["#/dash", "Panel interno"]].map(([h, t]) => (
               <a key={h} href={h} onClick={() => setMenu(false)} className="hover:text-maroon transition-colors">{t}</a>
             ))}
           </nav>
@@ -390,9 +390,9 @@ export default function Storefront() {
             </div>
             <div className="md:col-span-2">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Empresa</p>
-              <a href="#/panel" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Panel interno</a>
-              <a href="#/panel" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Proveedores</a>
-              <a href="#/panel" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Trabaja con nosotros</a>
+              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Panel interno</a>
+              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Proveedores</a>
+              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Trabaja con nosotros</a>
             </div>
             <div className="md:col-span-3">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Legal · Ecuador</p>
