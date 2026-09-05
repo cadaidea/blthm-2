@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { ORDERS, fmt2 } from "../../data";
+import { ORDERS, fmt2, productosActivos } from "../../data";
 import { I, Modal, toast } from "../ui";
-import { Card, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
+import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
 
 /* ---------- Máquina de 15 estados BLETIA ---------- */
@@ -16,7 +16,7 @@ const MAP: Record<string, number> = {
   "Pago pendiente": 3, "Pago aprobado": 4, "En taller": 6, "En transporte": 12, "Entregado": 13,
 };
 
-type Row = { id: string; code: string; customer: string; item: string; total: number; state: number };
+type Row = { id: string; code: string; customer: string; item: string; total: number; state: number; tipo: "Venta stock" | "Venta pedido"; spec?: string };
 
 /* ---------- Cargador de foto por campo (el fix solicitado) ----------
    Cada cargador lleva el nombre del campo visible, así siempre se sabe
@@ -65,11 +65,40 @@ const CAMPOS_FOTO = ["Tapiz principal", "Tapiz secundario", "Estructura / madera
 
 export function OMS15() {
   const [rows, setRows] = useState<Row[]>(() =>
-    ORDERS.map((o) => ({ id: o.id, code: o.code, customer: o.customer, item: o.item, total: o.total, state: MAP[o.status] ?? 0 })),
+    ORDERS.map((o) => ({ id: o.id, code: o.code, customer: o.customer, item: o.item, total: o.total, state: MAP[o.status] ?? 0, tipo: o.tipo, spec: o.spec })),
   );
   const [sel, setSel] = useState<string>(ORDERS[0].id);
   const [openSpec, setOpenSpec] = useState(false);
+  const [openStock, setOpenStock] = useState(false);
   const [fotos, setFotos] = useState<Record<string, string | null>>({});
+  /* venta por pedido (specs) */
+  const [specCliente, setSpecCliente] = useState("");
+  const [specPieza, setSpecPieza] = useState("");
+  /* venta de stock */
+  const stockables = useMemo(() => productosActivos().filter((p) => p.stock > 0 && p.state === "Publicado"), []);
+  const [stockId, setStockId] = useState(stockables[0]?.id ?? "");
+  const [stockQty, setStockQty] = useState("1");
+
+  /* crea una venta de stock (sale de bodega, entra en estado 5 = pago aprobado) */
+  const crearVentaStock = () => {
+    const p = stockables.find((x) => x.id === stockId);
+    const qty = Math.max(1, parseInt(stockQty) || 1);
+    if (!p) return;
+    const code = `BL-2026-0${150 + rows.length}`;
+    setRows((rs) => [{ id: `vs${Date.now()}`, code, customer: "Mostrador / web", item: `${qty} × ${p.name}`, total: p.price * qty, state: 4, tipo: "Venta stock" }, ...rs]);
+    toast(`Venta de stock ${code} · ${qty} × ${p.name} (descuenta inventario)`, "ok");
+    setOpenStock(false);
+  };
+
+  /* crea una venta por pedido (fabricación con specs, entra en estado 1 = cotización) */
+  const crearVentaPedido = () => {
+    if (!specCliente.trim() || !specPieza.trim()) return;
+    const code = `BL-2026-0${150 + rows.length}`;
+    setRows((rs) => [{ id: `vp${Date.now()}`, code, customer: specCliente.trim(), item: specPieza.trim(), total: 0, state: 0, tipo: "Venta pedido", spec: `${fotosAdjuntas} fotos de specs adjuntas` }, ...rs]);
+    toast(`Venta por pedido ${code} enviada a cotización (estado 1/15)`, "ok");
+    setSpecCliente(""); setSpecPieza(""); setFotos({});
+    setOpenSpec(false);
+  };
 
   const selected = rows.find((r) => r.id === sel) || rows[0];
   const inTaller = rows.filter((r) => r.state >= 5 && r.state <= 10).length;
@@ -91,7 +120,12 @@ export function OMS15() {
       <SectionTitle
         title="Pedidos · máquina de 15 estados"
         sub="De la cotización a la factura. Cada avance emite un evento al cliente y actualiza inventario y contabilidad."
-        right={<button onClick={() => setOpenSpec(true)} className={btnDark}><I n="plus" s={14} /> Pedido bajo specs</button>}
+        right={
+          <div className="flex gap-2">
+            <button onClick={() => setOpenStock(true)} className={btnGhost}><I n="box" s={14} /> Venta de stock</button>
+            <button onClick={() => setOpenSpec(true)} className={btnDark}><I n="hammer" s={14} /> Venta por pedido</button>
+          </div>
+        }
       />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -134,7 +168,7 @@ export function OMS15() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px]">
-            <thead><tr><Th>Pedido</Th><Th>Cliente</Th><Th>Piezas</Th><Th>Total</Th><Th>Estado (15)</Th><Th> </Th></tr></thead>
+            <thead><tr><Th>Pedido</Th><Th>Cliente</Th><Th>Piezas</Th><Th>Tipo</Th><Th>Total</Th><Th>Estado (15)</Th><Th> </Th></tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id + r.state} onClick={() => setSel(r.id)}
@@ -142,7 +176,12 @@ export function OMS15() {
                   <Td className="font-mono text-[12px] font-semibold">{r.code}</Td>
                   <Td className="font-medium">{r.customer}</Td>
                   <Td className="text-ink2">{r.item}</Td>
-                  <Td className="tnum font-semibold">{fmt2(r.total)}</Td>
+                  <Td>
+                    <Chip tone={r.tipo === "Venta stock" ? "neutral" : "maroon"} dot>
+                      {r.tipo === "Venta stock" ? "Stock" : "Pedido"}
+                    </Chip>
+                  </Td>
+                  <Td className="tnum font-semibold">{r.total ? fmt2(r.total) : "—"}</Td>
                   <Td>
                     <div className="flex items-center gap-2.5">
                       <StatusChip s={r.state >= 13 ? "Entregado" : r.state === 12 ? "En transporte" : r.state >= 5 ? "En taller" : r.state >= 4 ? "Pago aprobado" : "Pago pendiente"} />
@@ -198,11 +237,11 @@ export function OMS15() {
           <div className="grid sm:grid-cols-2 gap-3 mt-5">
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Cliente</span>
-              <input className="w-full border border-linedark bg-card px-3.5 py-3 text-[13.5px] outline-none focus:border-ink" placeholder="Ej. Hotel Casa del Patio" />
+              <input value={specCliente} onChange={(e) => setSpecCliente(e.target.value)} className={inp} placeholder="Ej. Hotel Casa del Patio" />
             </label>
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Pieza / referencia</span>
-              <input className="w-full border border-linedark bg-card px-3.5 py-3 text-[13.5px] outline-none focus:border-ink" placeholder="Ej. Silla Vela · 18 unidades" />
+              <input value={specPieza} onChange={(e) => setSpecPieza(e.target.value)} className={inp} placeholder="Ej. Silla Vela · 18 unidades" />
             </label>
           </div>
 
@@ -210,10 +249,34 @@ export function OMS15() {
             <p className="text-[11.5px] text-stone flex items-center gap-1.5">
               <I n="shield" s={12} /> Las fotos viajan al DAM y quedan vinculadas a la ficha del pedido.
             </p>
-            <button onClick={() => setOpenSpec(false)} className={`${btnDark} !py-3`}>
-              <I n="check" s={14} /> Crear pedido (estado 1/15)
+            <button onClick={crearVentaPedido} disabled={!specCliente.trim() || !specPieza.trim()} className={`${btnDark} !py-3 disabled:opacity-50`}>
+              <I n="check" s={14} /> Crear venta por pedido (1/15)
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* venta de stock */}
+      <Modal open={openStock} onClose={() => setOpenStock(false)} w="max-w-md">
+        <div className="p-6 sm:p-7">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-[17px]">Venta de stock</h3>
+            <button onClick={() => setOpenStock(false)} className="p-2 hover:bg-paper2" aria-label="Cerrar"><I n="close" s={16} /></button>
+          </div>
+          <p className="text-[12.5px] text-stone mt-2">Sale directo de bodega y descuenta inventario. Entra en estado 5 (pago aprobado).</p>
+          <label className="block mt-5">
+            <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Pieza con stock</span>
+            <select value={stockId} onChange={(e) => setStockId(e.target.value)} className={inp}>
+              {stockables.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.stock} en stock · {fmt2(p.price)}</option>)}
+            </select>
+          </label>
+          <label className="block mt-3">
+            <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Cantidad</span>
+            <input value={stockQty} onChange={(e) => setStockQty(e.target.value)} className={inp} inputMode="numeric" />
+          </label>
+          <button onClick={crearVentaStock} className={`${btnDark} w-full mt-5 !py-3.5`}>
+            <I n="check" s={14} /> Registrar venta de stock
+          </button>
         </div>
       </Modal>
     </div>

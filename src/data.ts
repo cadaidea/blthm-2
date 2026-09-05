@@ -49,7 +49,7 @@ export type Product = {
   sku: string;
   name: string;
   slug?: string;
-  category: "Sofás" | "Sillones" | "Mesas" | "Sillas" | "Centros" | "Almacenaje" | "Descanso";
+  category: string; // nombre de categoría (CRUD en PIM → categorías de producto)
   price: number; // precio final, IVA incluido
   material: string;
   dims: string;
@@ -198,16 +198,18 @@ export type Order = {
   id: string; code: string; customer: string; city: string; item: string;
   total: number; pay: "Link PayPhone" | "Web PayPhone" | "Transferencia";
   status: OrderStatus; carrier: string; date: string;
+  tipo: "Venta stock" | "Venta pedido"; // stock = sale de bodega · pedido = fabricación con specs del cliente
+  spec?: string;
 };
 
 export const ORDERS: Order[] = [
-  { id: "o1", code: "BL-2026-0147", customer: "Estudio Alvarado & Reyes", city: "Guayaquil", item: "2 × Mesa Raíz", total: 3500, pay: "Link PayPhone", status: "Pago pendiente", carrier: "—", date: "hoy, 09:41" },
-  { id: "o2", code: "BL-2026-0146", customer: "Lucía Briones", city: "Loja", item: "1 × Estantería Trama", total: 1320, pay: "Web PayPhone", status: "Pago aprobado", carrier: "—", date: "hoy, 08:15" },
-  { id: "o3", code: "BL-2026-0145", customer: "Hotel Casa del Patio", city: "Cuenca", item: "18 × Silla Vela", total: 7560, pay: "Link PayPhone", status: "En taller", carrier: "—", date: "ayer, 17:02" },
-  { id: "o4", code: "BL-2026-0144", customer: "Andrés Valencia", city: "Manta", item: "1 × Sofá Nudo", total: 2890, pay: "Web PayPhone", status: "En transporte", carrier: "TransCosta Logística", date: "06 feb, 11:20" },
-  { id: "o5", code: "BL-2026-0143", customer: "Corporativo Andino S.A.", city: "Quito", item: "6 × Silla Vela · 1 × Aparador Bruma", total: 4500, pay: "Link PayPhone", status: "En transporte", carrier: "Sierra Express Carga", date: "05 feb, 15:44" },
-  { id: "o6", code: "BL-2026-0141", customer: "María Fernanda Jaramillo", city: "Quito", item: "1 × Butaca Aura", total: 1190, pay: "Web PayPhone", status: "Entregado", carrier: "Flota propia BLETIA", date: "28 ene, 10:05" },
-  { id: "o7", code: "BL-2026-0139", customer: "Boutique Hotel Yaku", city: "Guayaquil", item: "4 × Cama Duna", total: 8560, pay: "Transferencia", status: "Entregado", carrier: "TransCosta Logística", date: "21 ene, 09:12" },
+  { id: "o1", code: "BL-2026-0147", customer: "Estudio Alvarado & Reyes", city: "Guayaquil", item: "2 × Mesa Raíz", total: 3500, pay: "Link PayPhone", status: "Pago pendiente", carrier: "—", date: "hoy, 09:41", tipo: "Venta pedido", spec: "Extensión a 260 cm · acabado roble ahumado" },
+  { id: "o2", code: "BL-2026-0146", customer: "Lucía Briones", city: "Loja", item: "1 × Estantería Trama", total: 1320, pay: "Web PayPhone", status: "Pago aprobado", carrier: "—", date: "hoy, 08:15", tipo: "Venta stock" },
+  { id: "o3", code: "BL-2026-0145", customer: "Hotel Casa del Patio", city: "Cuenca", item: "18 × Silla Vela", total: 7560, pay: "Link PayPhone", status: "En taller", carrier: "—", date: "ayer, 17:02", tipo: "Venta pedido", spec: "Tapiz cuero vegetalizado natural · grabado logo hotel" },
+  { id: "o4", code: "BL-2026-0144", customer: "Andrés Valencia", city: "Manta", item: "1 × Sofá Nudo", total: 2890, pay: "Web PayPhone", status: "En transporte", carrier: "TransCosta Logística", date: "06 feb, 11:20", tipo: "Venta stock" },
+  { id: "o5", code: "BL-2026-0143", customer: "Corporativo Andino S.A.", city: "Quito", item: "6 × Silla Vela · 1 × Aparador Bruma", total: 4500, pay: "Link PayPhone", status: "En transporte", carrier: "Sierra Express Carga", date: "05 feb, 15:44", tipo: "Venta pedido", spec: "Sillas en nogal negro · aparador serie numerada" },
+  { id: "o6", code: "BL-2026-0141", customer: "María Fernanda Jaramillo", city: "Quito", item: "1 × Butaca Aura", total: 1190, pay: "Web PayPhone", status: "Entregado", carrier: "Flota propia BLETIA", date: "28 ene, 10:05", tipo: "Venta stock" },
+  { id: "o7", code: "BL-2026-0139", customer: "Boutique Hotel Yaku", city: "Guayaquil", item: "4 × Cama Duna", total: 8560, pay: "Transferencia", status: "Entregado", carrier: "TransCosta Logística", date: "21 ene, 09:12", tipo: "Venta stock" },
 ];
 
 /* ---------- Proveedores ---------- */
@@ -322,15 +324,79 @@ export type CMSPost = {
   autor?: string;       // editor con nombre/cargo/bio
 };
 
-export const BLOG_CATEGORIAS = ["Materia", "Taller", "Servicio", "Proyecto"];
+/* ---------- RRHH · Nómina (de aquí salen los autores del blog) ---------- */
+export type Empleado = {
+  id: string; nombre: string; cargo: string; area: string;
+  sueldo: number; estado: "Activo" | "Vacaciones" | "Inactivo";
+  ingreso: string; email: string; esAutor: boolean; bio?: string;
+};
+export const EMPLEADOS_SEED: Empleado[] = [
+  { id: "dp", nombre: "Diego Pillacela", cargo: "Fundador", area: "Gerencia", sueldo: 3200, estado: "Activo", ingreso: "2018", email: "diego@bletia.ec", esAutor: true, bio: "Tercera generación de carpinteros. Dirige el taller y la curaduría de maderas." },
+  { id: "mj", nombre: "María José Velasco", cargo: "Diseñadora industrial", area: "Diseño", sueldo: 1800, estado: "Activo", ingreso: "2020", email: "mariajose@bletia.ec", esAutor: true, bio: "Firma la Serie Bruma y la paleta de tapices." },
+  { id: "ec", nombre: "Edison Cuarán", cargo: "Maestro de taller", area: "Taller", sueldo: 1400, estado: "Activo", ingreso: "2019", email: "edison@bletia.ec", esAutor: true, bio: "32 años de oficio. Especialista en ensambles de espiga y acabados a mano." },
+  { id: "rb", nombre: "Rocío Burbano", cargo: "Contadora", area: "Finanzas", sueldo: 1500, estado: "Activo", ingreso: "2021", email: "rocio@bletia.ec", esAutor: false },
+  { id: "pv", nombre: "Pedro Vaca", cargo: "Tapicero", area: "Taller", sueldo: 980, estado: "Vacaciones", ingreso: "2022", email: "pedro@bletia.ec", esAutor: false },
+];
+export function loadEmpleados(): Empleado[] {
+  try { const s = localStorage.getItem("bletia-rrhh"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
+  return EMPLEADOS_SEED;
+}
+export function saveEmpleados(list: Empleado[]) { localStorage.setItem("bletia-rrhh", JSON.stringify(list)); }
+/* Los autores del blog son empleados marcados como autores */
+export const autoresBlog = () => loadEmpleados().filter((e) => e.esAutor);
+
+/* ---------- Categorías del blog (CRUD en CMS) ---------- */
+export type BlogCategoria = { id: string; nombre: string };
+export const BLOG_CATEGORIAS_SEED: BlogCategoria[] = [
+  { id: "bc1", nombre: "Materia" }, { id: "bc2", nombre: "Taller" },
+  { id: "bc3", nombre: "Servicio" }, { id: "bc4", nombre: "Proyecto" },
+];
+export function loadBlogCategorias(): BlogCategoria[] {
+  try { const s = localStorage.getItem("bletia-blog-cats"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
+  return BLOG_CATEGORIAS_SEED;
+}
+export function saveBlogCategorias(list: BlogCategoria[]) { localStorage.setItem("bletia-blog-cats", JSON.stringify(list)); }
+/* compat: nombres planos de categorías */
+export const BLOG_CATEGORIAS = BLOG_CATEGORIAS_SEED.map((c) => c.nombre);
 
 export const BLOG_ETIQUETAS = ["nogal", "roble", "cuero", "lino", "entrega", "hecho-a-mano", "serie-bruma"];
 
-export const BLOG_AUTORES = [
-  { id: "dp", nombre: "Diego Pillacela", cargo: "Fundador · Taller", bio: "Tercera generación de carpinteros. Dirige el taller y la curaduría de maderas." },
-  { id: "mj", nombre: "María José Velasco", cargo: "Diseño & Curaduría", bio: "Diseñadora industrial. Firma la Serie Bruma y la paleta de tapices." },
-  { id: "ec", nombre: "Edison Cuarán", cargo: "Maestro de taller", bio: "32 años de oficio. Especialista en ensambles de espiga y acabados a mano." },
+/* compat: autores = empleados autores (mismo shape que antes) */
+export const BLOG_AUTORES = autoresBlog().map((e) => ({ id: e.id, nombre: e.nombre, cargo: e.cargo, bio: e.bio || "" }));
+
+/* ---------- Categorías de producto (CRUD en PIM) ---------- */
+export type CategoriaProducto = { id: string; nombre: string; activa: boolean };
+export const CATEGORIAS_PRODUCTO_SEED: CategoriaProducto[] = [
+  "Sofás", "Sillones", "Mesas", "Sillas", "Centros", "Almacenaje", "Descanso",
+].map((n, i) => ({ id: `cp${i + 1}`, nombre: n, activa: true }));
+export function loadCategoriasProducto(): CategoriaProducto[] {
+  try { const s = localStorage.getItem("bletia-prod-cats"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
+  return CATEGORIAS_PRODUCTO_SEED;
+}
+export function saveCategoriasProducto(list: CategoriaProducto[]) { localStorage.setItem("bletia-prod-cats", JSON.stringify(list)); }
+
+/* ---------- Compras · Órdenes al proveedor (OC) + acceso de un solo uso ----------
+   Al enviar la OC al proveedor externo, el sistema genera un link de un solo uso
+   y se lo manda por correo. El proveedor lo abre una vez para confirmar el pedido. */
+export type CompraOC = {
+  id: string; folio: string; // OC = proveedor externo · OP = producción interna
+  tipo: "stock" | "pedido_cliente";
+  proveedor: string; email: string;
+  items: { sku: string; pieza: string; qty: number; costo: number }[];
+  total: number; estado: "Enviada" | "Confirmada" | "Recibida" | "Anulada";
+  link: string; linkUsado: boolean; linkEnviado: string;
+  fecha: string; destino: string; specs?: string;
+};
+export const COMPRAS_SEED: CompraOC[] = [
+  { id: "c1", folio: "OC-0031", tipo: "stock", proveedor: "Maderera del Austro", email: "ventas@maderaustral.ec", items: [{ sku: "MP-NG-18", pieza: "Tablero nogal 18mm", qty: 24, costo: 85 }, { sku: "MP-RO-25", pieza: "Tablero roble 25mm", qty: 12, costo: 96 }], total: 3192, estado: "Confirmada", link: "PRV-8FK2-Q9ZD", linkUsado: true, linkEnviado: "07 feb, 10:12", fecha: "07 feb 2026", destino: "Taller" },
+  { id: "c2", folio: "OC-0032", tipo: "pedido_cliente", proveedor: "Casa Roble Import", email: "pedidos@casaroble.ec", items: [{ sku: "BLT-204", pieza: "Sofá Nudo · tapiz teja", qty: 1, costo: 1350 }], total: 1552.5, estado: "Enviada", link: "PRV-M3TP-W21A", linkUsado: false, linkEnviado: "09 feb, 12:40", fecha: "09 feb 2026", destino: "Bodega Central", specs: "Cliente BL-2026-0148 · tapiz teja, lado izquierdo" },
+  { id: "c3", folio: "OP-0017", tipo: "pedido_cliente", proveedor: "Taller BLETIA (interno)", email: "taller@bletia.ec", items: [{ sku: "BLT-115", pieza: "Silla Vela · cuero natural", qty: 18, costo: 150 }], total: 2700, estado: "Recibida", link: "PRV-ZK77-HD4C", linkUsado: true, linkEnviado: "02 feb, 09:00", fecha: "02 feb 2026", destino: "Taller", specs: "Hotel Casa del Patio · grabado de logo" },
 ];
+export function loadCompras(): CompraOC[] {
+  try { const s = localStorage.getItem("bletia-compras"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
+  return COMPRAS_SEED;
+}
+export function saveCompras(list: CompraOC[]) { localStorage.setItem("bletia-compras", JSON.stringify(list)); }
 
 export const CMS_POSTS_SEED: CMSPost[] = [
   { id: "post-14", num: "N° 14", fecha: "08 feb 2026", titulo: "Por qué el nogal se trabaja en luna menguante", tag: "Materia", estado: "Publicado", etiquetas: ["nogal", "hecho-a-mano"], autor: "dp", cuerpo: "La savia baja, la madera se estabiliza y el corte sufre menos. No es superstición: es humedad interna. Cuando la luna mengua, el árbol concentra sus líquidos en la raíz y la fibra queda más estable. Es el momento exacto para talar, y el que respetamos desde hace tres generaciones." },
@@ -342,7 +408,7 @@ export const CMS_POSTS_SEED: CMSPost[] = [
 export const minutosLectura = (cuerpo: string): number =>
   Math.max(1, Math.round(cuerpo.split(/\s+/).filter(Boolean).length / 180));
 
-export const autorDe = (id?: string) => BLOG_AUTORES.find((a) => a.id === id);
+export const autorDe = (id?: string) => loadEmpleados().find((e) => e.id === id);
 
 export type MenuItem = { label: string; url: string };
 

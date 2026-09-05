@@ -4,17 +4,18 @@ import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
 import { DAM, Proveedores, Taller } from "./Modules2";
-import { Contabilidad, Enlaces, Infra } from "./Modules3";
+import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
 import { OMS15 } from "./Modules5";
 import { CMS, SitioPublico } from "./Modules6";
 import { Marketing, Stock, Variantes } from "./Modules7";
+import { Compras, RRHH } from "./Modules8";
 import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth";
 
 export type Mod =
   | "vision" | "oms" | "logistica" | "taller" | "bom" | "stock"
-  | "relaciones" | "cobros" | "pim" | "variantes" | "dam"
-  | "conta" | "links" | "seguridad" | "infra" | "sitio" | "cms" | "marketing";
+  | "relaciones" | "cobros" | "compras" | "pim" | "variantes" | "dam"
+  | "conta" | "rrhh" | "seguridad" | "infra" | "sitio" | "cms" | "marketing";
 
 /* Estructura de TALLER UNO (rama ac8f5) — 15 módulos en 6 grupos */
 const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] }[] = [
@@ -29,17 +30,18 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
   { group: "Relaciones", items: [
     { id: "relaciones", label: "Clientes & proveedores", icon: "users" },
     { id: "cobros", label: "Cobros PayPhone", icon: "card" },
+    { id: "compras", label: "Compras · OC proveedores", icon: "truck" },
   ]},
   { group: "Producto & activos", items: [
     { id: "pim", label: "Productos · PIM", icon: "tag" },
     { id: "variantes", label: "Variables & variantes", icon: "spark" },
     { id: "dam", label: "Fototeca · DAM", icon: "image" },
   ]},
-  { group: "Finanzas", items: [
+  { group: "Finanzas & equipo", items: [
     { id: "conta", label: "Contabilidad & SRI", icon: "calc" },
+    { id: "rrhh", label: "RRHH · Nómina", icon: "users" },
   ]},
   { group: "Plataforma", items: [
-    { id: "links", label: "Accesos de un solo uso", icon: "link" },
     { id: "seguridad", label: "Seguridad & porting", icon: "shield" },
     { id: "infra", label: "Ajustes & despliegue", icon: "server" },
   ]},
@@ -54,9 +56,10 @@ const TITLES: Record<Mod, string> = {
   vision: "Panel de control", oms: "Pedidos · máquina de 15 estados", logistica: "Logística & guías SRI",
   taller: "Taller & fabricación", bom: "BOM & materiales · MRP", relaciones: "Clientes & proveedores",
   cobros: "Cobros PayPhone", pim: "Productos · PIM", dam: "Fototeca · DAM",
-  conta: "Contabilidad & SRI", links: "Accesos de un solo uso", seguridad: "Seguridad & porting",
+  conta: "Contabilidad & SRI", seguridad: "Seguridad & porting",
   infra: "Ajustes & despliegue", sitio: "Sitio público · bletia.ec", cms: "Contenido web · CMS",
   variantes: "Variables & variantes", stock: "Stock & bodegas", marketing: "Marketing · Digest",
+  compras: "Compras · Órdenes al proveedor", rrhh: "RRHH · Nómina",
 };
 
 /* Cada rol ve solo su área. Gerencia lo ve todo.
@@ -72,7 +75,6 @@ const ACCESS: Record<Mod, Role[]> = {
   pim: ["gerencia", "ventas", "taller"],
   dam: ["gerencia", "ventas", "taller"],
   conta: ["gerencia", "contabilidad"],
-  links: ["gerencia", "contabilidad"],
   seguridad: ["gerencia"],
   infra: ["gerencia"],
   sitio: ["gerencia", "ventas"],
@@ -80,6 +82,8 @@ const ACCESS: Record<Mod, Role[]> = {
   marketing: ["gerencia", "ventas"],
   variantes: ["gerencia", "ventas", "taller"],
   stock: ["gerencia", "taller", "logistica"],
+  compras: ["gerencia", "logistica", "contabilidad"],
+  rrhh: ["gerencia", "contabilidad"],
 };
 
 /* ---- motor de eventos simulado (Redis + BullMQ en producción) ---- */
@@ -332,7 +336,8 @@ export default function Panel() {
           {mod === "dam" && <DAM />}
           {mod === "stock" && <Stock />}
           {mod === "conta" && <Contabilidad />}
-          {mod === "links" && <Enlaces />}
+          {mod === "compras" && <Compras />}
+          {mod === "rrhh" && <RRHH />}
           {mod === "seguridad" && <Seguridad />}
           {mod === "infra" && <Infra />}
           {mod === "sitio" && <SitioPublico />}
