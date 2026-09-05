@@ -1,0 +1,31 @@
+.ej-field-wrap { border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; background: #fff; }
+.ej-holder { min-height: 220px; font-size: 15px; }
+.ej-holder .ce-block__content, .ej-holder .ce-toolbar__content { max-width: 100%; }
+
+/* ---- Bloques renderizados en el frontend público (mismas clases usa el editor) ---- */
+.ej-delimiter { border: none; border-top: 2px solid #e2e8f0; margin: 2rem auto; width: 60px; }
+.ej-checklist { list-style: none; padding-left: 0; }
+.ej-checklist .ej-check { display: flex; align-items: center; gap: .5rem; padding: .2rem 0; }
+.ej-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.ej-table td, .ej-table th { border: 1px solid #e2e8f0; padding: .5rem .75rem; text-align: left; }
+.ej-table th { background: #f8fafc; font-weight: 600; }
+.ej-code { background: #161921; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: .85rem; }
+.ej-warning { background: #fffbeb; border-left: 4px solid #f59e0b; padding: .75rem 1rem; border-radius: 6px; margin: 1rem 0; }
+.ej-image { margin: 1.5rem 0; text-align: center; }
+.ej-image img { max-width: 100%; height: auto; border-radius: 8px; }
+.ej-image--border img { border: 1px solid #e2e8f0; }
+.ej-image--stretched img { width: 100%; }
+.ej-image--bg { background: #f8fafc; padding: 1rem; border-radius: 8px; }
+.ej-image figcaption { font-size: .85rem; color: #6b7280; margin-top: .5rem; }
+.ej-attach { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1rem; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #161921; margin: .5rem 0; }
+.ej-linktool { display: flex; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; margin: 1rem 0; }
+.ej-linktool__img { width: 120px; background-size: cover; background-position: center; flex-shrink: 0; }
+.ej-linktool__body { padding: .75rem 1rem; display: flex; flex-direction: column; gap: .25rem; }
+.ej-linktool__desc { font-size: .85rem; color: #6b7280; }
+.ej-linktool__url { font-size: .75rem; color: #9ca3af; }
+.ej-embed-caption { text-align: center; font-size: .85rem; color: #6b7280; margin-top: -.5rem; }
+
+.embed-wrap { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; margin: 1.5rem 0; }
+.embed-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+.embed-wrap--tiktok { padding-bottom: 177%; max-width: 325px; margin-left: auto; margin-right: auto; }
+.embed-wrap--instagram { padding-bottom: 120%; max-width: 500px; margin-left: auto; margin-right: auto; }

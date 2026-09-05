@@ -1,0 +1,103 @@
+@foreach(($bloques ?? []) as $b)
+    @php($t = $b['type'] ?? null)
+    @php($d = $b['data'] ?? [])
+    @php($full = !empty($d['full']) ? 'is-full' : '')
+    @php($tsz = !empty($d['texto_size']) ? intval($d['texto_size']) : 18)
+    @php($hsz = !empty($d['h_size']) ? intval($d['h_size']) : 25)
+    @php($istyle = (!empty($d['alto']) ? 'height:'.intval($d['alto']).'px;object-fit:cover;' : '') . ((isset($d['radio']) && (int)$d['radio'] > 0) ? 'border-radius:'.intval($d['radio']).'px;' : ''))
+    @if($t === 'titulo')
+        @if(($d['nivel'] ?? 'h2') === 'h3')<h3 style="font-size:{{ $hsz }}px">{{ $d['titulo'] ?? '' }}</h3>@else<h2 style="font-size:{{ $hsz }}px">{{ $d['titulo'] ?? '' }}</h2>@endif
+    @elseif($t === 'texto')
+        <div class="t-block t-block-texto {{ $full }}" style="font-size:{{ $tsz }}px">{!! $d['texto'] ?? '' !!}</div>
+    @elseif($t === 'cita')
+        <blockquote class="t-block-cita t-block {{ $full }}" style="font-size:{{ $tsz }}px">{{ $d['texto'] ?? '' }}</blockquote>
+    @elseif($t === 'imagen')
+        @php($u = !empty($d['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($d['imagen']) : null)
+        @php($fstyle = !empty($d['ancho_px']) ? 'max-width:'.intval($d['ancho_px']).'px;' : '')
+        @if($u)<figure class="t-block t-block-img--{{ $d['ancho'] ?? 'completa' }} t-block-img--{{ $d['align'] ?? 'centro' }} {{ $full ? 'is-full is-bleed' : '' }}" style="{{ $fstyle }}"><img src="{{ $u }}" alt="{{ $d['alt'] ?? '' }}" style="{{ $istyle }}">@if(!empty($d['pie']))<figcaption class="t-iva" style="text-align:center;margin-top:6px">{{ $d['pie'] }}</figcaption>@endif</figure>@endif
+    @elseif($t === 'imagen_texto')
+        @php($u = !empty($d['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($d['imagen']) : null)
+        <div class="t-block t-block-it {{ ($d['posicion'] ?? 'izq') === 'der' ? 'is-der' : '' }} {{ $full ? 'is-full is-bleed' : '' }}">
+            <div>@if($u)<img src="{{ $u }}" alt="{{ $d['alt'] ?? '' }}" style="{{ $istyle }}">@endif</div>
+            <div style="font-size:{{ $tsz }}px">{!! $d['texto'] ?? '' !!}</div>
+        </div>
+    @elseif($t === 'imagen_borde')
+        @php($u = !empty($d['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($d['imagen']) : null)
+        <div class="t-block t-imgborde {{ ($d['posicion'] ?? 'izq') === 'der' ? 'is-der' : '' }}">
+            <div class="t-imgborde-img">@if($u)<img src="{{ $u }}" alt="" style="{{ $istyle }}">@endif</div>
+            <div class="t-imgborde-txt"><div class="t-imgborde-in" style="font-size:{{ $tsz }}px">@if(!empty($d['titulo']))<h2 style="font-size:{{ $hsz }}px">{{ $d['titulo'] }}</h2>@endif{!! $d['texto'] ?? '' !!}</div></div>
+        </div>
+    @elseif($t === 'galeria')
+        @php($items = array_values(array_filter($d['items'] ?? [], fn($i) => !empty($i['imagen']))))
+        @if(count($items) > 0)
+        <div class="t-block t-galeria {{ $full ? 'is-full is-bleed' : '' }}">
+            <div class="t-galeria-head">@if(!empty($d['eyebrow']))<span class="t-eyebrow">{{ $d['eyebrow'] }}</span>@endif@if(!empty($d['titulo']))<div class="t-galeria-tit" style="font-size:{{ $hsz }}px">{!! $d['titulo'] !!}</div>@endif</div>
+            <div class="t-galeria-grid">
+                @foreach($items as $it)
+                    @php($iu = \Illuminate\Support\Facades\Storage::disk('public')->url($it['imagen']))
+                    <div class="t-galeria-img"><img src="{{ $iu }}" alt="{{ $it['alt'] ?? '' }}" style="{{ $istyle }}"></div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    @elseif($t === 'tabla')
+        @php($filasRaw = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', trim((string)($d['contenido'] ?? '')))), fn($x) => $x !== '')))
+        @if(count($filasRaw) > 0)
+        <div class="t-block t-block-tabla {{ $full }}">
+            <div class="t-tabla-scroll">
+            <table>
+                <thead><tr>@foreach(explode('|', $filasRaw[0]) as $c)<th>{{ trim($c) }}</th>@endforeach</tr></thead>
+                <tbody>
+                @foreach(array_slice($filasRaw, 1) as $fila)
+                    <tr>@foreach(explode('|', $fila) as $c)<td>{{ trim($c) }}</td>@endforeach</tr>
+                @endforeach
+                </tbody>
+            </table>
+            </div>
+        </div>
+        @endif
+    @elseif($t === 'columnas')
+        @php($cant = (int)($d['cantidad'] ?? 2))
+        <div class="t-block t-cols t-cols--{{ $cant }} {{ $full }}" style="font-size:{{ $tsz }}px">
+            @foreach(($d['items'] ?? []) as $col)
+                @php($cu = !empty($col['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($col['imagen']) : null)
+                <div class="t-col">
+                    @if($cu)<img src="{{ $cu }}" alt="" style="{{ $istyle }}">@endif
+                    <div>{!! $col['texto'] ?? '' !!}</div>
+                </div>
+            @endforeach
+        </div>
+    @elseif($t === 'texto_imagen')
+        @php($tu = !empty($d['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($d['imagen']) : null)
+        @php($bg = !empty($d['fondo']) ? 'background:'.$d['fondo'].';' : '')
+        <div class="t-block t-ti {{ ($d['posicion'] ?? 'izq') === 'der' ? 'is-der' : '' }} {{ !empty($d['fondo']) ? 'has-bg' : '' }} {{ $full ? 'is-full is-bleed' : '' }}" style="{{ $bg }}">
+            <div class="t-ti-img">@if($tu)<img src="{{ $tu }}" alt="" style="{{ $istyle }}">@endif</div>
+            <div class="t-ti-txt" style="font-size:{{ $tsz }}px">{!! $d['texto'] ?? '' !!}</div>
+        </div>
+    @elseif($t === 'hero')
+        @php($hu = !empty($d['imagen']) ? \Illuminate\Support\Facades\Storage::disk('public')->url($d['imagen']) : null)
+        @php($hbg = $hu ? "background-image:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)),url('".$hu."');background-size:cover;background-position:center;" : (!empty($d['fondo']) ? 'background:'.$d['fondo'].';' : 'background:#161921;'))
+        @php($hstyle = $hbg . (!empty($d['alto']) ? 'min-height:'.intval($d['alto']).'px;' : '') . ((isset($d['radio']) && (int)$d['radio'] > 0) ? 'border-radius:'.intval($d['radio']).'px;overflow:hidden;' : ''))
+        <div class="t-block t-bhero t-bhero--{{ $d['tono'] ?? 'claro' }} ph-{{ $d['pos_h'] ?? 'izq' }} pv-{{ $d['pos_v'] ?? 'abajo' }} {{ $full ? 'is-full is-bleed' : '' }}" style="{{ $hstyle }}">
+            <div class="t-bhero-in">
+                @if(!empty($d['titulo']))<h2 style="font-size:{{ $hsz }}px">{{ $d['titulo'] }}</h2>@endif
+                @if(!empty($d['texto']))<p style="font-size:{{ $tsz }}px">{{ $d['texto'] }}</p>@endif
+                @if(!empty($d['boton_texto']) && !empty($d['boton_url']))<a class="t-bhero-btn" href="{{ $d['boton_url'] }}">{{ $d['boton_texto'] }}</a>@endif
+            </div>
+        </div>
+    @elseif($t === 'botones')
+        @php($bs = array_values($d['items'] ?? []))
+        @php($n = count($bs))
+        @if($n > 0)
+        <div class="t-block t-ctas t-ctas--{{ $n }} {{ $full }}">
+            @foreach($bs as $bt)
+                <div class="t-cta">
+                    @if(!empty($bt['titulo']))<h4>{{ $bt['titulo'] }}</h4>@endif
+                    @if(!empty($bt['texto']))<p>{{ $bt['texto'] }}</p>@endif
+                    @if(!empty($bt['boton_texto']) && !empty($bt['url']))<a class="t-cta-btn" href="{{ $bt['url'] }}">{{ $bt['boton_texto'] }}</a>@endif
+                </div>
+            @endforeach
+        </div>
+        @endif
+    @endif
+@endforeach

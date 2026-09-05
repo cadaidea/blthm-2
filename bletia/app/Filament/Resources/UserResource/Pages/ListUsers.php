@@ -1,0 +1,22 @@
+<?php
+namespace App\Filament\Resources\UserResource\Pages;
+
+use App\Filament\Resources\UserResource;
+use App\Models\User;
+use Filament\Actions;
+use Filament\Resources\Pages\ListRecords;
+
+class ListUsers extends ListRecords
+{
+    protected static string $resource = UserResource::class;
+
+    public function getModel(): string
+    {
+        return User::class;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [Actions\CreateAction::make()->label('Nuevo usuario')];
+    }
+}

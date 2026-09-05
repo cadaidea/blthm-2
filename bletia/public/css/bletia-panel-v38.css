@@ -1,0 +1,95 @@
+/* ===== Bletia · tema panel /dash (sin Vite) ===== */
+:root{
+  --bletia-primary:#161921;
+  --bletia-accent:#0499FC;
+  --bletia-bg:#f6f7f9;
+  --bletia-card:#ffffff;
+  --bletia-soft:#EFEBDD;
+  --bletia-radius:14px;
+}
+
+/* Fondo general más suave y aireado (estilo tarjetas) */
+.fi-main{ background:var(--bletia-bg); }
+.fi-sidebar{ background:#fff; border-right:1px solid #ececec; }
+.fi-topbar > nav{ background:#fff; border-bottom:1px solid #ececec; }
+
+/* Marca en el sidebar */
+.fi-sidebar-header{ padding-top:18px; padding-bottom:8px; }
+.fi-logo{ font-family:"Geomanist","Inter",sans-serif; font-weight:300; letter-spacing:.5px; color:var(--bletia-primary)!important; font-size:1.45rem; }
+
+/* Items de navegación: más redondeados, estilo pastilla */
+.fi-sidebar-item-button{ border-radius:12px!important; margin:2px 8px; }
+.fi-sidebar-item.fi-active .fi-sidebar-item-button,
+.fi-sidebar-item-button[aria-current="page"]{ background:var(--bletia-soft)!important; }
+.fi-sidebar-group-label{ text-transform:uppercase; letter-spacing:.08em; font-size:.66rem; color:#9a9a9a; }
+
+/* Tarjetas / secciones con esquinas suaves y sombra ligera */
+.fi-section, .fi-wi-stats-overview-stat, .fi-ta-ctn, .fi-fo-component-ctn .fi-section{
+  border-radius:var(--bletia-radius)!important;
+  box-shadow:0 1px 3px rgba(16,16,21,.05)!important;
+  border:1px solid #efefef!important;
+}
+
+/* Botones primarios redondeados (pill) con acento de marca */
+.fi-btn{ border-radius:999px!important; }
+.fi-btn.fi-color-primary, .fi-btn-color-primary{
+  background:var(--bletia-primary)!important; color:#fff!important;
+}
+
+/* Badges de estado más legibles */
+.fi-badge{ border-radius:999px!important; font-weight:600; }
+
+/* Topbar search más prominente */
+.fi-global-search-field input{ border-radius:999px!important; }
+
+/* Responsive: en móvil, tarjetas a ancho completo y tipografía cómoda */
+@media (max-width:1024px){
+  .fi-main{ padding:12px!important; }
+  .fi-section{ margin-bottom:12px; }
+}
+@media (max-width:640px){
+  .fi-ta-table{ font-size:.92rem; }
+  .fi-header-heading{ font-size:1.3rem!important; }
+}
+
+/* ===== Bletia · Dashboard de inicio (v3.8.0) ===== */
+.bletia-inicio{ font-family:"Geomanist","Inter",sans-serif; }
+.bletia-h2{ font-size:1rem; font-weight:600; color:#161921; margin:22px 4px 12px; }
+.bletia-alarma{ display:flex; align-items:center; gap:10px; background:#fff4e5; border:1px solid #ffd9a8; color:#8a5a00; padding:13px 16px; border-radius:14px; margin-bottom:16px; text-decoration:none; font-weight:500; }
+.bletia-alarma svg{ width:22px; height:22px; flex-shrink:0; }
+
+.bletia-metricas{ display:grid; grid-template-columns:repeat(auto-fill,minmax(165px,1fr)); gap:12px; }
+.bletia-metrica{ background:#fff; border:1px solid #efefef; border-left:4px solid var(--c,#0499FC); border-radius:14px; padding:16px; box-shadow:0 1px 3px rgba(16,16,21,.05); }
+.bletia-metrica-ic{ color:var(--c,#0499FC); margin-bottom:8px; }
+.bletia-metrica-ic svg{ width:24px; height:24px; }
+.bletia-metrica-val{ font-size:1.55rem; font-weight:700; color:#161921; line-height:1.1; }
+.bletia-metrica-lbl{ color:#8a8a8a; font-size:.82rem; margin-top:3px; }
+
+.bletia-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+.bletia-card-acc{ display:flex; flex-direction:column; gap:12px; padding:18px; background:#fff; border:1px solid #efefef; border-radius:14px; text-decoration:none; transition:.15s; }
+.bletia-card-acc:hover{ box-shadow:0 8px 22px rgba(16,16,21,.10); transform:translateY(-2px); }
+.bletia-ic{ width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.bletia-ic svg{ width:24px; height:24px; }
+.bletia-card-label{ font-weight:600; color:#161921; }
+
+.bletia-list{ display:flex; flex-direction:column; gap:8px; }
+.bletia-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1px solid #efefef; border-radius:14px; text-decoration:none; flex-wrap:wrap; }
+.bletia-row:hover{ box-shadow:0 2px 10px rgba(16,16,21,.06); }
+.bletia-row-main{ display:flex; flex-direction:column; }
+.bletia-folio{ font-weight:700; color:#161921; }
+.bletia-forma{ font-size:.78rem; color:#9a9a9a; }
+.bletia-row-meta{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.bletia-estado{ font-size:.74rem; font-weight:600; padding:4px 11px; border-radius:999px; background:#eef0f3; color:#444; text-transform:capitalize; }
+.bletia-e-entregado,.bletia-e-listo_despacho,.bletia-e-en_bodega{ background:#e3f6ec; color:#1c7a4a; }
+.bletia-e-pendiente,.bletia-e-por_aprobar{ background:#fff4e5; color:#8a5a00; }
+.bletia-e-aprobado,.bletia-e-enviado_proveedor,.bletia-e-en_fabricacion,.bletia-e-listo_proveedor{ background:#e7f0ff; color:#1456b8; }
+.bletia-e-en_produccion{ background:#efeaff; color:#5b3bbf; }
+.bletia-e-anulado,.bletia-e-cancelado{ background:#fde8e8; color:#b42318; }
+.bletia-dias{ font-size:.78rem; color:#6b6b6b; }
+.bletia-dias.late{ color:#b42318; font-weight:600; }
+.bletia-total{ font-weight:700; color:#161921; }
+.bletia-empty{ padding:24px; text-align:center; color:#9a9a9a; background:#fff; border:1px dashed #ddd; border-radius:14px; }
+@media (max-width:640px){
+  .bletia-metricas{ grid-template-columns:repeat(2,1fr); }
+  .bletia-grid{ grid-template-columns:repeat(2,1fr); }
+}

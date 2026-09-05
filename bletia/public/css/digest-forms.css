@@ -1,0 +1,113 @@
+/* Formularios de suscripción — heredan el tema (tienda.css). Responsive. */
+.df-form{
+  --df-brand: var(--brand,#161921);
+  --df-accent: var(--accent,#0499FC);
+  --df-line: var(--line,#ececef);
+  --df-muted: var(--muted,#8a8f98);
+  --df-radius: var(--radius,14px);
+  font-family: var(--font, inherit);
+  color: var(--df-brand);
+  box-sizing:border-box;
+}
+.df-form *,.df-form *::before,.df-form *::after{box-sizing:border-box}
+.df-hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0}
+.df-title{margin:0 0 6px;font-size:1.05rem;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+.df-desc{margin:0 0 14px;color:var(--df-muted);font-size:.9rem;line-height:1.5}
+.df-fields{display:flex;flex-direction:column;gap:10px}
+.df-input{
+  width:100%;padding:12px 14px;border:1px solid var(--df-line);border-radius:10px;
+  font-family:inherit;font-size:.95rem;color:var(--df-brand);background:#fff;outline:none;
+  transition:border-color .2s var(--ease,ease);
+}
+.df-input:focus{border-color:var(--df-brand)}
+.df-input::placeholder{color:var(--df-muted)}
+/* Botón al estilo del tema (pill que invierte en hover) */
+.df-btn{
+  font-family:inherit;width:100%;padding:12px 18px;background:var(--df-brand);color:#fff;border:0;
+  border-radius:999px;font-size:.95rem;font-weight:500;letter-spacing:.02em;cursor:pointer;
+  transition:background .25s var(--ease,ease),transform .1s ease;
+}
+.df-btn:hover{background:#000}
+.df-btn:active{transform:translateY(1px)}
+.df-ok{color:#2e7d32;font-size:.85rem;margin:0 0 10px}
+.df-close,.df-bar-close{position:absolute;background:none;border:0;cursor:pointer;color:var(--df-muted);font-size:22px;line-height:1}
+
+/* ---- INLINE (sidebar, footer, entre párrafos, fin de post, checkout) ---- */
+.df-inline{margin:20px 0;width:100%}
+.df-inline .df-box{
+  background:#f7f7f4;border:1px solid var(--df-line);border-radius:var(--df-radius);padding:20px;
+}
+.df-inline .df-close,.df-inline .df-bar-close{display:none}
+/* En el aside ocupa todo el ancho de la columna */
+.t-aside .df-inline{margin:0}
+.t-aside .df-inline .df-box{background:transparent;border:0;padding:0}
+/* En el footer hereda colores claros del footer */
+.t-footer .df-inline .df-box,footer .df-inline .df-box{background:transparent;border:0;padding:0}
+
+/* ---- POPUP ---- */
+.df-popup{position:fixed;inset:0;z-index:95;background:rgba(22,25,33,.5);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;padding:20px}
+.df-popup.is-open{display:flex}
+.df-popup .df-box{background:#fff;border-radius:var(--df-radius);max-width:420px;width:100%;padding:30px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.df-popup .df-close{top:14px;right:16px}
+.df-popup .df-bar-close{display:none}
+.df-msg .df-box{text-align:center}
+.df-msg-txt{font-size:1rem;line-height:1.5;margin:8px 4px 2px;color:var(--df-brand)}
+
+/* ---- SLIDE-IN ---- */
+.df-slide_in{position:fixed;right:20px;bottom:20px;z-index:94;max-width:340px;width:calc(100% - 40px);display:none}
+.df-slide_in.is-open{display:block;animation:dfslide .35s var(--ease,ease)}
+@keyframes dfslide{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.df-slide_in .df-box{background:#fff;border:1px solid var(--df-line);border-radius:var(--df-radius);padding:22px;position:relative;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.df-slide_in .df-close{top:10px;right:12px}
+.df-slide_in .df-bar-close{display:none}
+
+/* ---- BARRAS ---- */
+.df-bar_top,.df-bar_bottom{position:fixed;left:0;right:0;z-index:93;background:var(--df-brand);color:#fff;display:none;padding:12px 18px}
+.df-bar_top{top:0}.df-bar_bottom{bottom:0}
+.df-bar_top.is-open,.df-bar_bottom.is-open{display:block}
+.df-bar_top .df-box,.df-bar_bottom .df-box{max-width:var(--maxw,1240px);margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:relative}
+.df-bar_top .df-title,.df-bar_bottom .df-title{margin:0;font-size:.95rem;color:#fff}
+.df-bar_top .df-desc,.df-bar_bottom .df-desc{display:none}
+.df-bar_top .df-fields,.df-bar_bottom .df-fields{flex-direction:row;flex:1;min-width:260px;align-items:center;gap:8px}
+.df-bar_top .df-input,.df-bar_bottom .df-input{flex:1;padding:9px 12px}
+.df-bar_top .df-btn,.df-bar_bottom .df-btn{width:auto;padding:9px 18px}
+.df-bar_top .df-close,.df-bar_bottom .df-close{display:none}
+.df-bar_top .df-bar-close,.df-bar_bottom .df-bar-close{position:static;color:#fff;margin-left:auto}
+
+/* ---- RESPONSIVE ---- */
+@media(max-width:880px){
+  .df-slide_in{right:12px;bottom:12px;max-width:none;width:calc(100% - 24px)}
+  .df-popup .df-box{padding:24px}
+  .df-bar_top .df-box,.df-bar_bottom .df-box{flex-direction:column;align-items:stretch;gap:8px}
+  .df-bar_top .df-fields,.df-bar_bottom .df-fields{flex-direction:column}
+  .df-bar_top .df-btn,.df-bar_bottom .df-btn{width:100%}
+  .df-bar_top .df-bar-close,.df-bar_bottom .df-bar-close{position:absolute;top:8px;right:12px;margin:0}
+}
+/* DF-TAB */
+.df-tab{position:fixed;right:22px;bottom:22px;z-index:94}
+.df-tab-bubble{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:8px;font-size:11px;line-height:1.15;box-shadow:0 10px 28px rgba(0,0,0,.22);position:relative;transition:transform .2s ease}
+.df-tab-bubble:hover{transform:scale(1.06)}
+.df-tab-bubble-txt{font-weight:600;letter-spacing:.01em}
+.df-tab-bubble-x{position:absolute;top:-5px;right:-5px;width:22px;height:22px;border-radius:50%;background:#fff;color:#161921;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;box-shadow:0 3px 10px rgba(0,0,0,.2);cursor:pointer}
+.df-tab-panel{display:none;position:fixed;right:22px;bottom:22px;width:min(720px,calc(100vw - 44px));background:#fff;border-radius:var(--df-radius,16px);box-shadow:0 30px 90px rgba(0,0,0,.28);overflow:hidden}
+.df-tab.is-open .df-tab-panel{display:block;animation:dfslide .3s ease}
+.df-tab.is-open .df-tab-bubble{display:none}
+.df-tab-grid{display:grid;grid-template-columns:1fr 1fr;align-items:stretch}
+.df-tab-grid.no-media{grid-template-columns:1fr}
+.df-tab-body{padding:30px}
+.df-tab-media{background-size:cover;background-position:center;min-height:320px}
+.df-tab-panel-x{position:absolute;top:12px;right:14px;width:30px;height:30px;border:0;background:transparent;color:var(--df-brand,#161921);font-size:22px;line-height:1;cursor:pointer;z-index:2}
+/* chips de listas: la pastilla es el botón; checkbox oculto */
+.df-listas{margin:6px 0}
+.df-listas-lbl{font-size:12px;color:#888;display:block;margin-bottom:6px}
+.df-chips{display:flex;flex-wrap:wrap;gap:8px}
+.df-chip{display:inline-flex;align-items:center;border:1px solid var(--df-line,#e3e3e3);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;user-select:none;transition:.15s ease}
+.df-chip input{position:absolute;opacity:0;width:0;height:0}
+.df-chip:hover{border-color:var(--df-brand,#161921)}
+.df-chip:has(input:checked){border-color:var(--df-brand,#161921);background:var(--df-brand,#161921);color:#fff}
+@media(max-width:600px){
+  .df-tab-grid,.df-tab-grid.no-media{grid-template-columns:1fr}
+  .df-tab-media{display:none}
+  .df-tab-panel{right:12px;left:12px;bottom:12px;width:auto}
+  .df-tab{right:14px;bottom:14px}
+}
