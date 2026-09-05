@@ -39,9 +39,16 @@ export function BletiaMark({ light = false, size = 22 }: { light?: boolean; size
 const KEY = "bletia-session";
 export type Session = { role: Role; name: string };
 
+/* El dueño siempre aterriza en Gerencia (los 13 módulos) si no hay una sesión
+   de trabajador guardada. Los colaboradores cierran sesión y eligen su rol. */
+const OWNER_SESSION: Session = { role: "gerencia", name: "Gerencia BLETIA" };
+
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(() => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; }
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+      return saved ?? OWNER_SESSION;
+    } catch { return OWNER_SESSION; }
   });
   const login = (s: Session) => { localStorage.setItem(KEY, JSON.stringify(s)); setSession(s); };
   const logout = () => { localStorage.removeItem(KEY); setSession(null); };
