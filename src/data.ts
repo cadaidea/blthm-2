@@ -345,6 +345,19 @@ export function saveEmpleados(list: Empleado[]) { localStorage.setItem("bletia-r
 /* Los autores del blog son empleados marcados como autores */
 export const autoresBlog = () => loadEmpleados().filter((e) => e.esAutor);
 
+/* ---------- Pantalla de acceso de colaboradores (editable desde RRHH) ---------- */
+export type LoginConfig = { titulo: string; subtitulo: string; bienvenida: string };
+export const LOGIN_DEFAULTS: LoginConfig = {
+  titulo: "Cada rol ve su área. Gerencia lo ve todo.",
+  subtitulo: "Pedidos, taller, cobros, contabilidad y tienda en un solo lugar. Entra con tu rol y verás solo lo que te corresponde.",
+  bienvenida: "Buen día. Entra a tu área.",
+};
+export function loadLogin(): LoginConfig {
+  try { const s = localStorage.getItem("bletia-login"); if (s) return { ...LOGIN_DEFAULTS, ...JSON.parse(s) }; } catch { /* defaults */ }
+  return LOGIN_DEFAULTS;
+}
+export function saveLogin(cfg: LoginConfig) { localStorage.setItem("bletia-login", JSON.stringify(cfg)); }
+
 /* ---------- Categorías del blog (CRUD en CMS) ---------- */
 export type BlogCategoria = { id: string; nombre: string };
 export const BLOG_CATEGORIAS_SEED: BlogCategoria[] = [

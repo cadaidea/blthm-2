@@ -191,7 +191,6 @@ export default function Storefront() {
                 <button onClick={saveCuenta} className="w-full mt-3.5 bg-ink text-paper text-[12.5px] font-semibold py-3 hover:bg-maroon transition-colors">
                   Entrar
                 </button>
-                <p className="text-[10.5px] text-stone mt-3 text-center">¿Eres del equipo? <a href="#/dash" className="underline underline-offset-2 hover:text-ink">bletia.ec/dash</a></p>
               </div>
             )}
           </div>
@@ -404,7 +403,7 @@ export default function Storefront() {
               <Reveal delay={150}>
                 <p className="text-cream/70 text-[15px] leading-relaxed max-w-[52ch] mt-6">
                   Una parte de la colección nace aquí: madera certificada, ensambles de espiga y acabados a mano.
-                  Cada pieza de taller sale numerada, firmada y con su orden de fabricación trazable desde el panel interno.
+                  Cada pieza de taller sale numerada, firmada y con su historia de fabricación trazable de punta a punta.
                 </p>
               </Reveal>
               <div className="mt-10 grid sm:grid-cols-2 gap-x-10 gap-y-7">
@@ -571,7 +570,7 @@ export default function Storefront() {
             <div className="md:col-span-5">
               <p className="font-display font-semibold tracking-[0.32em] text-xl">BLETIA<span className="text-maroon">.</span></p>
               <p className="text-cream/60 text-[13.5px] leading-relaxed mt-5 max-w-[38ch]">
-                Mueblería de lujo minimalista. Fabricamos en Quito, entregamos en todo el Ecuador y cobramos como debe ser: seguro.
+                Muebles de autor hechos a mano en Cuenca. Madera noble, líneas serenas y piezas que se heredan.
               </p>
               <div className="flex items-center gap-3 mt-7">
                 <span className="w-8 h-8 border border-cream/25 flex items-center justify-center hover:bg-maroon hover:border-maroon transition-colors cursor-pointer"><I n="spark" s={14} /></span>
@@ -604,7 +603,13 @@ export default function Storefront() {
               </p>
             </div>
           </div>
-          <div className="border-t border-cream/15 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
+          {/* slogan de cierre (abajo, como pide la marca) */}
+          <div className="border-t border-cream/15 mt-14 pt-10">
+            <p className="font-display font-medium text-[clamp(1.7rem,3.6vw,2.8rem)] leading-tight text-cream max-w-[22ch]">
+              Cada pieza define tu espacio<span className="text-maroon">.</span>
+            </p>
+          </div>
+          <div className="border-t border-cream/15 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
             <span>© 2026 BLETIA. Hecho en Ecuador, a mano y a tiempo.</span>
             <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon" /> bletia.ec</span>
           </div>

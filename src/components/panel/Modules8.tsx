@@ -1,12 +1,60 @@
 import { useMemo, useState } from "react";
 import {
-  BODEGAS, COMPRAS_SEED, SUPPLIERS, fmt, fmt2, loadCompras, loadEmpleados,
-  randomCode, saveCompras, saveEmpleados,
-  type CompraOC, type Empleado,
+  BODEGAS, COMPRAS_SEED, LOGIN_DEFAULTS, SUPPLIERS, fmt, fmt2, loadCompras, loadEmpleados,
+  loadLogin, randomCode, saveCompras, saveEmpleados, saveLogin,
+  type CompraOC, type Empleado, type LoginConfig,
 } from "../../data";
 import { CopyBtn, I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
+
+/* ---------- Editor de la pantalla de acceso de colaboradores ---------- */
+function LoginEditor() {
+  const [draft, setDraft] = useState<LoginConfig>(() => loadLogin());
+  const [saved, setSaved] = useState(false);
+  const guardar = () => {
+    saveLogin(draft);
+    setSaved(true);
+    toast("Pantalla de acceso actualizada", "ok");
+    setTimeout(() => setSaved(false), 1600);
+  };
+  const restablecer = () => { setDraft(LOGIN_DEFAULTS); saveLogin(LOGIN_DEFAULTS); toast("Se restauró el mensaje por defecto", "info"); };
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+        <div>
+          <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+            <I n="shield" s={16} className="text-stone" /> Pantalla de acceso de colaboradores
+          </h3>
+          <p className="text-[12px] text-stone mt-0.5">
+            Lo que ven tus trabajadores en <code className="font-mono">bletia.ec/dash</code> antes de entrar. Se publica al instante.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={restablecer} className={btnGhost}>Restaurar</button>
+          <button onClick={guardar} className={btnDark}>
+            <I n={saved ? "check" : "doc"} s={14} /> {saved ? "Guardado" : "Publicar"}
+          </button>
+        </div>
+      </div>
+      <div className="grid md:grid-cols-3 gap-4 mt-4">
+        <label className="block">
+          <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Título grande</span>
+          <input value={draft.titulo} onChange={(e) => setDraft({ ...draft, titulo: e.target.value })} className={inp} />
+        </label>
+        <label className="block">
+          <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Texto de apoyo</span>
+          <input value={draft.subtitulo} onChange={(e) => setDraft({ ...draft, subtitulo: e.target.value })} className={inp} />
+        </label>
+        <label className="block">
+          <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Saludo del formulario</span>
+          <input value={draft.bienvenida} onChange={(e) => setDraft({ ...draft, bienvenida: e.target.value })} className={inp} />
+        </label>
+      </div>
+    </Card>
+  );
+}
 
 /* ================= RRHH · Nómina (fuente de autores del blog) ================= */
 export function RRHH() {

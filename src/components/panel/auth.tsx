@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { loadLogin } from "../../data";
 import { I } from "../ui";
 
 /* ---------- Modelo de roles ---------- */
@@ -68,6 +69,7 @@ export function useAuth() {
 
 /* ---------- Pantalla de login (bletia.ec/dash/login) ---------- */
 export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void; onBack?: () => void }) {
+  const cfg = loadLogin();
   const [role, setRole] = useState<Role>("gerencia");
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
@@ -84,11 +86,10 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
         <BletiaMark light size={26} />
         <div>
           <h1 className="font-display font-medium text-[clamp(2rem,3.4vw,3rem)] leading-[1.05]">
-            Cada rol ve su área.<br />Gerencia lo ve todo.
+            {cfg.titulo}
           </h1>
           <p className="text-cream/60 text-[14px] leading-relaxed max-w-[44ch] mt-5">
-            ERP · CRM · PIM · OMS · MES · DAM · Contabilidad. Cobros PayPhone por links de un solo uso
-            y facturación electrónica SRI con IVA 15%.
+            {cfg.subtitulo}
           </p>
         </div>
         <div className="flex items-center gap-6 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream/40">
@@ -108,7 +109,7 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
               <I n="back" s={13} /> Volver al panel de Gerencia
             </button>
           )}
-          <h2 className="font-display font-medium text-[28px]">Buen día. Entra a tu área.</h2>
+          <h2 className="font-display font-medium text-[28px]">{cfg.bienvenida}</h2>
           <p className="text-[13px] text-stone mt-2">
             Selecciona tu rol: verás solo los módulos que te corresponden.
           </p>
