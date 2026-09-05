@@ -36,27 +36,38 @@ export function BletiaMark({ light = false, size = 22 }: { light?: boolean; size
 }
 
 /* ---------- Sesión (localStorage) ---------- */
-const KEY = "bletia-session";
+/* v2: invalida sesiones viejas (p. ej. un rol de trabajador guardado de una
+   versión previa) para que el dueño siempre aterrice en Gerencia. */
+const KEY = "bletia-session-v2";
 export type Session = { role: Role; name: string };
 
 /* El dueño siempre aterriza en Gerencia (los 13 módulos) si no hay una sesión
-   de trabajador guardada. Los colaboradores cierran sesión y eligen su rol. */
+   de trabajador válida guardada. Los colaboradores cierran sesión y eligen su rol. */
 const OWNER_SESSION: Session = { role: "gerencia", name: "Gerencia BLETIA" };
+const VALID_ROLES: Role[] = ["gerencia", "ventas", "taller", "logistica", "contabilidad"];
+
+function isSession(s: unknown): s is Session {
+  if (!s || typeof s !== "object") return false;
+  const o = s as Record<string, unknown>;
+  return typeof o.name === "string" && o.name.length > 0 &&
+    VALID_ROLES.includes(o.role as Role);
+}
 
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(() => {
+  const [session, setSession] = useState<Session>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-      return saved ?? OWNER_SESSION;
+      return isSession(saved) ? saved : OWNER_SESSION;
     } catch { return OWNER_SESSION; }
   });
   const login = (s: Session) => { localStorage.setItem(KEY, JSON.stringify(s)); setSession(s); };
-  const logout = () => { localStorage.removeItem(KEY); setSession(null); };
+  /* salir del modo trabajador: vuelve a la sesión de dueño (Gerencia, todo visible) */
+  const logout = () => { localStorage.removeItem(KEY); setSession(OWNER_SESSION); };
   return { session, login, logout };
 }
 
 /* ---------- Pantalla de login (bletia.ec/dash/login) ---------- */
-export function LoginScreen({ onLogin }: { onLogin: (s: Session) => void }) {
+export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void; onBack?: () => void }) {
   const [role, setRole] = useState<Role>("gerencia");
   const [name, setName] = useState("");
   const [err, setErr] = useState("");
@@ -92,6 +103,12 @@ export function LoginScreen({ onLogin }: { onLogin: (s: Session) => void }) {
       <div className="flex items-center justify-center p-6 sm:p-12">
         <div className="w-full max-w-[420px] fade-in">
           <div className="lg:hidden mb-10"><BletiaMark size={24} /></div>
+          {onBack && (
+            <button onClick={onBack}
+              className="mb-5 inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone hover:text-ink transition-colors">
+              <I n="back" s={13} /> Volver al panel de Gerencia
+            </button>
+          )}
           <p className="eyebrow">Acceso de colaboradores</p>
           <h2 className="font-display font-medium text-[28px] mt-3">Buen día. Entra a tu área.</h2>
           <p className="text-[13px] text-stone mt-2">

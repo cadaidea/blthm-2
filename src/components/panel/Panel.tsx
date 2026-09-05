@@ -161,6 +161,8 @@ export default function Panel() {
   const [mod, setMod] = useState<Mod>("vision");
   const [env, setEnv] = useState<"staging" | "producción">("staging");
   const [nav, setNav] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const [workerLogin, setWorkerLogin] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("bletia-theme") === "dark");
   const engine = useEventEngine();
 
@@ -171,10 +173,12 @@ export default function Panel() {
 
   /* al entrar, asegura que el rol esté viendo un módulo permitido */
   useEffect(() => {
-    if (session && !ACCESS[mod].includes(session.role)) setMod("vision");
+    if (!ACCESS[mod].includes(session.role)) setMod("vision");
   }, [session, mod]);
 
-  if (!session) return <LoginScreen onLogin={login} />;
+  /* entrada de colaboradores (los trabajadores eligen su rol aquí) */
+  if (workerLogin)
+    return <LoginScreen onLogin={(s) => { login(s); setWorkerLogin(false); setMod("vision"); }} onBack={() => setWorkerLogin(false)} />;
 
   const role = session.role;
   const visibleNav = NAV.map((g) => ({ ...g, items: g.items.filter((it) => ACCESS[it.id].includes(role)) }))
@@ -242,10 +246,35 @@ export default function Panel() {
               className={`hidden sm:block text-[11px] font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${env === "staging" ? "border-warn/40 text-warn bg-warnbg hover:border-warn" : "border-ok/40 text-ok bg-okbg hover:border-ok"}`}>
               {env}
             </button>
-            <button onClick={logout} title="Cerrar sesión"
-              className="w-8 h-8 bg-ink text-paper text-[11px] font-bold flex items-center justify-center hover:bg-maroon transition-colors">
-              {session.name.split(" ").slice(0, 2).map((w) => w[0]).join("")}
-            </button>
+            <div className="relative">
+              <button onClick={() => setUserMenu(!userMenu)} title="Sesión y roles"
+                className={`w-8 h-8 text-[11px] font-bold flex items-center justify-center transition-colors ${role === "gerencia" ? "bg-ink text-paper hover:bg-maroon" : "bg-maroon text-cream hover:bg-maroon2"}`}>
+                {session.name.split(" ").slice(0, 2).map((w) => w[0]).join("")}
+              </button>
+              {userMenu && (
+                <>
+                  <div className="fixed inset-0 z-[64]" onClick={() => setUserMenu(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-60 bg-card border border-line shadow-[0_18px_50px_rgba(20,16,10,0.25)] z-[65] fade-in">
+                    <div className="px-3.5 py-3 border-b border-line">
+                      <p className="text-[12.5px] font-bold leading-tight">{session.name}</p>
+                      <p className="text-[10.5px] text-stone mt-0.5">
+                        {ROLE_LABEL[role]} {role === "gerencia" ? "· acceso a los 13 módulos" : "· viendo solo tu área"}
+                      </p>
+                    </div>
+                    <button onClick={() => { setWorkerLogin(true); setUserMenu(false); }}
+                      className="w-full text-left px-3.5 py-2.5 text-[12.5px] font-medium hover:bg-paper2 transition-colors flex items-center gap-2.5">
+                      <I n="users" s={14} className="text-stone" /> Entrar como colaborador
+                    </button>
+                    {role !== "gerencia" && (
+                      <button onClick={() => { logout(); setUserMenu(false); }}
+                        className="w-full text-left px-3.5 py-2.5 text-[12.5px] font-medium hover:bg-paper2 transition-colors flex items-center gap-2.5">
+                        <I n="shield" s={14} className="text-maroon" /> Volver a Gerencia (todo)
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
