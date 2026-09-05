@@ -37,6 +37,12 @@ export const slugDe = (s: string) =>
    El "#" solo vive en la URL como prefijo de ruta del prototipo; nunca se muestra. */
 export const tagTexto = (s: string) => s.replace(/-/g, " ");
 
+/* URLs canónicas (misma lógica que bletia.ec):
+   artículo → /{categoría}/{slug-del-artículo} · tag → /blog/tag/{slug} */
+export const articuloUrl = (p: { tag: string; titulo: string }) =>
+  `#/${slugDe(p.tag)}/${slugDe(p.titulo)}`;
+export const tagUrl = (t: string) => `#/blog/tag/${slugDe(t)}`;
+
 /* ---------- Catálogo (PIM) ---------- */
 export type Product = {
   id: string;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, slugDe, tagTexto, variantesDe, type Product } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -508,7 +508,7 @@ export default function Storefront() {
               const au = autorDe(d.autor);
               return (
                 <Reveal key={d.id} delay={i * 70}>
-                  <a href={`#/articulo/${slugDe(d.titulo)}`} className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
+                  <a href={articuloUrl(d)} className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
                     <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                       <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
                       <span className="text-[12px] text-stone tnum">{d.fecha}</span>
@@ -522,7 +522,7 @@ export default function Storefront() {
                         {d.etiquetas && d.etiquetas.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {d.etiquetas.map((e) => (
-                              <a key={e} href={`#/blog/etiqueta/${slugDe(e)}`} onClick={(ev) => ev.stopPropagation()}
+                              <a key={e} href={tagUrl(e)} onClick={(ev) => ev.stopPropagation()}
                                 className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(e)}</a>
                             ))}
                           </div>

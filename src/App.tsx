@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import Storefront from "./components/Storefront";
 import Panel from "./components/panel/Panel";
 import { ArticuloPage, BlogPage, CategoriaPage, PaginaPage, ProductoPage } from "./components/StorePages";
+import { BLOG_CATEGORIAS, slugDe } from "./data";
+
+/* categorías del blog en formato slug — para la ruta /{categoria}/{articulo} */
+const CAT_SLUGS = BLOG_CATEGORIAS.map(slugDe);
 
 /* Enrutador por hash (bletia.ec):
    #/dash · #/panel            → panel interno (puerta de login)
@@ -46,10 +50,12 @@ export default function App() {
   if (head === "pagina" && a) return <PaginaPage key={hash} slug={a} />;
   if (head === "blog") {
     if (a === "categoria" && b) return <BlogPage key={hash} kind="categoria" value={b} />;
-    if (a === "etiqueta" && b) return <BlogPage key={hash} kind="etiqueta" value={b} />;
+    if (a === "tag" && b) return <BlogPage key={hash} kind="etiqueta" value={b} />;
     if (a === "autor" && b) return <BlogPage key={hash} kind="autor" value={b} />;
     return <BlogPage key={hash} />;
   }
+  /* artículo: /{categoría}/{slug-del-artículo} — igual que en bletia.ec */
+  if (CAT_SLUGS.includes(head) && a) return <ArticuloPage key={hash} slug={a} />;
 
   return <Storefront />;
 }

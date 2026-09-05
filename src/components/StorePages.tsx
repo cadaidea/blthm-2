@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ATRIBUTOS, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadPaginas, minutosLectura,
-  nombreOpcion, slugDe, tagTexto, variantesDe, type Product,
+  ATRIBUTOS, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadPaginas, minutosLectura,
+  nombreOpcion, slugDe, tagTexto, tagUrl, variantesDe, type Product,
 } from "../data";
 import { I } from "./ui";
 
@@ -311,8 +311,7 @@ export function BlogPage({ kind, value }: { kind?: "categoria" | "etiqueta" | "a
           {filtrados.map((p) => {
             const a = autorDe(p.autor);
             return (
-              <a key={p.id} href={`#/articulo/${slugDe(p.titulo)}`} className="group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 py-6 hover:px-4 transition-all">
-                <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase shrink-0 w-14">{p.num}</span>
+                <a key={p.id} href={articuloUrl(p)} className="group flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 py-6 hover:px-4 transition-all">                <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase shrink-0 w-14">{p.num}</span>
                 <span className="flex-1">
                   <span className="font-display font-medium text-[18px] leading-snug group-hover:text-maroon transition-colors block">{p.titulo}</span>
                   <span className="text-[12px] text-stone mt-1 block">{a ? `${a.nombre} · ${a.cargo}` : "BLETIA"} · {minutosLectura(p.cuerpo)} min de lectura</span>
@@ -329,7 +328,7 @@ export function BlogPage({ kind, value }: { kind?: "categoria" | "etiqueta" | "a
             <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-stone mb-3">Etiquetas</p>
             <div className="flex flex-wrap gap-2">
               {tags.map((t) => (
-                <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
+                <a key={t} href={tagUrl(t)} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
               ))}
             </div>
           </div>
@@ -349,7 +348,7 @@ export function ArticuloPage({ slug }: { slug: string }) {
   const [copied, setCopied] = useState(false);
 
   const copiar = () => {
-    const url = `${window.location.origin}${window.location.pathname}#/articulo/${slug}`;
+    const url = `${window.location.origin}${window.location.pathname}${articuloUrl(p)}`;
     try { void navigator.clipboard.writeText(url); } catch { /* noop */ }
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
@@ -383,7 +382,7 @@ export function ArticuloPage({ slug }: { slug: string }) {
         {(p.etiquetas || []).length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10">
             {(p.etiquetas || []).map((t) => (
-              <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
+              <a key={t} href={tagUrl(t)} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
             ))}
           </div>
         )}
