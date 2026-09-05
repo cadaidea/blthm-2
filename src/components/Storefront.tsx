@@ -566,8 +566,9 @@ export default function Storefront() {
             )}
           </div>
 
+          {/* footer = texto + columnas de menús (editables desde el CMS) */}
           <div className="grid md:grid-cols-12 gap-10">
-            <div className="md:col-span-5">
+            <div className="md:col-span-6">
               <p className="font-display font-semibold tracking-[0.32em] text-xl">BLETIA<span className="text-maroon">.</span></p>
               <p className="text-cream/60 text-[13.5px] leading-relaxed mt-5 max-w-[38ch]">
                 Muebles de autor hechos a mano en Cuenca. Madera noble, líneas serenas y piezas que se heredan.
@@ -578,29 +579,17 @@ export default function Storefront() {
                 <span className="w-8 h-8 border border-cream/25 flex items-center justify-center hover:bg-maroon hover:border-maroon transition-colors cursor-pointer"><I n="link" s={14} /></span>
               </div>
             </div>
-            <div className="md:col-span-2">
+            <div className="md:col-span-3">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Tienda</p>
               {site.menus.tienda.map((m) => (
                 <a key={m.label} href={m.url} className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">{m.label}</a>
               ))}
             </div>
-            <div className="md:col-span-2">
+            <div className="md:col-span-3">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Empresa</p>
               {site.menus.empresa.map((m) => (
                 <a key={m.label} href={m.url} className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">{m.label}</a>
               ))}
-            </div>
-            <div className="md:col-span-3" id="legal">
-              <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Legal · Ecuador</p>
-              <p className="text-[12.5px] text-cream/60 leading-relaxed">
-                {site.legal.razonSocial} · RUC {site.legal.ruc}<br />
-                {site.legal.direccion}<br />
-                {site.legal.sri}<br />
-                {site.legal.moneda}
-              </p>
-              <p className="text-[11px] text-cream/40 mt-4 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-maroon" /> {site.legal.pagos}
-              </p>
             </div>
           </div>
           {/* slogan de cierre (abajo, como pide la marca) */}

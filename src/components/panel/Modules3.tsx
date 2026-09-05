@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, randomCode, type PayLink } from "../../data";
+import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, loadSite, randomCode, saveSite, type PayLink } from "../../data";
 import { CodeBlock, CopyBtn, I, toast } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
@@ -8,6 +8,16 @@ import { StatusChip } from "./Panel";
 export function Contabilidad() {
   const max = Math.max(...CASHFLOW.map((c) => c.in));
   const [tab, setTab] = useState<"facturas" | "partida" | "f104">("facturas");
+
+  /* ---- Datos del emisor (campo de facturación) ---- */
+  const [legal, setLegal] = useState(() => loadSite().legal);
+  const [legalSaved, setLegalSaved] = useState(false);
+  const guardarLegal = () => {
+    saveSite({ ...loadSite(), legal });
+    setLegalSaved(true);
+    toast("Datos del emisor guardados para la facturación", "ok");
+    setTimeout(() => setLegalSaved(false), 1600);
+  };
 
   /* ---- Libro diario (partida doble) derivado de la facturación ---- */
   const asientos = useMemo(() => {
@@ -63,6 +73,44 @@ export function Contabilidad() {
         <Stat label="Retenciones emitidas" value="$1.214" sub="A proveedores de transporte" />
         <Stat label="Margen bruto" value="41,3%" sub="Mezcla taller + curaduría" />
       </div>
+
+      {/* Campo de facturación: datos del emisor (se usan al autorizar cada factura SRI) */}
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+              <I n="calc" s={16} className="text-maroon" /> Datos del emisor · facturación electrónica
+            </h3>
+            <p className="text-[12px] text-stone mt-0.5">
+              Este emisor firma cada factura, nota de crédito y guía de remisión que autoriza el SRI a nombre de BLETIA.
+            </p>
+          </div>
+          <button onClick={guardarLegal} className={`${btnDark} ${legalSaved ? "!bg-ok" : ""}`}>
+            <I n={legalSaved ? "check" : "doc"} s={14} /> {legalSaved ? "Guardado" : "Guardar emisor"}
+          </button>
+        </div>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+          {([
+            ["razonSocial", "Razón social"],
+            ["ruc", "RUC"],
+            ["direccion", "Domicilio fiscal"],
+            ["sri", "Régimen / SRI"],
+            ["moneda", "Moneda e IVA"],
+            ["pagos", "Pasarela de cobro"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="block">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">{label}</span>
+              <input value={legal[key]} onChange={(e) => setLegal({ ...legal, [key]: e.target.value })} className={inp} />
+            </label>
+          ))}
+        </div>
+        <div className="mt-4 border border-line bg-paper2/50 px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-ink2">
+          <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone">Vista previa de emisor</span>
+          <span><strong>{legal.razonSocial}</strong> · RUC {legal.ruc}</span>
+          <span>{legal.direccion}</span>
+          <span className="text-stone">{legal.moneda}</span>
+        </div>
+      </Card>
 
       {/* Flujo de caja */}
       <Card className="p-5 sm:p-6">
