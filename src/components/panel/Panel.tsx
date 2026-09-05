@@ -7,42 +7,51 @@ import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Enlaces, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
 import { OMS15 } from "./Modules5";
+import { CMS, SitioPublico } from "./Modules6";
 import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth";
 
 export type Mod =
   | "vision" | "oms" | "logistica" | "taller" | "bom"
-  | "crm" | "prov" | "cobros" | "pim" | "dam"
-  | "conta" | "links" | "seguridad" | "infra";
+  | "relaciones" | "cobros" | "pim" | "dam"
+  | "conta" | "links" | "seguridad" | "infra" | "sitio" | "cms";
 
+/* Estructura de TALLER UNO (rama ac8f5) — 15 módulos en 6 grupos */
 const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] }[] = [
   { group: "Operación", items: [
     { id: "vision", label: "Panel de control", icon: "grid" },
     { id: "oms", label: "Pedidos · OMS", icon: "box" },
-    { id: "logistica", label: "Logística · Guías SRI", icon: "truck" },
-    { id: "taller", label: "Taller · MES", icon: "hammer" },
+    { id: "logistica", label: "Logística & guías SRI", icon: "truck" },
+    { id: "taller", label: "Taller & fabricación", icon: "hammer" },
     { id: "bom", label: "BOM & materiales", icon: "tag" },
   ]},
-  { group: "Cliente & catálogo", items: [
-    { id: "crm", label: "Clientes · CRM", icon: "users" },
-    { id: "prov", label: "Proveedores · SRM", icon: "truck" },
-    { id: "cobros", label: "Cobros · PayPhone", icon: "card" },
+  { group: "Relaciones", items: [
+    { id: "relaciones", label: "Clientes & proveedores", icon: "users" },
+    { id: "cobros", label: "Cobros PayPhone", icon: "card" },
+  ]},
+  { group: "Producto & activos", items: [
     { id: "pim", label: "Productos · PIM", icon: "tag" },
     { id: "dam", label: "Fototeca · DAM", icon: "image" },
   ]},
-  { group: "Finanzas & sistema", items: [
-    { id: "conta", label: "Contabilidad · SRI", icon: "calc" },
-    { id: "links", label: "Accesos de un uso", icon: "link" },
-    { id: "seguridad", label: "Seguridad · LOPDP", icon: "shield" },
+  { group: "Finanzas", items: [
+    { id: "conta", label: "Contabilidad & SRI", icon: "calc" },
+  ]},
+  { group: "Plataforma", items: [
+    { id: "links", label: "Accesos de un solo uso", icon: "link" },
+    { id: "seguridad", label: "Seguridad & porting", icon: "shield" },
     { id: "infra", label: "Ajustes & despliegue", icon: "server" },
+  ]},
+  { group: "Canal digital", items: [
+    { id: "sitio", label: "Sitio público", icon: "eye" },
+    { id: "cms", label: "Contenido web · CMS", icon: "doc" },
   ]},
 ];
 
 const TITLES: Record<Mod, string> = {
   vision: "Panel de control", oms: "Pedidos · máquina de 15 estados", logistica: "Logística & guías SRI",
-  taller: "Taller · MES", bom: "BOM & materiales · MRP", crm: "Clientes · CRM",
-  prov: "Proveedores · SRM", cobros: "Cobros · PayPhone", pim: "Productos · PIM",
-  dam: "Fototeca · DAM", conta: "Contabilidad · SRI", links: "Accesos de un solo uso",
-  seguridad: "Seguridad · LOPDP", infra: "Ajustes & despliegue",
+  taller: "Taller & fabricación", bom: "BOM & materiales · MRP", relaciones: "Clientes & proveedores",
+  cobros: "Cobros PayPhone", pim: "Productos · PIM", dam: "Fototeca · DAM",
+  conta: "Contabilidad & SRI", links: "Accesos de un solo uso", seguridad: "Seguridad & porting",
+  infra: "Ajustes & despliegue", sitio: "Sitio público · bletia.ec", cms: "Contenido web · CMS",
 };
 
 /* Cada rol ve solo su área. Gerencia lo ve todo.
@@ -53,8 +62,7 @@ const ACCESS: Record<Mod, Role[]> = {
   logistica: ["gerencia", "logistica"],
   taller: ["gerencia", "taller"],
   bom: ["gerencia", "taller"],
-  crm: ["gerencia", "ventas"],
-  prov: ["gerencia", "logistica", "taller"],
+  relaciones: ["gerencia", "ventas", "taller", "logistica"],
   cobros: ["gerencia", "ventas", "contabilidad"],
   pim: ["gerencia", "ventas", "taller"],
   dam: ["gerencia", "ventas", "taller"],
@@ -62,6 +70,8 @@ const ACCESS: Record<Mod, Role[]> = {
   links: ["gerencia", "contabilidad"],
   seguridad: ["gerencia"],
   infra: ["gerencia"],
+  sitio: ["gerencia", "ventas"],
+  cms: ["gerencia", "ventas"],
 };
 
 /* ---- motor de eventos simulado (Redis + BullMQ en producción) ---- */
@@ -285,8 +295,7 @@ export default function Panel() {
           {mod === "logistica" && <Logistica />}
           {mod === "taller" && <Taller />}
           {mod === "bom" && <BOM />}
-          {mod === "crm" && <CRM />}
-          {mod === "prov" && <Proveedores />}
+          {mod === "relaciones" && <Relaciones role={role} />}
           {mod === "cobros" && <Cobros />}
           {mod === "pim" && <PIM />}
           {mod === "dam" && <DAM />}
@@ -294,8 +303,38 @@ export default function Panel() {
           {mod === "links" && <Enlaces />}
           {mod === "seguridad" && <Seguridad />}
           {mod === "infra" && <Infra />}
+          {mod === "sitio" && <SitioPublico />}
+          {mod === "cms" && <CMS />}
         </main>
       </div>
+    </div>
+  );
+}
+
+/* ---- Clientes & proveedores: un módulo, dos áreas (CRM + SRM intactos) ---- */
+function Relaciones({ role }: { role: Role }) {
+  const veClientes = role === "gerencia" || role === "ventas";
+  const veProv = role === "gerencia" || role === "taller" || role === "logistica";
+  const [tab, setTab] = useState<"clientes" | "proveedores">(veClientes ? "clientes" : "proveedores");
+  const activo = tab === "clientes" && veClientes ? "clientes" : veProv ? "proveedores" : "clientes";
+
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-2">
+        {veClientes && (
+          <button onClick={() => setTab("clientes")}
+            className={`px-4 py-2.5 text-[12.5px] font-semibold border transition-colors flex items-center gap-2 ${activo === "clientes" ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+            <I n="users" s={14} /> Clientes · CRM
+          </button>
+        )}
+        {veProv && (
+          <button onClick={() => setTab("proveedores")}
+            className={`px-4 py-2.5 text-[12.5px] font-semibold border transition-colors flex items-center gap-2 ${activo === "proveedores" ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+            <I n="truck" s={14} /> Proveedores · SRM
+          </button>
+        )}
+      </div>
+      {activo === "clientes" ? <CRM /> : <Proveedores />}
     </div>
   );
 }

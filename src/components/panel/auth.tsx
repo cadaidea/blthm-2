@@ -5,8 +5,8 @@ import { I } from "../ui";
 export type Role = "gerencia" | "ventas" | "taller" | "logistica" | "contabilidad";
 
 export const ROLES: { id: Role; label: string; desc: string; icon: "grid" | "cart" | "hammer" | "truck" | "calc" }[] = [
-  { id: "gerencia", label: "Gerencia", desc: "Acceso total · los 13 módulos", icon: "grid" },
-  { id: "ventas", label: "Ventas", desc: "OMS · CRM · Cobros · PIM · DAM", icon: "cart" },
+  { id: "gerencia", label: "Gerencia", desc: "Acceso total · los 15 módulos", icon: "grid" },
+  { id: "ventas", label: "Ventas", desc: "OMS · Relaciones · Cobros · PIM · DAM · Canal digital", icon: "cart" },
   { id: "taller", label: "Taller", desc: "MES · BOM · PIM · DAM", icon: "hammer" },
   { id: "logistica", label: "Logística", desc: "Guías SRI · Despachos · Transporte", icon: "truck" },
   { id: "contabilidad", label: "Contabilidad", desc: "SRI · Facturas · Cobros", icon: "calc" },
@@ -93,7 +93,7 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
           </p>
         </div>
         <div className="flex items-center gap-6 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream/40">
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon pulse-maroon" />13 módulos</span>
+          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon pulse-maroon" />15 módulos</span>
           <span>+2.000 ev/s</span>
           <span>OVH Cloud</span>
         </div>

@@ -283,3 +283,58 @@ export const randomCode = () => {
   const p = () => Array.from({ length: 4 }, () => c[Math.floor(Math.random() * c.length)]).join("");
   return `${p()}-${p()}`;
 };
+
+/* ---------- Canal digital: CMS + configuración del sitio ----------
+   Lo que se edita en el panel (Sitio público / Contenido web) se persiste
+   aquí y lo consume la tienda en tiempo real al cargar. */
+export type CMSPost = {
+  id: string; num: string; fecha: string; titulo: string; tag: string;
+  cuerpo: string; estado: "Borrador" | "Publicado";
+};
+
+export const CMS_POSTS_SEED: CMSPost[] = [
+  { id: "post-14", num: "N° 14", fecha: "08 feb 2026", titulo: "Por qué el nogal se trabaja en luna menguante", tag: "Materia", estado: "Publicado", cuerpo: "La savia baja, la madera se estabiliza y el corte sufre menos. No es superstición: es humedad interna." },
+  { id: "post-13", num: "N° 13", fecha: "24 ene 2026", titulo: "Entrega guante blanco: el último centímetro importa", tag: "Servicio", estado: "Publicado", cuerpo: "Armamos en sitio, retiramos el embalaje y nivelamos cada pata. El mueble se estrena en su lugar final." },
+  { id: "post-12", num: "N° 12", fecha: "10 ene 2026", titulo: "Serie Bruma: ranurar a mano toma 11 horas. Vale cada una", tag: "Taller", estado: "Publicado", cuerpo: "El flautín del aparador Bruma se ranura pieza por pieza. La máquina lo haría en 20 minutos; la mano lo hace irrepetible." },
+  { id: "post-15", num: "N° 15", fecha: "próximamente", titulo: "Cuero vegetalizado: por qué tarda 9 meses en curtirse", tag: "Materia", estado: "Borrador", cuerpo: "Corteza de quebracho, agua y tiempo. El curtido vegetal no se acelera: se espera." },
+];
+
+export type SiteConfig = {
+  anuncioActivo: boolean;
+  anuncioTexto: string;
+  destacadoId: string;
+  seoTitulo: string;
+  seoDesc: string;
+  pagoLink: boolean;
+  pagoDirecto: boolean;
+  colecciones: Record<string, boolean>;
+};
+
+export const SITE_DEFAULTS: SiteConfig = {
+  anuncioActivo: true,
+  anuncioTexto: "Entrega guante blanco en todo el Ecuador · factura electrónica SRI al instante",
+  destacadoId: "aura",
+  seoTitulo: "BLETIA — Mueblería de autor · Ecuador",
+  seoDesc: "Muebles de lujo minimalista fabricados en Quito. Pago seguro con PayPhone y entrega nacional.",
+  pagoLink: true,
+  pagoDirecto: true,
+  colecciones: { Asientos: true, Mesas: true, Almacenaje: true, Descanso: true },
+};
+
+export function loadCMS(): CMSPost[] {
+  try {
+    const s = localStorage.getItem("bletia-cms");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; }
+  } catch { /* semilla */ }
+  return CMS_POSTS_SEED;
+}
+export function saveCMS(posts: CMSPost[]) { localStorage.setItem("bletia-cms", JSON.stringify(posts)); }
+
+export function loadSite(): SiteConfig {
+  try {
+    const s = localStorage.getItem("bletia-sitio");
+    if (s) return { ...SITE_DEFAULTS, ...JSON.parse(s) };
+  } catch { /* defaults */ }
+  return SITE_DEFAULTS;
+}
+export function saveSite(cfg: SiteConfig) { localStorage.setItem("bletia-sitio", JSON.stringify(cfg)); }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CITIES, IMG, PRODUCTS, fmt, fmt2, randomCode, type Product } from "../data";
+import { CITIES, IMG, PRODUCTS, fmt, fmt2, loadCMS, loadSite, randomCode, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -13,11 +13,7 @@ const MARQUEE = [
   "Latón envejecido", "Hecho en Ecuador", "Garantía 5 años", "Pago PayPhone",
 ];
 
-const DIARIO = [
-  { n: "N° 14", fecha: "08 feb 2026", t: "Por qué el nogal se trabaja en luna menguante", tag: "Materia" },
-  { n: "N° 13", fecha: "24 ene 2026", t: "Entrega guante blanco: el último centímetro importa", tag: "Servicio" },
-  { n: "N° 12", fecha: "10 ene 2026", t: "Serie Bruma: ranurar a mano toma 11 horas. Vale cada una", tag: "Taller" },
-];
+/* El Diario se sirve desde el CMS del panel (bletia-cms en localStorage) */
 
 export default function Storefront() {
   const [cat, setCat] = useState<(typeof CATS)[number]>("Todo");
@@ -30,6 +26,12 @@ export default function Storefront() {
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ code: string; track: string } | null>(null);
+
+  /* Canal digital: lo publicado en el panel rige la tienda */
+  const [site] = useState(loadSite);
+  const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
+  const destacado = PRODUCTS.find((p) => p.id === site.destacadoId) ?? PRODUCTS[0];
+  const catActivas = CATS.filter((c) => c === "Todo" || site.colecciones[c] !== false);
 
   useEffect(() => { localStorage.setItem("bletia-cart", JSON.stringify(cart)); }, [cart]);
   useEffect(() => {
@@ -44,7 +46,12 @@ export default function Storefront() {
   const base = total / 1.15;
   const iva = total - base;
 
-  const shown = useMemo(() => (cat === "Todo" ? PRODUCTS : PRODUCTS.filter((p) => p.category === cat)), [cat]);
+  const catFinal = catActivas.includes(cat) ? cat : "Todo";
+  const visibles = useMemo(() => PRODUCTS.filter((p) => site.colecciones[p.category] !== false), [site]);
+  const shown = useMemo(
+    () => (catFinal === "Todo" ? visibles : visibles.filter((p) => p.category === catFinal)),
+    [catFinal, visibles],
+  );
 
   const add = (id: string, qty = 1) => {
     setCart((c) => {
@@ -64,6 +71,12 @@ export default function Storefront() {
     <div className="min-h-screen bg-paper text-ink font-dash">
       {/* ================= HEADER ================= */}
       <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${scrolled ? "bg-paper/90 backdrop-blur-md border-b border-line" : "bg-transparent border-b border-transparent"}`}>
+        {site.anuncioActivo && site.anuncioTexto && (
+          <div className="bg-maroon text-cream text-center text-[11.5px] font-medium px-4 py-2 flex items-center justify-center gap-2">
+            <I n="spark" s={12} className="shrink-0" />
+            <span className="truncate">{site.anuncioTexto}</span>
+          </div>
+        )}
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-6">
           <a href="#top" className="font-display font-semibold tracking-[0.32em] text-[17px] leading-none select-none">
             BLETIA<span className="text-maroon">.</span>
@@ -109,7 +122,7 @@ export default function Storefront() {
       )}
 
       {/* ================= APERTURA ================= */}
-      <section id="top" className="relative pt-16">
+      <section id="top" className={`relative ${site.anuncioActivo && site.anuncioTexto ? "pt-[6.35rem]" : "pt-16"}`}>
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
           <div className="grid lg:grid-cols-12 gap-8 lg:gap-0 items-stretch min-h-[calc(100vh-4rem)]">
             <div className="lg:col-span-7 flex flex-col justify-center py-12 lg:py-0 lg:pr-14 grain">
@@ -152,15 +165,15 @@ export default function Storefront() {
               <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
                 <img src={IMG.hero} alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
                 <button
-                  onClick={() => setQuick(PRODUCTS[0])}
+                  onClick={() => setQuick(destacado)}
                   className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5"
                 >
                   <div className="w-12 h-14 overflow-hidden shrink-0">
-                    <img src={IMG.hero} alt="" className="w-full h-full object-cover" />
+                    <img src={destacado.img} alt="" className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <p className="font-display font-medium text-[15px] leading-tight">Butaca Aura</p>
-                    <p className="text-[11.5px] text-stone mt-0.5">Nogal · Bouclé — {fmt(1190)}</p>
+                    <p className="font-display font-medium text-[15px] leading-tight truncate">{destacado.name}</p>
+                    <p className="text-[11.5px] text-stone mt-0.5">{destacado.material} — {fmt(destacado.price)}</p>
                     <p className="text-[11px] font-semibold text-maroon mt-1.5 flex items-center gap-1 group-hover:gap-2 transition-all">
                       Ver pieza <I n="chev-r" s={11} />
                     </p>
@@ -202,9 +215,9 @@ export default function Storefront() {
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {CATS.map((c) => (
+              {catActivas.map((c) => (
                 <button key={c} onClick={() => setCat(c)}
-                  className={`px-4 py-2 text-[12.5px] font-semibold border transition-all duration-300 ${cat === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink hover:text-ink"}`}>
+                  className={`px-4 py-2 text-[12.5px] font-semibold border transition-all duration-300 ${catFinal === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink hover:text-ink"}`}>
                   {c}
                 </button>
               ))}
@@ -353,18 +366,24 @@ export default function Storefront() {
               <a href="#diario" className="hidden sm:inline-flex items-center gap-2 text-[13px] font-semibold u-grow">Todo el diario <I n="arrow" s={14} /></a>
             </div>
           </Reveal>
-          {DIARIO.map((d, i) => (
-            <Reveal key={d.n} delay={i * 70}>
-              <a href="#diario" className="group grid sm:grid-cols-[80px_110px_1fr_auto] gap-3 sm:gap-8 items-center border-t border-linedark py-6 hover:px-4 transition-all duration-300">
-                <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.n}</span>
-                <span className="text-[12px] text-stone tnum">{d.fecha}</span>
-                <span className="font-display font-medium text-[17px] sm:text-[19px] group-hover:text-maroon transition-colors leading-snug">{d.t}</span>
-                <span className="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-stone">
-                  {d.tag} <I n="chev-r" s={12} className="group-hover:translate-x-1 transition-transform" />
-                </span>
-              </a>
-            </Reveal>
-          ))}
+          {posts.length === 0 ? (
+            <p className="border-t border-linedark py-10 text-[13.5px] text-stone text-center">
+              El diario está en pausa: el taller anda con las manos en la madera. Vuelve pronto.
+            </p>
+          ) : (
+            posts.map((d, i) => (
+              <Reveal key={d.id} delay={i * 70}>
+                <a href="#diario" className="group grid sm:grid-cols-[80px_110px_1fr_auto] gap-3 sm:gap-8 items-center border-t border-linedark py-6 hover:px-4 transition-all duration-300">
+                  <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
+                  <span className="text-[12px] text-stone tnum">{d.fecha}</span>
+                  <span className="font-display font-medium text-[17px] sm:text-[19px] group-hover:text-maroon transition-colors leading-snug">{d.titulo}</span>
+                  <span className="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-stone">
+                    {d.tag} <I n="chev-r" s={12} className="group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </a>
+              </Reveal>
+            ))
+          )}
         </div>
       </section>
 
@@ -546,7 +565,8 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
   const [step, setStep] = useState<Step>(count > 0 ? "datos" : "listo");
   const [form, setForm] = useState({ nombre: "", doc: "", tel: "", ciudad: CITIES[0], dir: "" });
   const [err, setErr] = useState("");
-  const [method, setMethod] = useState<"link" | "directo">("link");
+  const site = loadSite();
+  const [method, setMethod] = useState<"link" | "directo">(site.pagoLink ? "link" : "directo");
   const [linkCode] = useState(randomCode);
   const [payState, setPayState] = useState<"idle" | "proc" | "ok">("idle");
   const [orderCode] = useState(`BL-2026-0${148 + Math.floor(Math.random() * 40)}`);
@@ -641,22 +661,26 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
             <h3 className="font-display font-medium text-[22px]">¿Cómo prefieres pagar?</h3>
             <p className="text-[13px] text-ink2 mt-2">Procesado por <strong>PayPhone</strong>. Nunca vemos ni guardamos los datos de tu tarjeta.</p>
             <div className="grid gap-3 mt-6">
-              <button onClick={() => setMethod("link")}
-                className={`text-left border p-4 flex items-start gap-3.5 transition-all ${method === "link" ? "border-maroon bg-card shadow-[inset_2px_0_0_#800000]" : "border-linedark hover:border-ink"}`}>
-                <I n="link" s={19} className={method === "link" ? "text-maroon" : "text-stone"} />
-                <span>
-                  <span className="block font-semibold text-[14px]">Link de pago de un solo uso</span>
-                  <span className="block text-[12.5px] text-stone mt-0.5">Generamos un link privado que expira en 24 h. Lo abres y pagas cuando quieras.</span>
-                </span>
-              </button>
-              <button onClick={() => setMethod("directo")}
-                className={`text-left border p-4 flex items-start gap-3.5 transition-all ${method === "directo" ? "border-maroon bg-card shadow-[inset_2px_0_0_#800000]" : "border-linedark hover:border-ink"}`}>
-                <I n="card" s={19} className={method === "directo" ? "text-maroon" : "text-stone"} />
-                <span>
-                  <span className="block font-semibold text-[14px]">Pago directo en la web</span>
-                  <span className="block text-[12.5px] text-stone mt-0.5">Tarjeta de crédito o débito, con opción de diferido. Confirmación inmediata.</span>
-                </span>
-              </button>
+              {site.pagoLink && (
+                <button onClick={() => setMethod("link")}
+                  className={`text-left border p-4 flex items-start gap-3.5 transition-all ${method === "link" ? "border-maroon bg-card shadow-[inset_2px_0_0_#800000]" : "border-linedark hover:border-ink"}`}>
+                  <I n="link" s={19} className={method === "link" ? "text-maroon" : "text-stone"} />
+                  <span>
+                    <span className="block font-semibold text-[14px]">Link de pago de un solo uso</span>
+                    <span className="block text-[12.5px] text-stone mt-0.5">Generamos un link privado que expira en 24 h. Lo abres y pagas cuando quieras.</span>
+                  </span>
+                </button>
+              )}
+              {site.pagoDirecto && (
+                <button onClick={() => setMethod("directo")}
+                  className={`text-left border p-4 flex items-start gap-3.5 transition-all ${method === "directo" ? "border-maroon bg-card shadow-[inset_2px_0_0_#800000]" : "border-linedark hover:border-ink"}`}>
+                  <I n="card" s={19} className={method === "directo" ? "text-maroon" : "text-stone"} />
+                  <span>
+                    <span className="block font-semibold text-[14px]">Pago directo en la web</span>
+                    <span className="block text-[12.5px] text-stone mt-0.5">Tarjeta de crédito o débito, con opción de diferido. Confirmación inmediata.</span>
+                  </span>
+                </button>
+              )}
             </div>
             <div className="flex items-center justify-between mt-5 px-1 text-[13px]">
               <span className="text-stone">{count} {count === 1 ? "pieza" : "piezas"} · IVA incluido</span>
