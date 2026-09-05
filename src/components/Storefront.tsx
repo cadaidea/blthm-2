@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product, type SeccionHome } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -39,6 +39,9 @@ export default function Storefront() {
 
   /* Canal digital: lo publicado en el panel rige la tienda */
   const [site] = useState(loadSite);
+  /* secciones de la portada: orden y visibilidad editables desde el panel */
+  const [secciones] = useState(loadSecciones);
+  const firstIsHero = secciones.find((s) => s.visible)?.tipo === "hero";
   const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
   const [blogCat, setBlogCat] = useState("Todo");
   const postsFiltrados = blogCat === "Todo" ? posts : posts.filter((p) => p.tag === blogCat);
@@ -96,6 +99,310 @@ export default function Storefront() {
     setCart([]);
     setLastOrder({ code, track: `bletia.ec/t/${randomCode().toLowerCase()}` });
   };
+
+  /* ---------- Secciones de la portada (textos vienen del panel) ---------- */
+  const tituloHero = (cfg: SeccionHome) => {
+    const raw = cfg.titulo.trim();
+    const sinPunto = raw.endsWith(".") ? raw.slice(0, -1) : raw;
+    const words = sinPunto.split(/\s+/);
+    const last = words.length > 1 ? words.pop()! : sinPunto;
+    return (
+      <h1 className="font-display font-medium text-[clamp(2.7rem,6.2vw,5.4rem)] leading-[1.0] tracking-[-0.015em]">
+        {words.join(" ")}{words.length > 0 && " "}
+        <em className="not-italic relative">{last}<span className="absolute left-0 -bottom-1 w-full h-[2px] bg-maroon/70" /></em>
+        {raw.endsWith(".") && "."}
+      </h1>
+    );
+  };
+
+  const secHero = (cfg: SeccionHome) => (
+    <section id="top" className={`relative ${firstIsHero ? (site.anuncioActivo && site.anuncioTexto ? "pt-[6.35rem]" : "pt-16") : ""}`}>
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-0 items-stretch min-h-[calc(100vh-4rem)]">
+          <div className="lg:col-span-7 flex flex-col justify-center py-12 lg:py-0 lg:pr-14 grain">
+            <Reveal>{tituloHero(cfg)}</Reveal>
+            {cfg.texto && (
+              <Reveal delay={180}>
+                <p className="text-ink2 text-[15px] sm:text-base leading-relaxed max-w-[46ch] mt-7 whitespace-pre-line">{cfg.texto}</p>
+              </Reveal>
+            )}
+            <Reveal delay={260}>
+              <div className="flex flex-wrap items-center gap-4 mt-9">
+                <a href="#coleccion" className="group inline-flex items-center gap-3 bg-ink text-paper px-7 py-4 text-[13px] font-semibold tracking-wide hover:bg-maroon transition-colors duration-300">
+                  Explorar la colección
+                  <I n="arrow" s={16} className="transition-transform group-hover:translate-x-1" />
+                </a>
+                <a href="#taller" className="u-grow text-[13px] font-semibold text-ink2 hover:text-ink">Nuestro taller</a>
+              </div>
+            </Reveal>
+            <Reveal delay={340}>
+              <div className="flex flex-wrap gap-x-8 gap-y-2 mt-12 pt-6 border-t border-line text-[11.5px] font-medium text-stone tracking-wide">
+                <span className="flex items-center gap-2"><I n="shield" s={13} /> Garantía de 5 años</span>
+                <span className="flex items-center gap-2"><I n="card" s={13} /> IVA 15% incluido · Factura SRI</span>
+                <span className="flex items-center gap-2"><I n="truck" s={13} /> Entrega guante blanco nacional</span>
+              </div>
+            </Reveal>
+          </div>
+          <div className="lg:col-span-5 relative lg:min-h-[calc(100vh-4rem)]">
+            <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
+              <img src={IMG.hero} alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
+              <button onClick={() => setQuick(destacado)}
+                className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5">
+                <div className="w-12 h-14 overflow-hidden shrink-0">
+                  <img src={destacado.img} alt="" className="w-full h-full object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-display font-medium text-[15px] leading-tight truncate">{destacado.name}</p>
+                  <p className="text-[11.5px] text-stone mt-0.5">{destacado.material} — {fmt(destacado.price)}</p>
+                  <p className="text-[11px] font-semibold text-maroon mt-1.5 flex items-center gap-1 group-hover:gap-2 transition-all">
+                    Ver pieza <I n="chev-r" s={11} />
+                  </p>
+                </div>
+              </button>
+            </div>
+            <span className="hidden xl:block absolute -right-7 top-1/2 -translate-y-1/2 rotate-90 origin-center text-[10px] font-semibold tracking-[0.5em] text-stone uppercase">
+              Serie 2026
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  const secColeccion = (cfg: SeccionHome) => (
+    <section id="coleccion" className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28 scroll-mt-16">
+      <Reveal>
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
+          <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05]">{cfg.titulo}</h2>
+          <div className="flex flex-wrap gap-2">
+            {catActivas.map((c) => (
+              <button key={c} onClick={() => setCat(c)}
+                className={`px-4 py-2 text-[12.5px] font-semibold border transition-all duration-300 ${catFinal === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink hover:text-ink"}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-14">
+        {shown.map((p, i) => (
+          <Reveal key={p.id} delay={(i % 3) * 90}>
+            <article className="group cursor-pointer" onClick={() => setQuick(p)}>
+              <div className="relative overflow-hidden bg-paper2 aspect-[4/5]">
+                <img src={p.img} alt={p.name} loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-[1.05]" />
+                <span className={`absolute top-3.5 left-3.5 text-[10px] font-bold tracking-[0.16em] uppercase px-2.5 py-1.5 flex items-center gap-1.5 ${p.origin === "Taller BLETIA" ? "bg-card/95 text-ink" : "bg-ink/85 text-cream"}`}>
+                  {p.origin === "Taller BLETIA" && <span className="w-1.5 h-1.5 bg-maroon" />}
+                  {p.origin === "Taller BLETIA" ? "Taller" : "Curaduría"}
+                </span>
+                {p.stock <= 3 && (
+                  <span className="absolute top-[46px] left-3.5 text-[10px] font-bold tracking-[0.14em] uppercase px-2.5 py-1.5 bg-card/95 text-warn">
+                    Últimas {p.stock}
+                  </span>
+                )}
+                <button onClick={(e) => { e.stopPropagation(); toggleWish(p.id); }}
+                  aria-label={wish.includes(p.id) ? "Quitar de deseos" : "Guardar en deseos"}
+                  className={`absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-card/95 backdrop-blur transition-all duration-300 hover:scale-110 ${wish.includes(p.id) ? "text-maroon" : "text-ink/70 hover:text-ink"}`}>
+                  <I n={wish.includes(p.id) ? "heart-fill" : "heart"} s={16} />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); add(p.id); setCartOpen(true); }}
+                  className="absolute bottom-0 inset-x-0 bg-ink text-paper text-[12.5px] font-semibold py-3.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-400 hover:bg-maroon">
+                  <I n="plus" s={14} /> Añadir al carrito — {fmt(p.price)}
+                </button>
+              </div>
+              <div className="pt-4 flex items-baseline justify-between gap-4">
+                <div>
+                  <p className="text-[10.5px] font-semibold tracking-[0.18em] text-stone uppercase tnum">{p.sku}</p>
+                  <a href={`#/producto/${slugDe(p.slug || p.name)}`} onClick={(e) => e.stopPropagation()}>
+                    <h3 className="font-display font-medium text-[19px] mt-1 group-hover:text-maroon transition-colors duration-300">{p.name}</h3>
+                  </a>
+                  <p className="text-[12.5px] text-stone mt-0.5">{p.material}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-semibold tnum text-[15px]">{fmt(p.price)}</p>
+                  <p className="text-[10.5px] text-stone">IVA incl.</p>
+                </div>
+              </div>
+            </article>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+
+  const secTaller = (cfg: SeccionHome) => (
+    <section id="taller" className="bg-coal text-cream scroll-mt-16">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <Reveal>
+            <div className="relative overflow-hidden">
+              <img src={IMG.taller} alt="Maestro del taller BLETIA trabajando nogal" loading="lazy"
+                className="w-full h-[420px] sm:h-[520px] object-cover transition-transform duration-[1200ms] hover:scale-[1.03]" />
+              <span className="absolute bottom-4 left-4 bg-coal/85 backdrop-blur text-cream text-[10.5px] font-semibold tracking-[0.2em] uppercase px-3 py-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-maroon pulse-maroon" /> Taller BLETIA · Cuenca
+              </span>
+            </div>
+          </Reveal>
+          <div>
+            <Reveal delay={80}>
+              <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05] mt-4">{cfg.titulo}</h2>
+            </Reveal>
+            {cfg.texto && (
+              <Reveal delay={150}>
+                <p className="text-cream/70 text-[15px] leading-relaxed max-w-[52ch] mt-6 whitespace-pre-line">{cfg.texto}</p>
+              </Reveal>
+            )}
+            <div className="mt-10 grid sm:grid-cols-2 gap-x-10 gap-y-7">
+              {[
+                ["01", "Selección", "Nogal y roble con certificado de origen, secados 24 meses."],
+                ["02", "Ensamble", "Caja y espiga. Sin clavos, sin prisa, sin atajos."],
+                ["03", "Acabado", "Aceites y ceras naturales aplicados en tres manos."],
+                ["04", "Firma", "Control de calidad y número de serie grabado a fuego."],
+              ].map(([n, t, d], i) => (
+                <Reveal key={n} delay={200 + i * 80}>
+                  <div className="flex gap-4 border-t border-cream/15 pt-5 group">
+                    <span className="font-display text-maroon text-[13px] font-semibold pt-1">{n}</span>
+                    <div>
+                      <p className="font-display font-medium text-[17px] group-hover:translate-x-1 transition-transform duration-300">{t}</p>
+                      <p className="text-cream/55 text-[13px] leading-relaxed mt-1.5">{d}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  const secServicios = (cfg: SeccionHome) => (
+    <section id="servicios" className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28 scroll-mt-16">
+      <div className="grid lg:grid-cols-12 gap-12">
+        <div className="lg:col-span-4">
+          <Reveal>
+            <h2 className="font-display font-medium text-[clamp(1.9rem,3.4vw,2.8rem)] leading-[1.05]">{cfg.titulo}</h2>
+            {cfg.texto && <p className="text-ink2 text-[14.5px] leading-relaxed mt-5 max-w-[40ch] whitespace-pre-line">{cfg.texto}</p>}
+            <div className="mt-8 overflow-hidden border border-line">
+              <img src={IMG.detalle} alt="Materiales: cuero vegetalizado y nogal" loading="lazy" className="w-full h-44 object-cover hover:scale-105 transition-transform duration-700" />
+            </div>
+          </Reveal>
+        </div>
+        <div className="lg:col-span-8">
+          {[
+            ["01", "Entrega guante blanco", "Flota propia en Cuenca y red de transportistas auditados en el resto del país. Armamos en sitio, retiramos el embalaje y dejamos todo en su lugar.", "truck"],
+            ["02", "Pago con PayPhone", "Elige: link de pago de un solo uso que llega a tu WhatsApp, o pago directo aquí en la web. Difiere con tu tarjeta, nosotros no tocamos tus datos.", "card"],
+            ["03", "Garantía de 5 años", "Estructura y ensambles garantizados, con mantenimiento anual de cortesía durante los dos primeros años.", "shield"],
+            ["04", "Proyectos a medida", "Arquitectos, hoteles y oficinas: cotización por plano, series numeradas y facturación electrónica autorizada por el SRI.", "doc"],
+          ].map(([n, t, d, ic], i) => (
+            <Reveal key={n} delay={i * 80}>
+              <div className="group grid sm:grid-cols-[64px_44px_1fr] gap-4 sm:gap-6 items-start border-t border-linedark py-8 hover:bg-card transition-colors duration-300 px-2 -mx-2">
+                <span className="font-display font-medium text-[26px] text-linedark group-hover:text-maroon transition-colors duration-300 tnum">{n}</span>
+                <span className="mt-1 text-ink2 group-hover:text-maroon transition-colors"><I n={ic as "truck"} s={22} /></span>
+                <div>
+                  <h3 className="font-display font-medium text-[20px]">{t}</h3>
+                  <p className="text-ink2 text-[14px] leading-relaxed mt-2 max-w-[62ch]">{d}</p>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+          <div className="border-t border-linedark" />
+        </div>
+      </div>
+    </section>
+  );
+
+  const secDiario = (cfg: SeccionHome) => (
+    <section id="diario" className="border-t border-line bg-paper2/60 scroll-mt-16">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20">
+        <Reveal>
+          <div className="flex items-end justify-between gap-6 mb-10">
+            <h2 className="font-display font-medium text-[clamp(1.7rem,3vw,2.4rem)]">{cfg.titulo}</h2>
+            <a href="#/blog" className="hidden sm:inline-flex items-center gap-2 text-[13px] font-semibold u-grow">Todo el diario <I n="arrow" s={14} /></a>
+          </div>
+        </Reveal>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {["Todo", ...BLOG_CATEGORIAS].map((c) => (
+            <button key={c} onClick={() => setBlogCat(c)}
+              className={`px-3.5 py-1.5 text-[12px] font-semibold border transition-colors ${blogCat === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+        {postsFiltrados.length === 0 ? (
+          <p className="border-t border-linedark py-10 text-[13.5px] text-stone text-center">
+            El diario está en pausa: el taller anda con las manos en la madera. Vuelve pronto.
+          </p>
+        ) : (
+          postsFiltrados.map((d, i) => {
+            const au = autorDe(d.autor);
+            return (
+              <Reveal key={d.id} delay={i * 70}>
+                <a href={articuloUrl(d)} className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
+                    <span className="text-[12px] text-stone tnum">{d.fecha}</span>
+                    <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone bg-paper2 px-2 py-0.5">{d.tag}</span>
+                    <span className="text-[11px] text-stone flex items-center gap-1"><I n="clock" s={11} /> {minutosLectura(d.cuerpo)} min de lectura</span>
+                  </div>
+                  <div className="grid sm:grid-cols-[1fr_auto] gap-4 mt-2.5">
+                    <div>
+                      <h3 className="font-display font-medium text-[18px] sm:text-[21px] group-hover:text-maroon transition-colors leading-snug">{d.titulo}</h3>
+                      <p className="text-[13.5px] text-ink2 leading-relaxed mt-2 max-w-[68ch]">{d.cuerpo}</p>
+                      {d.etiquetas && d.etiquetas.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {d.etiquetas.map((e) => (
+                            <a key={e} href={tagUrl(e)} onClick={(ev) => ev.stopPropagation()}
+                              className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(e)}</a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {au && (
+                      <div className="flex sm:flex-col items-center sm:items-end gap-2.5 shrink-0">
+                        <span className="w-10 h-10 bg-ink text-paper text-[12px] font-bold flex items-center justify-center shrink-0">
+                          {au.nombre.split(" ").slice(0, 2).map((w) => w[0]).join("")}
+                        </span>
+                        <span className="text-right">
+                          <span className="block text-[12px] font-semibold">{au.nombre}</span>
+                          <span className="block text-[10.5px] text-stone">{au.cargo}</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </Reveal>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+
+  const secCustom = (cfg: SeccionHome) => (
+    <section id={`sec-${cfg.id}`} className={`scroll-mt-16 ${cfg.oscuro ? "bg-coal text-cream" : "border-t border-line bg-paper2/60"}`}>
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
+        <div className={`grid gap-10 lg:gap-16 items-center ${cfg.img ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
+          <Reveal>
+            <div className={cfg.img ? "" : "max-w-[820px]"}>
+              <h2 className={`font-display font-medium text-[clamp(1.8rem,3.4vw,2.8rem)] leading-[1.08] ${cfg.oscuro ? "text-cream" : "text-ink"}`}>{cfg.titulo}</h2>
+              {cfg.texto && (
+                <p className={`text-[15px] leading-relaxed mt-6 max-w-[58ch] whitespace-pre-line ${cfg.oscuro ? "text-cream/70" : "text-ink2"}`}>{cfg.texto}</p>
+              )}
+            </div>
+          </Reveal>
+          {cfg.img && (
+            <Reveal delay={120}>
+              <div className={`overflow-hidden ${cfg.oscuro ? "" : "border border-line"}`}>
+                <img src={cfg.img} alt={cfg.titulo} loading="lazy"
+                  className="w-full h-[300px] sm:h-[420px] object-cover transition-transform duration-[1200ms] hover:scale-[1.03]" />
+              </div>
+            </Reveal>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 
   return (
     <div className="min-h-screen bg-paper text-ink font-dash">
@@ -251,292 +558,27 @@ export default function Storefront() {
         </div>
       )}
 
-      {/* ================= APERTURA ================= */}
-      <section id="top" className={`relative ${site.anuncioActivo && site.anuncioTexto ? "pt-[6.35rem]" : "pt-16"}`}>
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8">
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-0 items-stretch min-h-[calc(100vh-4rem)]">
-            <div className="lg:col-span-7 flex flex-col justify-center py-12 lg:py-0 lg:pr-14 grain">
-              <Reveal>
-                <h1 className="font-display font-medium text-[clamp(2.7rem,6.2vw,5.4rem)] leading-[1.0] tracking-[-0.015em]">
-                  Cada pieza<br />define <em className="not-italic relative">tu espacio<span className="absolute left-0 -bottom-1 w-full h-[2px] bg-maroon/70" /></em>.
-                </h1>
-              </Reveal>
-              <Reveal delay={180}>
-                <p className="text-ink2 text-[15px] sm:text-base leading-relaxed max-w-[46ch] mt-7">
-                  Muebles de nogal, roble y cuero vegetalizado: fabricados en nuestro taller y curados para durar décadas.
-                  Pagas con <strong className="font-semibold">PayPhone</strong> — por link de un solo uso o directo en la web — y recibes en todo el Ecuador.
-                </p>
-              </Reveal>
-              <Reveal delay={260}>
-                <div className="flex flex-wrap items-center gap-4 mt-9">
-                  <a href="#coleccion" className="group inline-flex items-center gap-3 bg-ink text-paper px-7 py-4 text-[13px] font-semibold tracking-wide hover:bg-maroon transition-colors duration-300">
-                    Explorar la colección
-                    <I n="arrow" s={16} className="transition-transform group-hover:translate-x-1" />
-                  </a>
-                  <a href="#taller" className="u-grow text-[13px] font-semibold text-ink2 hover:text-ink">Nuestro taller</a>
-                </div>
-              </Reveal>
-              <Reveal delay={340}>
-                <div className="flex flex-wrap gap-x-8 gap-y-2 mt-12 pt-6 border-t border-line text-[11.5px] font-medium text-stone tracking-wide">
-                  <span className="flex items-center gap-2"><I n="shield" s={13} /> Garantía de 5 años</span>
-                  <span className="flex items-center gap-2"><I n="card" s={13} /> IVA 15% incluido · Factura SRI</span>
-                  <span className="flex items-center gap-2"><I n="truck" s={13} /> Entrega guante blanco nacional</span>
-                </div>
-              </Reveal>
-            </div>
-
-            <div className="lg:col-span-5 relative lg:min-h-[calc(100vh-4rem)]">
-              <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
-                <img src={IMG.hero} alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
-                <button
-                  onClick={() => setQuick(destacado)}
-                  className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  <div className="w-12 h-14 overflow-hidden shrink-0">
-                    <img src={destacado.img} alt="" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-display font-medium text-[15px] leading-tight truncate">{destacado.name}</p>
-                    <p className="text-[11.5px] text-stone mt-0.5">{destacado.material} — {fmt(destacado.price)}</p>
-                    <p className="text-[11px] font-semibold text-maroon mt-1.5 flex items-center gap-1 group-hover:gap-2 transition-all">
-                      Ver pieza <I n="chev-r" s={11} />
-                    </p>
-                  </div>
-                </button>
-              </div>
-              <span className="hidden xl:block absolute -right-7 top-1/2 -translate-y-1/2 rotate-90 origin-center text-[10px] font-semibold tracking-[0.5em] text-stone uppercase">
-                Serie 2026
-              </span>
-            </div>
+      {/* ================= PORTADA · secciones editables desde el panel ================= */}
+      <div className={firstIsHero ? "" : site.anuncioActivo && site.anuncioTexto ? "pt-[6.35rem]" : "pt-16"}>
+        {secciones.filter((s) => s.visible).map((s) => (
+          <div key={s.id} className="contents">
+            {s.tipo === "hero" && secHero(s)}
+            {s.tipo === "coleccion" && secColeccion(s)}
+            {s.tipo === "taller" && secTaller(s)}
+            {s.tipo === "servicios" && secServicios(s)}
+            {s.tipo === "diario" && secDiario(s)}
+            {s.tipo === "custom" && secCustom(s)}
           </div>
-        </div>
+        ))}
+      </div>
 
-      </section>
 
-      {/* ================= COLECCIÓN ================= */}
-      <section id="coleccion" className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28 scroll-mt-16">
-        <Reveal>
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
-            <div>
-              <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05]">
-                Objetos serenos,<br className="hidden sm:block" /> líneas exactas.
-              </h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {catActivas.map((c) => (
-                <button key={c} onClick={() => setCat(c)}
-                  className={`px-4 py-2 text-[12.5px] font-semibold border transition-all duration-300 ${catFinal === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink hover:text-ink"}`}>
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Reveal>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-14">
-          {shown.map((p, i) => (
-            <Reveal key={p.id} delay={(i % 3) * 90}>
-              <article className="group cursor-pointer" onClick={() => setQuick(p)}>
-                <div className="relative overflow-hidden bg-paper2 aspect-[4/5]">
-                  <img src={p.img} alt={p.name} loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.2,0.7,0.2,1)] group-hover:scale-[1.05]" />
-                  <span className={`absolute top-3.5 left-3.5 text-[10px] font-bold tracking-[0.16em] uppercase px-2.5 py-1.5 flex items-center gap-1.5 ${p.origin === "Taller BLETIA" ? "bg-card/95 text-ink" : "bg-ink/85 text-cream"}`}>
-                    {p.origin === "Taller BLETIA" && <span className="w-1.5 h-1.5 bg-maroon" />}
-                    {p.origin === "Taller BLETIA" ? "Taller" : "Curaduría"}
-                  </span>
-                  {p.stock <= 3 && (
-                    <span className="absolute top-[46px] left-3.5 text-[10px] font-bold tracking-[0.14em] uppercase px-2.5 py-1.5 bg-card/95 text-warn">
-                      Últimas {p.stock}
-                    </span>
-                  )}
-                  <button onClick={(e) => { e.stopPropagation(); toggleWish(p.id); }}
-                    aria-label={wish.includes(p.id) ? "Quitar de deseos" : "Guardar en deseos"}
-                    className={`absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-card/95 backdrop-blur transition-all duration-300 hover:scale-110 ${wish.includes(p.id) ? "text-maroon" : "text-ink/70 hover:text-ink"}`}>
-                    <I n={wish.includes(p.id) ? "heart-fill" : "heart"} s={16} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); add(p.id); setCartOpen(true); }}
-                    className="absolute bottom-0 inset-x-0 bg-ink text-paper text-[12.5px] font-semibold py-3.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-400 hover:bg-maroon"
-                  >
-                    <I n="plus" s={14} /> Añadir al carrito — {fmt(p.price)}
-                  </button>
-                </div>
-                <div className="pt-4 flex items-baseline justify-between gap-4">
-                  <div>
-                    <p className="text-[10.5px] font-semibold tracking-[0.18em] text-stone uppercase tnum">{p.sku}</p>
-                    <a href={`#/producto/${slugDe(p.slug || p.name)}`} onClick={(e) => e.stopPropagation()}>
-                      <h3 className="font-display font-medium text-[19px] mt-1 group-hover:text-maroon transition-colors duration-300">{p.name}</h3>
-                    </a>
-                    <p className="text-[12.5px] text-stone mt-0.5">{p.material}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-semibold tnum text-[15px]">{fmt(p.price)}</p>
-                    <p className="text-[10.5px] text-stone">IVA incl.</p>
-                  </div>
-                </div>
-              </article>
-            </Reveal>
-          ))}
-        </div>
-      </section>
 
-      {/* ================= TALLER ================= */}
-      <section id="taller" className="bg-coal text-cream scroll-mt-16">
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <Reveal>
-              <div className="relative overflow-hidden">
-                <img src={IMG.taller} alt="Maestro del taller BLETIA trabajando nogal" loading="lazy"
-                  className="w-full h-[420px] sm:h-[520px] object-cover transition-transform duration-[1200ms] hover:scale-[1.03]" />
-                <span className="absolute bottom-4 left-4 bg-coal/85 backdrop-blur text-cream text-[10.5px] font-semibold tracking-[0.2em] uppercase px-3 py-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-maroon pulse-maroon" /> Taller BLETIA · Quito
-                </span>
-              </div>
-            </Reveal>
-            <div>
 
-              <Reveal delay={80}>
-                <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05] mt-4">
-                  De la tabla<br />al objeto.
-                </h2>
-              </Reveal>
-              <Reveal delay={150}>
-                <p className="text-cream/70 text-[15px] leading-relaxed max-w-[52ch] mt-6">
-                  Una parte de la colección nace aquí: madera certificada, ensambles de espiga y acabados a mano.
-                  Cada pieza de taller sale numerada, firmada y con su historia de fabricación trazable de punta a punta.
-                </p>
-              </Reveal>
-              <div className="mt-10 grid sm:grid-cols-2 gap-x-10 gap-y-7">
-                {[
-                  ["01", "Selección", "Nogal y roble con certificado de origen, secados 24 meses."],
-                  ["02", "Ensamble", "Caja y espiga. Sin clavos, sin prisa, sin atajos."],
-                  ["03", "Acabado", "Aceites y ceras naturales aplicados en tres manos."],
-                  ["04", "Firma", "Control de calidad y número de serie grabado a fuego."],
-                ].map(([n, t, d], i) => (
-                  <Reveal key={n} delay={200 + i * 80}>
-                    <div className="flex gap-4 border-t border-cream/15 pt-5 group">
-                      <span className="font-display text-maroon text-[13px] font-semibold pt-1">{n}</span>
-                      <div>
-                        <p className="font-display font-medium text-[17px] group-hover:translate-x-1 transition-transform duration-300">{t}</p>
-                        <p className="text-cream/55 text-[13px] leading-relaxed mt-1.5">{d}</p>
-                      </div>
-                    </div>
-                  </Reveal>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ================= SERVICIOS ================= */}
-      <section id="servicios" className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28 scroll-mt-16">
-        <div className="grid lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-4">
-            <Reveal>
-              <h2 className="font-display font-medium text-[clamp(1.9rem,3.4vw,2.8rem)] leading-[1.05]">
-                Comprar es la parte fácil.
-              </h2>
-              <p className="text-ink2 text-[14.5px] leading-relaxed mt-5 max-w-[40ch]">
-                Detrás de cada entrega hay una red propia de transporte, proveedores auditados y facturación electrónica al instante.
-              </p>
-              <div className="mt-8 overflow-hidden border border-line">
-                <img src={IMG.detalle} alt="Materiales: cuero vegetalizado y nogal" loading="lazy" className="w-full h-44 object-cover hover:scale-105 transition-transform duration-700" />
-              </div>
-            </Reveal>
-          </div>
-          <div className="lg:col-span-8">
-            {[
-              ["01", "Entrega guante blanco", "Flota propia en Quito y red de transportistas auditados en el resto del país. Armamos en sitio, retiramos el embalaje y dejamos todo en su lugar.", "truck"],
-              ["02", "Pago con PayPhone", "Elige: link de pago de un solo uso que llega a tu WhatsApp, o pago directo aquí en la web. Difiere con tu tarjeta, nosotros no tocamos tus datos.", "card"],
-              ["03", "Garantía de 5 años", "Estructura y ensambles garantizados, con mantenimiento anual de cortesía durante los dos primeros años.", "shield"],
-              ["04", "Proyectos a medida", "Arquitectos, hoteles y oficinas: cotización por plano, series numeradas y facturación electrónica autorizada por el SRI.", "doc"],
-            ].map(([n, t, d, ic], i) => (
-              <Reveal key={n} delay={i * 80}>
-                <div className="group grid sm:grid-cols-[64px_44px_1fr] gap-4 sm:gap-6 items-start border-t border-linedark py-8 hover:bg-card transition-colors duration-300 px-2 -mx-2">
-                  <span className="font-display font-medium text-[26px] text-linedark group-hover:text-maroon transition-colors duration-300 tnum">{n}</span>
-                  <span className="mt-1 text-ink2 group-hover:text-maroon transition-colors"><I n={ic as "truck"} s={22} /></span>
-                  <div>
-                    <h3 className="font-display font-medium text-[20px]">{t}</h3>
-                    <p className="text-ink2 text-[14px] leading-relaxed mt-2 max-w-[62ch]">{d}</p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-            <div className="border-t border-linedark" />
-          </div>
-        </div>
-      </section>
 
-      {/* ================= DIARIO ================= */}
-      <section id="diario" className="border-t border-line bg-paper2/60 scroll-mt-16">
-        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20">
-          <Reveal>
-            <div className="flex items-end justify-between gap-6 mb-10">
-              <div>
-                <h2 className="font-display font-medium text-[clamp(1.7rem,3vw,2.4rem)]">Notas que huelen a aserrín.</h2>
-              </div>
-              <a href="#diario" className="hidden sm:inline-flex items-center gap-2 text-[13px] font-semibold u-grow">Todo el diario <I n="arrow" s={14} /></a>
-            </div>
-          </Reveal>
-          {/* filtro por categoría del blog */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {["Todo", ...BLOG_CATEGORIAS].map((c) => (
-              <button key={c} onClick={() => setBlogCat(c)}
-                className={`px-3.5 py-1.5 text-[12px] font-semibold border transition-colors ${blogCat === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
-                {c}
-              </button>
-            ))}
-          </div>
 
-          {postsFiltrados.length === 0 ? (
-            <p className="border-t border-linedark py-10 text-[13.5px] text-stone text-center">
-              El diario está en pausa: el taller anda con las manos en la madera. Vuelve pronto.
-            </p>
-          ) : (
-            postsFiltrados.map((d, i) => {
-              const au = autorDe(d.autor);
-              return (
-                <Reveal key={d.id} delay={i * 70}>
-                  <a href={articuloUrl(d)} className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
-                    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                      <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
-                      <span className="text-[12px] text-stone tnum">{d.fecha}</span>
-                      <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone bg-paper2 px-2 py-0.5">{d.tag}</span>
-                      <span className="text-[11px] text-stone flex items-center gap-1"><I n="clock" s={11} /> {minutosLectura(d.cuerpo)} min de lectura</span>
-                    </div>
-                    <div className="grid sm:grid-cols-[1fr_auto] gap-4 mt-2.5">
-                      <div>
-                        <h3 className="font-display font-medium text-[18px] sm:text-[21px] group-hover:text-maroon transition-colors leading-snug">{d.titulo}</h3>
-                        <p className="text-[13.5px] text-ink2 leading-relaxed mt-2 max-w-[68ch]">{d.cuerpo}</p>
-                        {d.etiquetas && d.etiquetas.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {d.etiquetas.map((e) => (
-                              <a key={e} href={tagUrl(e)} onClick={(ev) => ev.stopPropagation()}
-                                className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(e)}</a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {au && (
-                        <div className="flex sm:flex-col items-center sm:items-end gap-2.5 shrink-0">
-                          <span className="w-10 h-10 bg-ink text-paper text-[12px] font-bold flex items-center justify-center shrink-0">
-                            {au.nombre.split(" ").slice(0, 2).map((w) => w[0]).join("")}
-                          </span>
-                          <span className="text-right">
-                            <span className="block text-[12px] font-semibold">{au.nombre}</span>
-                            <span className="block text-[10.5px] text-stone">{au.cargo}</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </a>
-                </Reveal>
-              );
-            })
-          )}
-        </div>
-      </section>
 
       {/* ================= FOOTER ================= */}
       <footer className="bg-ink text-cream">

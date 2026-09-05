@@ -358,6 +358,36 @@ export function loadLogin(): LoginConfig {
 }
 export function saveLogin(cfg: LoginConfig) { localStorage.setItem("bletia-login", JSON.stringify(cfg)); }
 
+/* ---------- Secciones de la portada (home editable desde el panel) ----------
+   Orden, visibilidad, títulos, textos y secciones personalizadas.
+   La tienda las renderiza en el orden del arreglo. */
+export type SeccionHome = {
+  id: string;
+  tipo: "hero" | "coleccion" | "taller" | "servicios" | "diario" | "custom";
+  visible: boolean;
+  titulo: string;
+  texto: string;
+  oscuro?: boolean; // solo custom: banda en carbón
+  img?: string;     // solo custom: foto opcional (URL)
+};
+
+export const SECCIONES_HOME_SEED: SeccionHome[] = [
+  { id: "hero", tipo: "hero", visible: true, titulo: "Cada pieza define tu espacio.", texto: "Muebles de nogal, roble y cuero vegetalizado: fabricados en nuestro taller y curados para durar décadas. Pagas con PayPhone — por link de un solo uso o directo en la web — y recibes en todo el Ecuador." },
+  { id: "coleccion", tipo: "coleccion", visible: true, titulo: "Objetos serenos, líneas exactas.", texto: "" },
+  { id: "taller", tipo: "taller", visible: true, titulo: "De la tabla al objeto.", texto: "Una parte de la colección nace aquí: madera certificada, ensambles de espiga y acabados a mano. Cada pieza de taller sale numerada, firmada y con su historia de fabricación trazable de punta a punta." },
+  { id: "servicios", tipo: "servicios", visible: true, titulo: "Comprar es la parte fácil.", texto: "Detrás de cada entrega hay una red propia de transporte, proveedores auditados y facturación electrónica al instante." },
+  { id: "diario", tipo: "diario", visible: true, titulo: "Notas que huelen a aserrín.", texto: "" },
+];
+
+export function loadSecciones(): SeccionHome[] {
+  try {
+    const s = localStorage.getItem("bletia-home");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; }
+  } catch { /* semilla */ }
+  return SECCIONES_HOME_SEED;
+}
+export function saveSecciones(list: SeccionHome[]) { localStorage.setItem("bletia-home", JSON.stringify(list)); }
+
 /* ---------- Categorías del blog (CRUD en CMS) ---------- */
 export type BlogCategoria = { id: string; nombre: string };
 export const BLOG_CATEGORIAS_SEED: BlogCategoria[] = [
