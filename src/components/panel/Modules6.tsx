@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, autorDe, loadCMS, loadSite,
-  minutosLectura, saveCMS, saveSite, type CMSPost, type SiteConfig,
+  BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, autorDe, loadCMS, loadPaginas,
+  loadSite, minutosLectura, saveCMS, savePaginas, saveSite, type CMSPost, type Pagina, type SiteConfig,
 } from "../../data";
 import { I, Modal } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -174,6 +174,54 @@ export function SitioPublico() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ---------- Editor de páginas del sitio (Políticas / Contacto / Nosotros) ---------- */
+function PaginasEditor() {
+  const [pags, setPags] = useState<Pagina[]>(() => loadPaginas());
+  const [sel, setSel] = useState(pags[0]?.slug || "politicas");
+  const [saved, setSaved] = useState(false);
+  const actual = pags.find((p) => p.slug === sel);
+
+  const editar = (cuerpo: string) => setPags((ps) => ps.map((p) => (p.slug === sel ? { ...p, cuerpo } : p)));
+  const guardar = () => {
+    savePaginas(pags);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+        <div>
+          <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+            <I n="doc" s={16} className="text-stone" /> Páginas del sitio
+          </h3>
+          <p className="text-[12px] text-stone mt-0.5">
+            Políticas, Contacto y Nosotros. Se publican al instante y se enlazan desde el pie de página de bletia.ec.
+          </p>
+        </div>
+        <button onClick={guardar} className={btnDark}>
+          <I n={saved ? "check" : "doc"} s={14} /> {saved ? "Publicado" : "Publicar página"}
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-4">
+        {pags.map((p) => (
+          <button key={p.slug} onClick={() => setSel(p.slug)}
+            className={`px-3.5 py-2 text-[12px] font-semibold border transition-colors ${sel === p.slug ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+            {p.titulo}
+          </button>
+        ))}
+      </div>
+      {actual && (
+        <div className="mt-4">
+          <p className="text-[11px] text-stone mb-1.5">URL: <code className="font-mono">bletia.ec/#/pagina/{actual.slug}</code></p>
+          <textarea value={actual.cuerpo} onChange={(e) => editar(e.target.value)} rows={6}
+            className={`${inp} resize-y leading-relaxed`} />
+        </div>
+      )}
+    </Card>
   );
 }
 

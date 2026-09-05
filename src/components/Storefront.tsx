@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, variantesDe, type Product } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, slugDe, variantesDe, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
 type CartLine = { id: string; qty: number };
 type Step = "datos" | "pago" | "link" | "directo" | "listo";
 
-const CATS = ["Todo", "Asientos", "Mesas", "Almacenaje", "Descanso"] as const;
+const CATS = ["Todo", "Sofás", "Sillones", "Mesas", "Sillas", "Centros", "Almacenaje", "Descanso"] as const;
 
 /* El Diario se sirve desde el CMS del panel (bletia-cms en localStorage) */
 
@@ -260,12 +260,12 @@ export default function Storefront() {
               <Reveal>
                 <p className="eyebrow flex items-center gap-3">
                   <span className="w-1.5 h-1.5 bg-maroon inline-block" />
-                  Mueblería de autor — Quito · Ecuador
+                  Muebles hechos a mano — Cuenca · Ecuador
                 </p>
               </Reveal>
               <Reveal delay={90}>
                 <h1 className="font-display font-medium text-[clamp(2.7rem,6.2vw,5.4rem)] leading-[1.0] tracking-[-0.015em] mt-6">
-                  El lujo de<br />lo <em className="not-italic relative">esencial<span className="absolute left-0 -bottom-1 w-full h-[2px] bg-maroon/70" /></em>.
+                  Cada pieza<br />define <em className="not-italic relative">tu espacio<span className="absolute left-0 -bottom-1 w-full h-[2px] bg-maroon/70" /></em>.
                 </h1>
               </Reveal>
               <Reveal delay={180}>
@@ -372,7 +372,9 @@ export default function Storefront() {
                 <div className="pt-4 flex items-baseline justify-between gap-4">
                   <div>
                     <p className="text-[10.5px] font-semibold tracking-[0.18em] text-stone uppercase tnum">{p.sku}</p>
-                    <h3 className="font-display font-medium text-[19px] mt-1 group-hover:text-maroon transition-colors duration-300">{p.name}</h3>
+                    <a href={`#/producto/${slugDe(p.slug || p.name)}`} onClick={(e) => e.stopPropagation()}>
+                      <h3 className="font-display font-medium text-[19px] mt-1 group-hover:text-maroon transition-colors duration-300">{p.name}</h3>
+                    </a>
                     <p className="text-[12.5px] text-stone mt-0.5">{p.material}</p>
                   </div>
                   <div className="text-right shrink-0">
@@ -506,7 +508,7 @@ export default function Storefront() {
               const au = autorDe(d.autor);
               return (
                 <Reveal key={d.id} delay={i * 70}>
-                  <a href="#diario" className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
+                  <a href={`#/articulo/${slugDe(d.titulo)}`} className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
                     <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                       <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
                       <span className="text-[12px] text-stone tnum">{d.fecha}</span>
@@ -601,7 +603,7 @@ export default function Storefront() {
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Legal · Ecuador</p>
               <p className="text-[12.5px] text-cream/60 leading-relaxed">
                 BLETIA S.A.S. · RUC 1793442001001<br />
-                Av. República del Salvador N34-229, Quito<br />
+                Taller y showroom en Cuenca, Ecuador<br />
                 Facturación electrónica autorizada por el SRI<br />
                 Precios en USD · IVA 15% incluido
               </p>

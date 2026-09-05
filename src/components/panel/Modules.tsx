@@ -447,7 +447,7 @@ export function CRM() {
 export function PIM() {
   const [list, setList] = useState<Product[]>(PRODUCTS);
   const [openNew, setOpenNew] = useState(false);
-  const [np, setNp] = useState({ name: "", sku: "", category: "Asientos" as Product["category"], price: "", material: "" });
+  const [np, setNp] = useState({ name: "", sku: "", category: "Sofás" as Product["category"], price: "", material: "" });
 
   const toggle = (id: string) =>
     setList((l) =>
@@ -469,7 +469,7 @@ export function PIM() {
       channels: ["Showroom"],
     };
     setList((l) => [p, ...l]);
-    setNp({ name: "", sku: "", category: "Asientos", price: "", material: "" });
+    setNp({ name: "", sku: "", category: "Sofás", price: "", material: "" });
     setOpenNew(false);
   };
 

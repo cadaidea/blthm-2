@@ -25,14 +25,21 @@ export const IMG = {
   aparador: "https://image.qwenlm.ai/generated-images/565de814-33d0-46c0-8f6f-1bf68cb12434/_result.png",
   taller: "https://image.qwenlm.ai/generated-images/02bb7b91-83a7-4a3f-bde3-6e927c3b8951/_result.png",
   detalle: "https://image.qwenlm.ai/generated-images/7a099c07-d65e-481b-97d3-b1fbd3a433bf/_result.png",
+  centro: "https://image.qwenlm.ai/generated-images/54dee3c0-7dbf-4730-b284-39ea7a1cfdc1/_result.png",
 };
+
+/* slug a partir del nombre (para URLs tipo /producto/{slug}) */
+export const slugDe = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 /* ---------- Catálogo (PIM) ---------- */
 export type Product = {
   id: string;
   sku: string;
   name: string;
-  category: "Asientos" | "Mesas" | "Almacenaje" | "Descanso";
+  slug?: string;
+  category: "Sofás" | "Sillones" | "Mesas" | "Sillas" | "Centros" | "Almacenaje" | "Descanso";
   price: number; // precio final, IVA incluido
   material: string;
   dims: string;
@@ -48,14 +55,14 @@ export type Product = {
 
 export const PRODUCTS: Product[] = [
   {
-    id: "p1", sku: "BLT-101", name: "Butaca Aura", category: "Asientos",
+    id: "p1", sku: "BLT-101", name: "Butaca Aura", slug: "butaca-aura", category: "Sillones",
     price: 1190, material: "Nogal americano · Bouclé crudo", dims: "78 × 82 × 74 cm",
     img: IMG.hero, stock: 6, state: "Publicado", origin: "Taller BLETIA", lead: "3 semanas",
     desc: "Curva continua tallada en nogal, cojín en bouclé de lana. Ensamble de espiga a la vista, sin herrajes. Serie numerada y firmada por el maestro de taller.",
     channels: ["Web", "Showroom", "Catálogo"],
   },
   {
-    id: "p2", sku: "BLT-204", name: "Sofá Nudo", category: "Asientos",
+    id: "p2", sku: "BLT-204", name: "Sofá Nudo", slug: "sofa-nudo", category: "Sofás",
     price: 2890, material: "Lino avena · Patas de nogal", dims: "228 × 95 × 80 cm",
     img: IMG.sofa, stock: 4, state: "Publicado", origin: "Proveedor", lead: "5 semanas",
     desc: "Tres cuerpos, plumón recuperado y espuma de alta densidad. Funda removible lavable. Estructura garantizada por 10 años.",
@@ -77,7 +84,7 @@ export const PRODUCTS: Product[] = [
     channels: ["Web", "Catálogo"],
   },
   {
-    id: "p5", sku: "BLT-115", name: "Silla Vela", category: "Asientos",
+    id: "p5", sku: "BLT-115", name: "Silla Vela", slug: "silla-vela", category: "Sillas",
     price: 420, material: "Nogal · Asiento de cuero vegetalizado", dims: "46 × 52 × 81 cm",
     img: IMG.silla, stock: 24, state: "Publicado", origin: "Taller BLETIA", lead: "2 semanas",
     desc: "Respaldo curvado al vapor, una sola pieza. Cuero de curtiembre local con sello ambiental. Apilable de a dos.",
@@ -97,6 +104,14 @@ export const PRODUCTS: Product[] = [
     desc: "Puertas ranuradas a mano, interior en cedro aromático. Bisagras de cierre suave. Stock limitado por serie.",
     channels: ["Showroom"],
     mto: "Serie numerada bajo pedido · se fabrica en 5 semanas",
+  },
+  {
+    id: "p8", sku: "BLT-712", name: "Centro Nube", slug: "centro-nube", category: "Centros",
+    price: 940, material: "Nogal americano · Base cilíndrica", dims: "90 × 90 × 35 cm",
+    img: IMG.centro, stock: 7, state: "Publicado", origin: "Taller BLETIA", lead: "3 semanas",
+    desc: "Mesa de centro de nogal con base escultórica torneada en una sola pieza. Borde biselado a mano y acabado al aceite. El complemento sereno para tu sala.",
+    channels: ["Web", "Showroom", "Catálogo"],
+    mto: "Disponible a medida en otras dimensiones · +2 semanas",
   },
 ];
 
@@ -341,18 +356,19 @@ export const SITE_DEFAULTS: SiteConfig = {
   seoDesc: "Muebles de lujo minimalista fabricados en Quito. Pago seguro con PayPhone y entrega nacional.",
   pagoLink: true,
   pagoDirecto: true,
-  colecciones: { Asientos: true, Mesas: true, Almacenaje: true, Descanso: true },
+  colecciones: { "Sofás": true, "Sillones": true, "Mesas": true, "Sillas": true, "Centros": true, "Almacenaje": true, "Descanso": true },
   menus: {
     tienda: [
       { label: "Colección", url: "#coleccion" },
-      { label: "Taller", url: "#taller" },
-      { label: "Servicios", url: "#servicios" },
-      { label: "Diario", url: "#diario" },
+      { label: "Sofás", url: "#/categoria/sofas" },
+      { label: "Sillones", url: "#/categoria/sillones" },
+      { label: "Mesas", url: "#/categoria/mesas" },
+      { label: "Diario", url: "#/blog" },
     ],
     empresa: [
-      { label: "Proyectos a medida", url: "#servicios" },
-      { label: "Materiales", url: "#taller" },
-      { label: "Legal", url: "#legal" },
+      { label: "Nosotros", url: "#/pagina/nosotros" },
+      { label: "Contacto", url: "#/pagina/contacto" },
+      { label: "Políticas", url: "#/pagina/politicas" },
     ],
   },
 };
@@ -438,6 +454,33 @@ export const MOV_STOCK_SEED: MovStock[] = [
 
 /* Suscriptores capturados en el footer de la tienda (opt-in doble: nacen "Pendiente") */
 export type WebSuscriptor = { email: string; fecha: string };
+/* ---------- Páginas del sitio (Políticas / Contacto / Nosotros) ---------- */
+export type Pagina = { slug: string; titulo: string; cuerpo: string };
+
+export const PAGINAS_SEED: Pagina[] = [
+  {
+    slug: "politicas", titulo: "Políticas",
+    cuerpo: "Garantía de 5 años en estructura y ensambles. Cambios dentro de los 15 días siguientes a la entrega si la pieza presenta defectos de fabricación. Los muebles hechos a medida (Made to Order) no admiten devolución, pero sí ajuste sin costo durante los primeros 60 días. Los precios incluyen IVA 15%. La entrega guante blanco cubre armado en sitio y retiro de embalaje.",
+  },
+  {
+    slug: "contacto", titulo: "Contacto",
+    cuerpo: "Taller y showroom en Cuenca, Ecuador. Escríbenos para cotizar un mueble a medida, visitar el taller o coordinar una entrega. Respondemos en menos de 24 horas hábiles. También puedes agendar una videollamada para ver las maderas y tapices disponibles antes de decidir.",
+  },
+  {
+    slug: "nosotros", titulo: "Nosotros",
+    cuerpo: "BLETIA nace en Cuenca con una idea simple: cada pieza define tu espacio. Hacemos a mano cada sofá, sillón, mesa, silla o centro que sale del taller, y convertimos tu idea en un mueble único solo para ti. Trabajamos nogal y roble certificados, cuero vegetalizado y tapices de lino, con series numeradas y firmadas.",
+  },
+];
+
+export function loadPaginas(): Pagina[] {
+  try {
+    const s = localStorage.getItem("bletia-paginas");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; }
+  } catch { /* semilla */ }
+  return PAGINAS_SEED;
+}
+export function savePaginas(pags: Pagina[]) { localStorage.setItem("bletia-paginas", JSON.stringify(pags)); }
+
 export function loadWebSuscriptores(): WebSuscriptor[] {
   try {
     const s = localStorage.getItem("bletia-suscriptores-web");
