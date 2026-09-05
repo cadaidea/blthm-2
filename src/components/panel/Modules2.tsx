@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ASSETS, IMG, PHASES, SUPPLIERS, WORK_ORDERS, type Asset, type WorkOrder } from "../../data";
-import { CopyBtn, I, Modal } from "../ui";
+import { CopyBtn, I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -86,6 +86,7 @@ export function Taller() {
       ws.map((w) => {
         if (w.id !== id) return w;
         const phase = Math.min(w.phase + 1, PHASES.length - 1);
+        toast(`${w.piece} → fase «${PHASES[phase]}»`, phase === PHASES.length - 1 ? "ok" : "info");
         return { ...w, phase, progress: MILESTONES[phase] };
       }),
     );
@@ -182,8 +183,10 @@ export function DAM() {
     }, 1400);
   };
 
-  const approve = (id: string) =>
+  const approve = (id: string) => {
     setAssets((a) => a.map((x) => (x.id === id ? { ...x, status: "Aprobado" } : x)));
+    toast("Activo aprobado: ya puede publicarse", "ok");
+  };
 
   return (
     <div className="fade-in space-y-6">

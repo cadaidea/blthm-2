@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ATRIBUTOS, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadPaginas, minutosLectura,
-  nombreOpcion, slugDe, tagTexto, tagUrl, variantesDe, type Product,
+  nombreOpcion, productoPorSlug, productosActivos, slugDe, tagTexto, tagUrl, variantesDe, type Product,
 } from "../data";
 import { I } from "./ui";
 
@@ -76,7 +76,7 @@ function NoEncontrado({ que }: { que: string }) {
 
 /* ================= PÁGINA DE PRODUCTO ================= */
 export function ProductoPage({ slug }: { slug: string }) {
-  const p = PRODUCTS.find((x) => slugDe(x.slug || x.name) === slug);
+  const p = productoPorSlug(slug);
   const [varSel, setVarSel] = useState<Record<string, string>>({});
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -93,7 +93,7 @@ export function ProductoPage({ slug }: { slug: string }) {
     attrsUsados.every((a) => v.opciones[a.id] && varSel[a.id] === v.opciones[a.id]),
   );
   const precio = matched ? matched.pvp : p.price;
-  const relacionados = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
+  const relacionados = productosActivos().filter((x) => x.category === p.category && x.id !== p.id).slice(0, 3);
 
   const comprar = () => {
     addToCart(p.id, qty);
@@ -232,10 +232,11 @@ export function ProductoPage({ slug }: { slug: string }) {
 
 /* ================= PÁGINA DE CATEGORÍA ================= */
 export function CategoriaPage({ slug }: { slug: string }) {
-  const cats = [...new Set(PRODUCTS.map((p) => p.category))];
+  const activos = productosActivos();
+  const cats = [...new Set(activos.map((p) => p.category))];
   const cat = cats.find((c) => slugDe(c) === slug);
   if (!cat) return <NoEncontrado que="categoría" />;
-  const items = PRODUCTS.filter((p) => p.category === cat);
+  const items = activos.filter((p) => p.category === cat);
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">

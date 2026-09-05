@@ -2,9 +2,10 @@ import { useMemo, useRef, useState } from "react";
 import { TTL_CACHE_MS, detectarDocumento } from "../../utils/sri";
 import {
   CITIES, CUSTOMERS, ORDER_FLOW, ORDERS, PRODUCTS, SUPPLIERS,
-  fmt, fmt2, type Customer, type Order, type Product,
+  fmt, fmt2, loadCustomProducts, saveCustomProduct, savePimOverride,
+  type Customer, type Order, type Product,
 } from "../../data";
-import { I, Modal } from "../ui";
+import { I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -445,17 +446,19 @@ export function CRM() {
 
 /* ================= PIM · Productos ================= */
 export function PIM() {
-  const [list, setList] = useState<Product[]>(PRODUCTS);
+  const [list, setList] = useState<Product[]>(() => [...PRODUCTS, ...loadCustomProducts()]);
   const [openNew, setOpenNew] = useState(false);
   const [np, setNp] = useState({ name: "", sku: "", category: "Sofás" as Product["category"], price: "", material: "" });
 
   const toggle = (id: string) =>
     setList((l) =>
-      l.map((p) =>
-        p.id === id
-          ? { ...p, state: p.state === "Publicado" ? "Borrador" : "Publicado" }
-          : p,
-      ),
+      l.map((p) => {
+        if (p.id !== id) return p;
+        const estado = p.state === "Publicado" ? "Borrador" : "Publicado";
+        savePimOverride(id, { estado });
+        toast(estado === "Publicado" ? `${p.name} publicado en la tienda` : `${p.name} oculto de la tienda`, estado === "Publicado" ? "ok" : "warn");
+        return { ...p, state: estado as Product["state"] };
+      }),
     );
 
   const add = () => {
@@ -468,7 +471,9 @@ export function PIM() {
       lead: "Por estimar", desc: "Ficha creada desde el PIM; completa materiales y dimensiones antes de publicar.",
       channels: ["Showroom"],
     };
+    saveCustomProduct(p);
     setList((l) => [p, ...l]);
+    toast(`Ficha «${p.name}» creada como borrador`, "ok");
     setNp({ name: "", sku: "", category: "Sofás", price: "", material: "" });
     setOpenNew(false);
   };

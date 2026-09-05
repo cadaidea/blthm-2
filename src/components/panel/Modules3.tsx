@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, randomCode, type PayLink } from "../../data";
-import { CodeBlock, CopyBtn, I } from "../ui";
+import { CodeBlock, CopyBtn, I, toast } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -244,12 +244,15 @@ export function Enlaces() {
     };
     setLinks((l) => [nl, ...l]);
     setLastNew(code);
+    toast(`Enlace creado para ${nl.who}`, "ok");
     setForm({ ...form, who: "", amount: "" });
     setTimeout(() => setLastNew(null), 2500);
   };
 
-  const revoke = (id: string) =>
+  const revoke = (id: string) => {
     setLinks((l) => l.map((x) => (x.id === id ? { ...x, status: "Revocado" } : x)));
+    toast("Enlace revocado: ya no se puede usar", "warn");
+  };
 
   return (
     <div className="fade-in space-y-6">

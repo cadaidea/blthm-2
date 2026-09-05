@@ -3,7 +3,7 @@ import {
   BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, autorDe, loadCMS, loadPaginas,
   loadSite, minutosLectura, saveCMS, savePaginas, saveSite, type CMSPost, type Pagina, type SiteConfig,
 } from "../../data";
-import { I, Modal } from "../ui";
+import { I, Modal, toast } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -30,6 +30,7 @@ export function SitioPublico() {
     if (sinPago) return;
     const cfg = { ...draft, seoTitulo: draft.seoTitulo.trim() || draft.seoTitulo, seoDesc: draft.seoDesc.trim() };
     saveSite(cfg);
+    toast("Configuración del sitio publicada en bletia.ec", "ok");
     setDraft(cfg);
     setLastPub(new Date().toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" }));
     setSaved(true);
@@ -188,6 +189,7 @@ function PaginasEditor() {
   const guardar = () => {
     savePaginas(pags);
     setSaved(true);
+    toast(`Página «${actual?.titulo}» publicada`, "ok");
     setTimeout(() => setSaved(false), 1800);
   };
 
@@ -252,6 +254,7 @@ export function CMS() {
     setMenus((m) => ({ ...m, [grupo]: [...m[grupo], { label: "Nuevo enlace", url: "#" }] }));
   const guardarMenus = () => {
     saveSite({ ...loadSite(), menus });
+    toast("Menús del pie de página actualizados", "ok");
     setMenusSaved(true);
     setTimeout(() => setMenusSaved(false), 1800);
   };
@@ -277,13 +280,17 @@ export function CMS() {
     if (!editing || editing.titulo.trim().length < 4) return;
     const p = { ...editing, estado };
     persist(posts.some((x) => x.id === p.id) ? posts.map((x) => (x.id === p.id ? p : x)) : [p, ...posts]);
+    toast(estado === "Publicado" ? `«${p.titulo}» publicado en la tienda` : `«${p.titulo}» guardado como borrador`, estado === "Publicado" ? "ok" : "info");
     setEditing(null);
   };
 
-  const toggleEstado = (id: string) =>
+  const toggleEstado = (id: string) => {
+    const target = posts.find((p) => p.id === id);
     persist(posts.map((p) => (p.id === id ? { ...p, estado: p.estado === "Publicado" ? "Borrador" : "Publicado" } : p)));
+    if (target) toast(target.estado === "Publicado" ? `«${target.titulo}» pasó a borrador` : `«${target.titulo}» publicado`, target.estado === "Publicado" ? "warn" : "ok");
+  };
 
-  const eliminar = (id: string) => { persist(posts.filter((p) => p.id !== id)); setConfirmDel(null); };
+  const eliminar = (id: string) => { persist(posts.filter((p) => p.id !== id)); setConfirmDel(null); toast("Entrada eliminada", "bad"); };
 
   return (
     <div className="fade-in space-y-6">

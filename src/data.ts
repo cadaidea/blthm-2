@@ -464,6 +464,66 @@ export const MOV_STOCK_SEED: MovStock[] = [
 
 /* Suscriptores capturados en el footer de la tienda (opt-in doble: nacen "Pendiente") */
 export type WebSuscriptor = { email: string; fecha: string };
+export function loadWebSuscriptores(): WebSuscriptor[] {
+  try {
+    const s = localStorage.getItem("bletia-suscriptores-web");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; }
+  } catch { /* vacío */ }
+  return [];
+}
+export function saveWebSuscriptor(email: string): boolean {
+  const list = loadWebSuscriptores();
+  if (list.some((w) => w.email.toLowerCase() === email.toLowerCase())) return false;
+  list.unshift({ email, fecha: new Date().toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" }) });
+  localStorage.setItem("bletia-suscriptores-web", JSON.stringify(list));
+  return true;
+}
+
+/* ---------- PIM → tienda: lo publicado en el panel rige el catálogo público ----------
+   Cada producto puede tener override de estado/precio/stock; la tienda los aplica al cargar. */
+export type PimOverride = { estado?: string; precio?: number; stock?: number };
+export function loadPimOverrides(): Record<string, PimOverride> {
+  try {
+    const s = localStorage.getItem("bletia-pim-overrides");
+    if (s) return JSON.parse(s);
+  } catch { /* vacío */ }
+  return {};
+}
+export function savePimOverride(id: string, ov: PimOverride) {
+  const all = loadPimOverrides();
+  all[id] = { ...all[id], ...ov };
+  localStorage.setItem("bletia-pim-overrides", JSON.stringify(all));
+}
+
+/* Productos creados desde el PIM (persisten aparte de la semilla) */
+export function loadCustomProducts(): Product[] {
+  try {
+    const s = localStorage.getItem("bletia-pim-custom");
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; }
+  } catch { /* vacío */ }
+  return [];
+}
+export function saveCustomProduct(p: Product) {
+  const list = loadCustomProducts();
+  localStorage.setItem("bletia-pim-custom", JSON.stringify([p, ...list]));
+}
+
+/* Catálogo vivo: seed + creados + overrides; solo "Publicado" sale a la tienda */
+export function productosActivos(): Product[] {
+  const ov = loadPimOverrides();
+  return [...PRODUCTS, ...loadCustomProducts()]
+    .map((p) => (ov[p.id] ? { ...p, ...ov[p.id], state: (ov[p.id].estado as Product["state"]) || p.state } : p))
+    .map((p) => ({ ...p, img: p.img || IMG.detalle }))
+    .filter((p) => p.state === "Publicado");
+}
+export function productoPorSlug(slug: string): Product | undefined {
+  const ov = loadPimOverrides();
+  return [...PRODUCTS, ...loadCustomProducts()]
+    .map((p) => (ov[p.id] ? { ...p, ...ov[p.id] } : p))
+    .map((p) => ({ ...p, img: p.img || IMG.detalle }))
+    .find((p) => slugDe(p.slug || p.name) === slug);
+}
+
 /* ---------- Páginas del sitio (Políticas / Contacto / Nosotros) ---------- */
 export type Pagina = { slug: string; titulo: string; cuerpo: string };
 
@@ -490,21 +550,6 @@ export function loadPaginas(): Pagina[] {
   return PAGINAS_SEED;
 }
 export function savePaginas(pags: Pagina[]) { localStorage.setItem("bletia-paginas", JSON.stringify(pags)); }
-
-export function loadWebSuscriptores(): WebSuscriptor[] {
-  try {
-    const s = localStorage.getItem("bletia-suscriptores-web");
-    if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; }
-  } catch { /* vacío */ }
-  return [];
-}
-export function saveWebSuscriptor(email: string) {
-  const list = loadWebSuscriptores();
-  if (list.some((w) => w.email.toLowerCase() === email.toLowerCase())) return false;
-  list.unshift({ email, fecha: new Date().toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" }) });
-  localStorage.setItem("bletia-suscriptores-web", JSON.stringify(list));
-  return true;
-}
 
 export function loadSite(): SiteConfig {
   try {
