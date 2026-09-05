@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, slugDe, variantesDe, type Product } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, slugDe, tagTexto, variantesDe, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -522,7 +522,8 @@ export default function Storefront() {
                         {d.etiquetas && d.etiquetas.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {d.etiquetas.map((e) => (
-                              <span key={e} className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 group-hover:border-maroon/40 transition-colors">#{e}</span>
+                              <a key={e} href={`#/blog/etiqueta/${slugDe(e)}`} onClick={(ev) => ev.stopPropagation()}
+                                className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(e)}</a>
                             ))}
                           </div>
                         )}

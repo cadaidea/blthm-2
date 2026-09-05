@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ATRIBUTOS, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadPaginas, minutosLectura,
-  nombreOpcion, slugDe, variantesDe, type Product,
+  nombreOpcion, slugDe, tagTexto, variantesDe, type Product,
 } from "../data";
 import { I } from "./ui";
 
@@ -288,7 +288,7 @@ export function BlogPage({ kind, value }: { kind?: "categoria" | "etiqueta" | "a
 
   const titulo =
     kind === "categoria" ? `Categoría: ${value}` :
-    kind === "etiqueta" ? `#${value}` :
+    kind === "etiqueta" ? `Etiqueta: ${tagTexto(value || "")}` :
     kind === "autor" ? `Autor: ${autorDe(value)?.nombre || value}` : "Diario de taller";
 
   return (
@@ -329,7 +329,7 @@ export function BlogPage({ kind, value }: { kind?: "categoria" | "etiqueta" | "a
             <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-stone mb-3">Etiquetas</p>
             <div className="flex flex-wrap gap-2">
               {tags.map((t) => (
-                <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">#{t}</a>
+                <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
               ))}
             </div>
           </div>
@@ -383,7 +383,7 @@ export function ArticuloPage({ slug }: { slug: string }) {
         {(p.etiquetas || []).length > 0 && (
           <div className="flex flex-wrap gap-2 mt-10">
             {(p.etiquetas || []).map((t) => (
-              <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">#{t}</a>
+              <a key={t} href={`#/blog/etiqueta/${slugDe(t)}`} className="px-3 py-1.5 text-[12px] border border-line text-ink2 hover:border-maroon hover:text-maroon transition-colors">{tagTexto(t)}</a>
             ))}
           </div>
         )}

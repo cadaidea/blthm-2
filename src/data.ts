@@ -33,6 +33,10 @@ export const slugDe = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+/* texto legible a partir de un slug de etiqueta: "hecho-a-mano" → "hecho a mano".
+   El "#" solo vive en la URL como prefijo de ruta del prototipo; nunca se muestra. */
+export const tagTexto = (s: string) => s.replace(/-/g, " ");
+
 /* ---------- Catálogo (PIM) ---------- */
 export type Product = {
   id: string;
