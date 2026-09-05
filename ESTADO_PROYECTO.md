@@ -1,7 +1,57 @@
-# BLETIA · Estado del proyecto (backup documental)
+# BLETIA · Estado del proyecto (BACKUP COMPLETO)
 
-> Este archivo documenta el estado funcional del proyecto. **No perder**: toda mejora nueva
-> se agrega SOBRE este estado, sin reescribir lo que ya funciona.
+> **Snapshot de seguridad**: este documento registra TODO lo que funciona hoy.
+> Toda mejora nueva se agrega SOBRE este estado, sin reescribir lo que ya funciona.
+> Stack: React 18 + Vite + Tailwind CSS 4 + TypeScript · Geomanist (público) / Inter (dash)
+> Fondos claros #ffffff · marca #800000 puntual · modo oscuro solo en dash.
+
+## 0. Mapa de archivos (inventario físico)
+- `index.html` — Inter (Google) + @font-face Geomanist (public/fonts/, font-display:swap)
+- `src/main.tsx`, `src/App.tsx` — rutas: tienda (`#/`), panel (`#/dash`, `#/dash/login`, alias `#/panel`)
+- `src/index.css` — tokens de marca (paper #fff, maroon #800000), modo oscuro `.dark`, animaciones
+- `src/data.ts` — semilla completa + IMG (mapa central de fotos) + CMS/Sitio (load/save localStorage)
+- `src/utils/sri.ts` — validación Módulo 10/11 cédula/RUC
+- `src/components/ui.tsx` — iconos SVG propios, Reveal, Modal, CopyBtn, CodeBlock
+- `src/components/Storefront.tsx` — tienda pública completa
+- `src/components/panel/` — pui, auth, Panel + Modules 1–6
+- `referencia/` — carpeta TEMPORAL de intercambio (se borra al final)
+
+## 0.1. Storefront — todo lo que la tienda hace HOY
+- Barra de anuncio fija (configurable en panel) + header fijo con blur al hacer scroll
+- Header: logo BLETIA, navegación desde `site.menus.tienda`, y 4 acciones:
+  búsqueda global (piezas + diario + secciones), cuenta (nombre persistido),
+  mis deseos (drawer + corazones en tarjetas y quick view), carrito (badge contador)
+- Apertura: producto destacado configurable (Ken Burns) + tarjeta superpuesta
+- Colección: filtros por categoría (colecciones apagables desde el panel), tarjetas con
+  corazón, quick view (specs, stock, IVA), "Añadir" y "Comprar ahora"
+- Secciones: Taller (4 pasos, foto), Servicios (4 bloques), Diario (servido por el CMS),
+  Footer (menús desde CMS, bloque #legal, sin mención al panel), copyright limpio
+- Checkout PayPhone: datos (cédula/RUC validados Módulo 10/11), método link 24h o directo
+  (según lo publicado en Sitio público), confirmación con link de seguimiento de un uso
+- Persistencia: carrito, deseos y cuenta en localStorage
+
+## 0.2. Panel — 15 módulos en 6 grupos (IA exacta del original)
+- Operación: Panel de control (bus de eventos +2.000 ev/s, prueba de carga, KPIs) ·
+  Pedidos OMS (15 estados + pedido bajo specs con fotos por campo) · Logística & guías
+  SRI (autorización 49 dígitos + etiquetas) · Taller & fabricación (fases) · BOM & materiales (MRP)
+- Relaciones: Clientes & proveedores (pestañas CRM+SRM, consulta por documento SRI,
+  caché 5 min, modo offline) · Cobros PayPhone
+- Producto & activos: Productos PIM · Fototeca DAM (subida simulada, aprobación, URL CDN)
+- Finanzas: Contabilidad & SRI (Facturas + Partida doble + Formulario 104, export CSV)
+- Plataforma: Accesos de un solo uso · Seguridad & porting · Ajustes & despliegue (guía OVH)
+- Canal digital: Sitio público (anuncio, destacado, colecciones, SEO, pagos) ·
+  Contenido web CMS (diario publicar/despublicar/eliminar + editor de menús del sitio)
+- Auth: login por roles en /dash/login (logo SVG BLETIA), auto-Gerencia, sesión v2,
+  menú de usuario (entrar como colaborador / volver a Gerencia), contraste claro/oscuro,
+  bienvenida editable ("inspírate · editar mensaje")
+
+## 0.3. Reglas que NO se tocan
+1. Roles: Gerencia ve los 15 módulos; cada trabajador solo su área (infra/seguridad solo Gerencia).
+2. Auto-Gerencia al entrar sin sesión válida de trabajador.
+3. Fondo claro #ffffff; modo oscuro solo dash; #800000 puntual.
+4. La tienda nunca muestra "Panel interno" (acceso equipo: solo texto bletia.ec/dash en popup de cuenta).
+5. Las fotos viven en el mapa IMG de data.ts (un solo punto de cambio).
+6. Lo publicado en Canal digital rige la tienda (anuncio, destacado, colecciones, pagos, menús, diario).
 
 ## 1. Inventario de lo implementado (estado actual)
 

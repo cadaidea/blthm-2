@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CITIES, IMG, PRODUCTS, fmt, fmt2, loadCMS, loadSite, randomCode, type Product } from "../data";
+import { ATRIBUTOS, CITIES, IMG, PRODUCTS, fmt, fmt2, loadCMS, loadSite, randomCode, variantesDe, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -32,6 +32,11 @@ export default function Storefront() {
   const [cuenta, setCuenta] = useState<string>(() => localStorage.getItem("bletia-cuenta") || "");
   const [accForm, setAccForm] = useState({ nombre: "", email: "" });
 
+  /* selector de variantes (combinación) en la ficha rápida */
+  const [varSel, setVarSel] = useState<Record<string, string>>({});
+  const [nlEmail, setNlEmail] = useState("");
+  const [nlOk, setNlOk] = useState(false);
+
   /* Canal digital: lo publicado en el panel rige la tienda */
   const [site] = useState(loadSite);
   const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
@@ -40,6 +45,11 @@ export default function Storefront() {
 
   useEffect(() => { localStorage.setItem("bletia-cart", JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem("bletia-wish", JSON.stringify(wish)); }, [wish]);
+  useEffect(() => { setVarSel({}); }, [quick?.id]);
+
+  const quickVars = quick ? variantesDe(quick.id) : [];
+  const matchedVar = quickVars.find((v) => Object.entries(v.opciones).every(([aid, oid]) => varSel[aid] === oid));
+  const precioFicha = matchedVar ? matchedVar.pvp : quick?.price ?? 0;
 
   const toggleWish = (id: string) =>
     setWish((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]));
@@ -499,6 +509,31 @@ export default function Storefront() {
       {/* ================= FOOTER ================= */}
       <footer className="bg-ink text-cream">
         <div className="max-w-[1400px] mx-auto px-5 sm:px-8 pt-16 pb-8">
+          {/* newsletter (alimenta Marketing · Digest del panel) */}
+          <div className="grid md:grid-cols-2 gap-6 items-center border-b border-cream/15 pb-10 mb-12">
+            <div>
+              <p className="font-display font-medium text-[clamp(1.3rem,2.4vw,1.8rem)] leading-tight">El diario del taller, en tu correo.</p>
+              <p className="text-cream/60 text-[13.5px] mt-2">Sin spam. Confirmas con un clic y te bajas cuando quieras.</p>
+            </div>
+            {nlOk ? (
+              <p className="flex items-center gap-2.5 text-[13.5px] font-medium text-ok md:justify-end fade-in">
+                <I n="check" s={16} /> ¡Gracias! Revisa tu correo para confirmar la suscripción.
+              </p>
+            ) : (
+              <form
+                onSubmit={(e) => { e.preventDefault(); if (/.+@.+\..+/.test(nlEmail)) setNlOk(true); }}
+                className="flex gap-2 md:justify-end"
+              >
+                <input value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} type="email" required
+                  placeholder="tu@correo.com"
+                  className="flex-1 md:max-w-[280px] bg-transparent border border-cream/30 px-4 py-3 text-[13.5px] text-cream placeholder:text-cream/40 outline-none focus:border-maroon transition-colors" />
+                <button type="submit" className="bg-maroon text-cream text-[13px] font-semibold px-6 hover:bg-maroon2 transition-colors">
+                  Suscribirme
+                </button>
+              </form>
+            )}
+          </div>
+
           <div className="grid md:grid-cols-12 gap-10">
             <div className="md:col-span-5">
               <p className="font-display font-semibold tracking-[0.32em] text-xl">BLETIA<span className="text-maroon">.</span></p>
@@ -566,10 +601,39 @@ export default function Storefront() {
                   </div>
                 ))}
               </dl>
+
+              {quickVars.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-stone">Elige tu combinación</p>
+                  {ATRIBUTOS.filter((a) => quickVars.some((v) => a.id in v.opciones)).map((a) => (
+                    <div key={a.id}>
+                      <p className="text-[12px] font-semibold text-ink2 mb-2">{a.nombre}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {a.opciones.map((o) => {
+                          const sel = varSel[a.id] === o.id;
+                          return (
+                            <button key={o.id} onClick={() => setVarSel((s) => ({ ...s, [a.id]: sel ? "" : o.id }))}
+                              className={`inline-flex items-center gap-2 border px-3 py-2 text-[12.5px] transition-all duration-200 ${sel ? "border-ink bg-ink text-paper" : "border-linedark text-ink2 hover:border-ink"}`}>
+                              {o.color && <span className="w-3.5 h-3.5 rounded-full border border-line shrink-0" style={{ background: o.color }} />}
+                              {o.valor}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  {matchedVar && (
+                    <p className="text-[11.5px] text-ok font-medium flex items-center gap-1.5 fade-in">
+                      <I n="check" s={13} /> Combinación disponible · PVP {fmt(matchedVar.pvp)}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-end justify-between mt-7">
                 <div>
-                  <p className="font-display font-medium text-[26px] tnum">{fmt(quick.price)}</p>
-                  <p className="text-[11px] text-stone">IVA 15% incluido · {fmt2(quick.price / 1.15)} base</p>
+                  <p className="font-display font-medium text-[26px] tnum">{fmt(precioFicha)}</p>
+                  <p className="text-[11px] text-stone">IVA 15% incluido · {fmt2(precioFicha / 1.15)} base</p>
                 </div>
                 {quick.state === "En taller" && (
                   <span className="text-[11px] font-bold tracking-wide uppercase px-2.5 py-1.5 bg-warnbg text-warn">Reserva tu serie</span>

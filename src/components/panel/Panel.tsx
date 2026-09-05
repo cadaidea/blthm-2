@@ -8,12 +8,13 @@ import { Contabilidad, Enlaces, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
 import { OMS15 } from "./Modules5";
 import { CMS, SitioPublico } from "./Modules6";
+import { Marketing, Stock, Variantes } from "./Modules7";
 import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth";
 
 export type Mod =
-  | "vision" | "oms" | "logistica" | "taller" | "bom"
-  | "relaciones" | "cobros" | "pim" | "dam"
-  | "conta" | "links" | "seguridad" | "infra" | "sitio" | "cms";
+  | "vision" | "oms" | "logistica" | "taller" | "bom" | "stock"
+  | "relaciones" | "cobros" | "pim" | "variantes" | "dam"
+  | "conta" | "links" | "seguridad" | "infra" | "sitio" | "cms" | "marketing";
 
 /* Estructura de TALLER UNO (rama ac8f5) — 15 módulos en 6 grupos */
 const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] }[] = [
@@ -23,6 +24,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
     { id: "logistica", label: "Logística & guías SRI", icon: "truck" },
     { id: "taller", label: "Taller & fabricación", icon: "hammer" },
     { id: "bom", label: "BOM & materiales", icon: "tag" },
+    { id: "stock", label: "Stock & bodegas", icon: "box" },
   ]},
   { group: "Relaciones", items: [
     { id: "relaciones", label: "Clientes & proveedores", icon: "users" },
@@ -30,6 +32,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
   ]},
   { group: "Producto & activos", items: [
     { id: "pim", label: "Productos · PIM", icon: "tag" },
+    { id: "variantes", label: "Variables & variantes", icon: "spark" },
     { id: "dam", label: "Fototeca · DAM", icon: "image" },
   ]},
   { group: "Finanzas", items: [
@@ -43,6 +46,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
   { group: "Canal digital", items: [
     { id: "sitio", label: "Sitio público", icon: "eye" },
     { id: "cms", label: "Contenido web · CMS", icon: "doc" },
+    { id: "marketing", label: "Marketing · Digest", icon: "pulse" },
   ]},
 ];
 
@@ -52,6 +56,7 @@ const TITLES: Record<Mod, string> = {
   cobros: "Cobros PayPhone", pim: "Productos · PIM", dam: "Fototeca · DAM",
   conta: "Contabilidad & SRI", links: "Accesos de un solo uso", seguridad: "Seguridad & porting",
   infra: "Ajustes & despliegue", sitio: "Sitio público · bletia.ec", cms: "Contenido web · CMS",
+  variantes: "Variables & variantes", stock: "Stock & bodegas", marketing: "Marketing · Digest",
 };
 
 /* Cada rol ve solo su área. Gerencia lo ve todo.
@@ -72,6 +77,9 @@ const ACCESS: Record<Mod, Role[]> = {
   infra: ["gerencia"],
   sitio: ["gerencia", "ventas"],
   cms: ["gerencia", "ventas"],
+  marketing: ["gerencia", "ventas"],
+  variantes: ["gerencia", "ventas", "taller"],
+  stock: ["gerencia", "taller", "logistica"],
 };
 
 /* ---- motor de eventos simulado (Redis + BullMQ en producción) ---- */
@@ -298,13 +306,16 @@ export default function Panel() {
           {mod === "relaciones" && <Relaciones role={role} />}
           {mod === "cobros" && <Cobros />}
           {mod === "pim" && <PIM />}
+          {mod === "variantes" && <Variantes />}
           {mod === "dam" && <DAM />}
+          {mod === "stock" && <Stock />}
           {mod === "conta" && <Contabilidad />}
           {mod === "links" && <Enlaces />}
           {mod === "seguridad" && <Seguridad />}
           {mod === "infra" && <Infra />}
           {mod === "sitio" && <SitioPublico />}
           {mod === "cms" && <CMS />}
+          {mod === "marketing" && <Marketing />}
         </main>
       </div>
     </div>

@@ -346,6 +346,76 @@ export function loadCMS(): CMSPost[] {
 }
 export function saveCMS(posts: CMSPost[]) { localStorage.setItem("bletia-cms", JSON.stringify(posts)); }
 
+/* ---------- Variables / variantes de producto (modelo COMBINACIÓN) ---------- */
+export type Atributo = {
+  id: string; nombre: string; tipo: "color" | "texto" | "imagen";
+  opciones: { id: string; valor: string; color?: string }[];
+};
+export const ATRIBUTOS: Atributo[] = [
+  { id: "at-tapiz", nombre: "Tapiz", tipo: "color", opciones: [
+    { id: "op-beige", valor: "Beige", color: "#d8cbb4" }, { id: "op-gris", valor: "Gris piedra", color: "#b0aca3" },
+    { id: "op-verde", valor: "Verde salvia", color: "#a3b18a" }, { id: "op-teja", valor: "Teja", color: "#b0603f" },
+  ]},
+  { id: "at-lado", nombre: "Lado", tipo: "texto", opciones: [
+    { id: "op-izq", valor: "Izquierdo" }, { id: "op-der", valor: "Derecho" },
+  ]},
+  { id: "at-acabado", nombre: "Acabado", tipo: "texto", opciones: [
+    { id: "op-nogal", valor: "Nogal" }, { id: "op-roble", valor: "Roble" }, { id: "op-negro", valor: "Negro" },
+  ]},
+];
+export type Variante = {
+  id: string; productoId: string; opciones: Record<string, string>; pvp: number; costo: number;
+};
+export const VARIANTES_SEED: Variante[] = [
+  { id: "v1", productoId: "aura", opciones: { "at-tapiz": "op-beige" }, pvp: 1190, costo: 640 },
+  { id: "v2", productoId: "aura", opciones: { "at-tapiz": "op-gris" }, pvp: 1190, costo: 640 },
+  { id: "v3", productoId: "aura", opciones: { "at-tapiz": "op-verde" }, pvp: 1240, costo: 665 },
+  { id: "v4", productoId: "nudo", opciones: { "at-tapiz": "op-beige" }, pvp: 2450, costo: 1310 },
+  { id: "v5", productoId: "nudo", opciones: { "at-tapiz": "op-teja" }, pvp: 2520, costo: 1350 },
+  { id: "v6", productoId: "vela", opciones: { "at-acabado": "op-nogal" }, pvp: 320, costo: 150 },
+  { id: "v7", productoId: "vela", opciones: { "at-acabado": "op-negro" }, pvp: 340, costo: 160 },
+];
+export const variantesDe = (productoId: string) => VARIANTES_SEED.filter((v) => v.productoId === productoId);
+export const nombreOpcion = (atributoId: string, opcionId: string) =>
+  ATRIBUTOS.find((a) => a.id === atributoId)?.opciones.find((o) => o.id === opcionId)?.valor ?? "";
+
+/* ---------- Marketing: suscriptores, listas, formularios (opt-in doble) ---------- */
+export type Suscriptor = {
+  id: string; email: string; nombre: string; estado: "Pendiente" | "Confirmado" | "Baja" | "Rebotado";
+  listas: string[]; fuente: string; fecha: string;
+};
+export const SUSCRIPTORES_SEED: Suscriptor[] = [
+  { id: "s1", email: "maria.fj@gmail.com", nombre: "María Fernanda", estado: "Confirmado", listas: ["Newsletter"], fuente: "Footer", fecha: "02 feb 2026" },
+  { id: "s2", email: "estudio@alvarado.ec", nombre: "Estudio Alvarado", estado: "Confirmado", listas: ["Newsletter", "Arquitectos"], fuente: "Popup", fecha: "28 ene 2026" },
+  { id: "s3", email: "lucia.briones@outlook.com", nombre: "Lucía Briones", estado: "Pendiente", listas: ["Newsletter"], fuente: "Footer", fecha: "09 feb 2026" },
+  { id: "s4", email: "hotel@casadelpatio.ec", nombre: "Hotel Casa del Patio", estado: "Confirmado", listas: ["Hoteleros"], fuente: "Slide-in", fecha: "15 ene 2026" },
+  { id: "s5", email: "rebotado@correo.com", nombre: "—", estado: "Rebotado", listas: ["Newsletter"], fuente: "Footer", fecha: "04 ene 2026" },
+];
+export const LISTAS_SEED = [
+  { id: "li1", nombre: "Newsletter", slug: "newsletter", suscriptores: 3 },
+  { id: "li2", nombre: "Arquitectos", slug: "arquitectos", suscriptores: 1 },
+  { id: "li3", nombre: "Hoteleros", slug: "hoteleros", suscriptores: 1 },
+];
+export const FORMULARIOS_SEED = [
+  { id: "f1", nombre: "Newsletter footer", tipo: "inline", listas: ["Newsletter"], activo: true },
+  { id: "f2", nombre: "Popup 10% primera compra", tipo: "popup", listas: ["Newsletter"], activo: true },
+  { id: "f3", nombre: "Slide-in catálogo", tipo: "slide_in", listas: ["Newsletter", "Arquitectos"], activo: false },
+];
+
+/* ---------- Stock & bodegas (movimientos entrada/salida/ajuste) ---------- */
+export type MovStock = {
+  id: string; fecha: string; tipo: "Entrada" | "Salida" | "Ajuste"; sku: string; pieza: string;
+  bodega: string; qty: number; motivo: string;
+};
+export const BODEGAS = ["Showroom Quito", "Taller", "Bodega Central"];
+export const MOV_STOCK_SEED: MovStock[] = [
+  { id: "m1", fecha: "09 feb 2026", tipo: "Salida", sku: "BLT-011", pieza: "Butaca Aura", bodega: "Showroom Quito", qty: -1, motivo: "Venta BL-2026-0148" },
+  { id: "m2", fecha: "08 feb 2026", tipo: "Entrada", sku: "BLT-021", pieza: "Mesa Raíz", bodega: "Taller", qty: 2, motivo: "Producción OF-2207" },
+  { id: "m3", fecha: "07 feb 2026", tipo: "Ajuste", sku: "BLT-031", pieza: "Estantería Trama", bodega: "Bodega Central", qty: -1, motivo: "Inventario físico" },
+  { id: "m4", fecha: "05 feb 2026", tipo: "Entrada", sku: "BLT-041", pieza: "Silla Vela", bodega: "Bodega Central", qty: 18, motivo: "Compra proveedor" },
+  { id: "m5", fecha: "03 feb 2026", tipo: "Salida", sku: "BLT-051", pieza: "Cama Duna", bodega: "Bodega Central", qty: -1, motivo: "Despacho BL-2026-0144" },
+];
+
 export function loadSite(): SiteConfig {
   try {
     const s = localStorage.getItem("bletia-sitio");
