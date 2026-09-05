@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  CMS_POSTS_SEED, PRODUCTS, loadCMS, loadSite, saveCMS, saveSite,
-  type CMSPost, type SiteConfig,
+  BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, autorDe, loadCMS, loadSite,
+  minutosLectura, saveCMS, saveSite, type CMSPost, type SiteConfig,
 } from "../../data";
 import { I, Modal } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -316,16 +316,22 @@ export function CMS() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px]">
-            <thead><tr><Th>N°</Th><Th>Título</Th><Th>Etiqueta</Th><Th>Fecha</Th><Th>Estado</Th><Th>Acciones</Th></tr></thead>
+            <thead><tr><Th>N°</Th><Th>Título</Th><Th>Categoría</Th><Th>Autor</Th><Th>Lectura</Th><Th>Fecha</Th><Th>Estado</Th><Th>Acciones</Th></tr></thead>
             <tbody>
-              {posts.map((p) => (
+              {posts.map((p) => {
+                const au = autorDe(p.autor);
+                return (
                 <tr key={p.id} className="hover:bg-paper2/50 transition-colors fade-in">
                   <Td className="font-mono text-[12px] font-semibold text-maroon whitespace-nowrap">{p.num}</Td>
-                  <Td className="max-w-[340px]">
+                  <Td className="max-w-[300px]">
                     <span className="font-medium block leading-snug">{p.titulo}</span>
-                    <span className="text-[11.5px] text-stone line-clamp-1">{p.cuerpo}</span>
+                    {p.etiquetas && p.etiquetas.length > 0 && (
+                      <span className="text-[10.5px] text-stone">{p.etiquetas.map((e) => `#${e}`).join(" ")}</span>
+                    )}
                   </Td>
                   <Td><Chip tone="neutral">{p.tag}</Chip></Td>
+                  <Td className="text-[12px] whitespace-nowrap">{au ? au.nombre : <span className="text-stone">—</span>}</Td>
+                  <Td className="text-[12px] text-stone tnum whitespace-nowrap">{minutosLectura(p.cuerpo)} min</Td>
                   <Td className="whitespace-nowrap text-stone">{p.fecha}</Td>
                   <Td><StatusChip s={p.estado} /></Td>
                   <Td>
@@ -341,7 +347,8 @@ export function CMS() {
                     </div>
                   </Td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -369,7 +376,7 @@ export function CMS() {
                   className={inp} placeholder="Ej. El aceite de linaza se aplica tibio, nunca frío" />
               </label>
               <label className="block">
-                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Etiqueta</span>
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Categoría</span>
                 <select value={editing.tag} onChange={(e) => setEditing({ ...editing, tag: e.target.value })} className={inp}>
                   {TAGS.map((t) => <option key={t}>{t}</option>)}
                 </select>
@@ -378,6 +385,28 @@ export function CMS() {
                 <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Fecha</span>
                 <input value={editing.fecha} onChange={(e) => setEditing({ ...editing, fecha: e.target.value })} className={inp} placeholder="08 feb 2026" />
               </label>
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Autor</span>
+                <select value={editing.autor || ""} onChange={(e) => setEditing({ ...editing, autor: e.target.value || undefined })} className={inp}>
+                  <option value="">— sin autor —</option>
+                  {BLOG_AUTORES.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </label>
+              <div className="block sm:col-span-2">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Etiquetas (blog)</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {BLOG_ETIQUETAS.map((et) => {
+                    const on = (editing.etiquetas || []).includes(et);
+                    return (
+                      <button key={et} type="button"
+                        onClick={() => setEditing({ ...editing, etiquetas: on ? (editing.etiquetas || []).filter((x) => x !== et) : [...(editing.etiquetas || []), et] })}
+                        className={`text-[11.5px] font-semibold border px-2.5 py-1.5 transition-colors ${on ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+                        #{et}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <label className="block sm:col-span-2">
                 <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Cuerpo</span>
                 <textarea value={editing.cuerpo} onChange={(e) => setEditing({ ...editing, cuerpo: e.target.value })}

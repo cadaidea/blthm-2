@@ -119,3 +119,16 @@
    reordenar/añadir/quitar. Reemplazan el texto de versión en el copyright. Bloque legal con `#legal`.
 6. ✅ **Carpeta `referencia/`** (temporal) para que el dueño suba archivos reales y se integren; se
    elimina al terminar. Fuentes Geomanist van en `public/fonts/`, no aquí.
+
+## 5. Ronda de completitud vs. original Laravel (github.com/cadaidea/blthm-2/bletia) (completada ✅)
+1. ✅ **Corregido bug de variantes**: las variantes apuntaban a ids `aura/nudo/vela` pero los productos
+   son `p1–p7`. Ahora el selector de combinación SÍ se renderiza (Butaca Aura, Sofá Nudo, Silla Vela)
+   con PVP distinto por tapiz/acabado y precio dinámico en la ficha.
+2. ✅ **Blog avanzado** (categorías, etiquetas `#`, autores con nombre/cargo/bio, minutos de lectura):
+   el Diario de la tienda filtra por categoría y muestra autor + cápsulas de etiquetas; el CMS gana
+   columnas Autor/Lectura y el editor permite elegir autor y etiquetas.
+3. ✅ **Newsletter → Marketing**: el suscriptor del footer se guarda con opt-in doble (nace "Pendiente")
+   y aparece en el módulo Marketing · Digest con fuente "Footer web".
+4. ✅ **Made to Order (MTO)**: campo `mto` en Mesa Raíz y Aparador Bruma; se muestra como fila de
+   especificación y badge oscuro en la ficha.
+5. ✅ Build verde (41 módulos). Todo lo anterior permanece intacto.

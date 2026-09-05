@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ATRIBUTOS, BODEGAS, FORMULARIOS_SEED, LISTAS_SEED, MOV_STOCK_SEED, PRODUCTS,
-  SUSCRIPTORES_SEED, VARIANTES_SEED, fmt2, nombreOpcion,
+  SUSCRIPTORES_SEED, VARIANTES_SEED, fmt2, loadWebSuscriptores, nombreOpcion,
   type MovStock, type Suscriptor, type Variante,
 } from "../../data";
 import { I } from "../ui";
@@ -126,7 +126,14 @@ export function Variantes() {
 
 /* ================= Marketing ================= */
 export function Marketing() {
-  const [subs, setSubs] = useState<Suscriptor[]>(SUSCRIPTORES_SEED);
+  const [subs, setSubs] = useState<Suscriptor[]>(() => {
+    /* los capturados en el footer de la tienda nacen "Pendiente" (opt-in doble) */
+    const web: Suscriptor[] = loadWebSuscriptores().map((w, i) => ({
+      id: `web-${i}-${w.email}`, email: w.email, nombre: "—", estado: "Pendiente",
+      listas: ["Newsletter"], fuente: "Footer web", fecha: w.fecha,
+    }));
+    return [...web, ...SUSCRIPTORES_SEED];
+  });
   const [listas] = useState(LISTAS_SEED);
   const [forms, setForms] = useState(FORMULARIOS_SEED);
   const [tab, setTab] = useState<"suscriptores" | "listas" | "formularios">("suscriptores");

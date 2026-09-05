@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, CITIES, IMG, PRODUCTS, fmt, fmt2, loadCMS, loadSite, randomCode, variantesDe, type Product } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, autorDe, fmt, fmt2, loadCMS, loadSite, minutosLectura, randomCode, saveWebSuscriptor, variantesDe, type Product } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -40,6 +40,8 @@ export default function Storefront() {
   /* Canal digital: lo publicado en el panel rige la tienda */
   const [site] = useState(loadSite);
   const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
+  const [blogCat, setBlogCat] = useState("Todo");
+  const postsFiltrados = blogCat === "Todo" ? posts : posts.filter((p) => p.tag === blogCat);
   const destacado = PRODUCTS.find((p) => p.id === site.destacadoId) ?? PRODUCTS[0];
   const catActivas = CATS.filter((c) => c === "Todo" || site.colecciones[c] !== false);
 
@@ -485,23 +487,60 @@ export default function Storefront() {
               <a href="#diario" className="hidden sm:inline-flex items-center gap-2 text-[13px] font-semibold u-grow">Todo el diario <I n="arrow" s={14} /></a>
             </div>
           </Reveal>
-          {posts.length === 0 ? (
+          {/* filtro por categoría del blog */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {["Todo", ...BLOG_CATEGORIAS].map((c) => (
+              <button key={c} onClick={() => setBlogCat(c)}
+                className={`px-3.5 py-1.5 text-[12px] font-semibold border transition-colors ${blogCat === c ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {postsFiltrados.length === 0 ? (
             <p className="border-t border-linedark py-10 text-[13.5px] text-stone text-center">
               El diario está en pausa: el taller anda con las manos en la madera. Vuelve pronto.
             </p>
           ) : (
-            posts.map((d, i) => (
-              <Reveal key={d.id} delay={i * 70}>
-                <a href="#diario" className="group grid sm:grid-cols-[80px_110px_1fr_auto] gap-3 sm:gap-8 items-center border-t border-linedark py-6 hover:px-4 transition-all duration-300">
-                  <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
-                  <span className="text-[12px] text-stone tnum">{d.fecha}</span>
-                  <span className="font-display font-medium text-[17px] sm:text-[19px] group-hover:text-maroon transition-colors leading-snug">{d.titulo}</span>
-                  <span className="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-stone">
-                    {d.tag} <I n="chev-r" s={12} className="group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </a>
-              </Reveal>
-            ))
+            postsFiltrados.map((d, i) => {
+              const au = autorDe(d.autor);
+              return (
+                <Reveal key={d.id} delay={i * 70}>
+                  <a href="#diario" className="group block border-t border-linedark py-7 hover:px-4 transition-all duration-300">
+                    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                      <span className="text-[11px] font-bold tracking-[0.16em] text-maroon uppercase">{d.num}</span>
+                      <span className="text-[12px] text-stone tnum">{d.fecha}</span>
+                      <span className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone bg-paper2 px-2 py-0.5">{d.tag}</span>
+                      <span className="text-[11px] text-stone flex items-center gap-1"><I n="clock" s={11} /> {minutosLectura(d.cuerpo)} min de lectura</span>
+                    </div>
+                    <div className="grid sm:grid-cols-[1fr_auto] gap-4 mt-2.5">
+                      <div>
+                        <h3 className="font-display font-medium text-[18px] sm:text-[21px] group-hover:text-maroon transition-colors leading-snug">{d.titulo}</h3>
+                        <p className="text-[13.5px] text-ink2 leading-relaxed mt-2 max-w-[68ch]">{d.cuerpo}</p>
+                        {d.etiquetas && d.etiquetas.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-3">
+                            {d.etiquetas.map((e) => (
+                              <span key={e} className="text-[10.5px] font-semibold text-ink2 border border-linedark px-2 py-0.5 group-hover:border-maroon/40 transition-colors">#{e}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {au && (
+                        <div className="flex sm:flex-col items-center sm:items-end gap-2.5 shrink-0">
+                          <span className="w-10 h-10 bg-ink text-paper text-[12px] font-bold flex items-center justify-center shrink-0">
+                            {au.nombre.split(" ").slice(0, 2).map((w) => w[0]).join("")}
+                          </span>
+                          <span className="text-right">
+                            <span className="block text-[12px] font-semibold">{au.nombre}</span>
+                            <span className="block text-[10.5px] text-stone">{au.cargo}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                </Reveal>
+              );
+            })
           )}
         </div>
       </section>
@@ -521,7 +560,7 @@ export default function Storefront() {
               </p>
             ) : (
               <form
-                onSubmit={(e) => { e.preventDefault(); if (/.+@.+\..+/.test(nlEmail)) setNlOk(true); }}
+                onSubmit={(e) => { e.preventDefault(); if (/.+@.+\..+/.test(nlEmail)) { saveWebSuscriptor(nlEmail.trim()); setNlOk(true); } }}
                 className="flex gap-2 md:justify-end"
               >
                 <input value={nlEmail} onChange={(e) => setNlEmail(e.target.value)} type="email" required
@@ -595,7 +634,11 @@ export default function Storefront() {
               </div>
               <p className="text-ink2 text-[13.5px] leading-relaxed mt-4">{quick.desc}</p>
               <dl className="mt-6 space-y-2.5 text-[13px]">
-                {[["Material", quick.material], ["Dimensiones", quick.dims], ["Origen", quick.origin], ["Disponibilidad", quick.state === "En taller" ? `En fabricación · ${quick.lead}` : `${quick.stock} en stock · ${quick.lead}`]].map(([k, v]) => (
+                {[
+                  ["Material", quick.material], ["Dimensiones", quick.dims], ["Origen", quick.origin],
+                  ["Disponibilidad", quick.state === "En taller" ? `En fabricación · ${quick.lead}` : `${quick.stock} en stock · ${quick.lead}`],
+                  ...(quick.mto ? [["Made to Order", quick.mto] as [string, string]] : []),
+                ].map(([k, v]) => (
                   <div key={k} className="flex justify-between gap-6 border-b border-line pb-2.5">
                     <dt className="text-stone">{k}</dt><dd className="font-medium text-right">{v}</dd>
                   </div>
@@ -635,9 +678,14 @@ export default function Storefront() {
                   <p className="font-display font-medium text-[26px] tnum">{fmt(precioFicha)}</p>
                   <p className="text-[11px] text-stone">IVA 15% incluido · {fmt2(precioFicha / 1.15)} base</p>
                 </div>
-                {quick.state === "En taller" && (
-                  <span className="text-[11px] font-bold tracking-wide uppercase px-2.5 py-1.5 bg-warnbg text-warn">Reserva tu serie</span>
-                )}
+                <div className="flex flex-col items-end gap-1.5">
+                  {quick.state === "En taller" && (
+                    <span className="text-[11px] font-bold tracking-wide uppercase px-2.5 py-1.5 bg-warnbg text-warn">Reserva tu serie</span>
+                  )}
+                  {quick.mto && (
+                    <span className="text-[11px] font-bold tracking-wide uppercase px-2.5 py-1.5 bg-ink text-paper">Made to Order</span>
+                  )}
+                </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={() => toggleWish(quick.id)}
