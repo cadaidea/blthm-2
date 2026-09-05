@@ -5,7 +5,8 @@ export type IconName =
   | "grid" | "cart" | "user" | "users" | "tag" | "box" | "truck" | "hammer"
   | "image" | "calc" | "link" | "server" | "close" | "plus" | "minus" | "check"
   | "copy" | "arrow" | "chev-r" | "search" | "star" | "clock" | "doc" | "pulse"
-  | "shield" | "card" | "menu" | "alert" | "eye" | "spark" | "back";
+  | "shield" | "card" | "menu" | "alert" | "eye" | "spark" | "back"
+  | "heart" | "heart-fill";
 
 const P: Record<IconName, ReactNode> = {
   grid: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></>,
@@ -39,6 +40,8 @@ const P: Record<IconName, ReactNode> = {
   eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.8" /></>,
   spark: <path d="M12 2.5 14 9.5 21 12l-7 2.5-2 7-2-7L3 12l7-2.5z" />,
   back: <path d="M20 12H5M11 6l-6 6 6 6" />,
+  heart: <path d="M12 20.3S4.2 15.4 4.2 9.9C4.2 7.2 6.3 5.2 8.7 5.2c1.4 0 2.6.7 3.3 1.7.7-1 1.9-1.7 3.3-1.7 2.4 0 4.5 2 4.5 4.7 0 5.5-7.8 10.4-7.8 10.4z" />,
+  "heart-fill": <path fill="currentColor" stroke="none" d="M12 20.3S4.2 15.4 4.2 9.9C4.2 7.2 6.3 5.2 8.7 5.2c1.4 0 2.6.7 3.3 1.7.7-1 1.9-1.7 3.3-1.7 2.4 0 4.5 2 4.5 4.7 0 5.5-7.8 10.4-7.8 10.4z" />,
 };
 
 export function I({ n, s = 18, className = "" }: { n: IconName; s?: number; className?: string }) {

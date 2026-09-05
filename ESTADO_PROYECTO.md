@@ -6,7 +6,7 @@
 ## 1. Inventario de lo implementado (estado actual)
 
 ### Tienda pública (Geomanist · bletia.ec)
-- Apertura editorial con Butaca Aura (Ken Burns), tarjeta de producto superpuesta, marquee de materiales
+- Apertura editorial con producto destacado configurable (Ken Burns) y tarjeta superpuesta
 - Colección: 7 productos, filtros por categoría, quick view con specs, desglose base/IVA 15%
 - Carrito persistente (localStorage) con cantidades y totales
 - Checkout PayPhone: link de un solo uso (24 h) y pago directo (diferido), confirmación con
@@ -55,3 +55,17 @@
    cuadrado Debe=Haber) / **Formulario 104** (borrador calculado).
 3. ✅ Datos semilla con documentos matemáticamente válidos (coherentes con el validador).
 4. ✅ Nada de lo documentado en la sección 1 se modificó (roles, auto-Gerencia, imágenes, 14 módulos intactos).
+
+## 4. Ronda de refinamiento de marca (completada ✅)
+1. ✅ **Fondo blanco real (#ffffff)** en tienda pública y contenido del dash (tokens `--color-paper`,
+   `--color-card`). El modo oscuro del dash conserva su paleta propia. Grano atenuado.
+2. ✅ **Eliminada la franja marquee** de materiales (se percibía genérica).
+3. ✅ **Fuera el botón/enlaces "Panel interno"** de header, menú móvil y footer. El acceso del equipo
+   queda solo como texto discreto `bletia.ec/dash` dentro del popup de cuenta.
+4. ✅ **Header con 4 acciones funcionales**: búsqueda global (piezas + diario + secciones), cuenta
+   (popup con nombre persistido), mis deseos (drawer con "al carrito") y carrito. Corazón en tarjetas
+   y quick view. Todo persiste en localStorage.
+5. ✅ **Menús del sitio editables desde el CMS** (columnas "Tienda" y "Empresa" del footer), con
+   reordenar/añadir/quitar. Reemplazan el texto de versión en el copyright. Bloque legal con `#legal`.
+6. ✅ **Carpeta `referencia/`** (temporal) para que el dueño suba archivos reales y se integren; se
+   elimina al terminar. Fuentes Geomanist van en `public/fonts/`, no aquí.

@@ -28,15 +28,16 @@
   --font-display: "Geomanist", "Outfit", "Inter", system-ui, sans-serif;
   --font-dash: "Inter", system-ui, sans-serif;
 
-  /* base clara (papel cálido, tienda pública) */
-  --color-paper: #f4f2ed;
-  --color-paper2: #edeae2;
-  --color-card: #fcfbf8;
+  /* base clara (día) — blanco real #ffffff, descansado a la vista.
+     Aplica a la tienda pública y al contenido del dash. */
+  --color-paper: #ffffff;
+  --color-paper2: #f6f5f2;
+  --color-card: #ffffff;
   --color-ink: #1c1a16;
-  --color-ink2: #403b32;
+  --color-ink2: #413c33;
   --color-stone: #8b8578;
-  --color-line: #e2ded4;
-  --color-linedark: #d4cfc2;
+  --color-line: #ebe9e3;
+  --color-linedark: #dddad1;
   --color-coal: #171511;
   --color-coal2: #221f1a;
   --color-cream: #ece8df;

@@ -8,11 +8,6 @@ type Step = "datos" | "pago" | "link" | "directo" | "listo";
 
 const CATS = ["Todo", "Asientos", "Mesas", "Almacenaje", "Descanso"] as const;
 
-const MARQUEE = [
-  "Nogal americano", "Roble ahumado", "Cuero vegetalizado", "Lino belga",
-  "Latón envejecido", "Hecho en Ecuador", "Garantía 5 años", "Pago PayPhone",
-];
-
 /* El Diario se sirve desde el CMS del panel (bletia-cms en localStorage) */
 
 export default function Storefront() {
@@ -27,6 +22,16 @@ export default function Storefront() {
   const [menu, setMenu] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ code: string; track: string } | null>(null);
 
+  /* búsqueda global, cuenta y lista de deseos */
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [wishOpen, setWishOpen] = useState(false);
+  const [wish, setWish] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("bletia-wish") || "[]"); } catch { return []; }
+  });
+  const [cuenta, setCuenta] = useState<string>(() => localStorage.getItem("bletia-cuenta") || "");
+  const [accForm, setAccForm] = useState({ nombre: "", email: "" });
+
   /* Canal digital: lo publicado en el panel rige la tienda */
   const [site] = useState(loadSite);
   const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
@@ -34,6 +39,18 @@ export default function Storefront() {
   const catActivas = CATS.filter((c) => c === "Todo" || site.colecciones[c] !== false);
 
   useEffect(() => { localStorage.setItem("bletia-cart", JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem("bletia-wish", JSON.stringify(wish)); }, [wish]);
+
+  const toggleWish = (id: string) =>
+    setWish((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]));
+  const saveCuenta = () => {
+    if (accForm.nombre.trim().length < 2) return;
+    setCuenta(accForm.nombre.trim());
+    localStorage.setItem("bletia-cuenta", accForm.nombre.trim());
+    setAccountOpen(false);
+    setAccForm({ nombre: "", email: "" });
+  };
+
   useEffect(() => {
     const f = () => setScrolled(window.scrollY > 24);
     f(); window.addEventListener("scroll", f, { passive: true });
@@ -87,12 +104,27 @@ export default function Storefront() {
             <a href="#servicios" className="u-grow hover:text-ink">Servicios</a>
             <a href="#diario" className="u-grow hover:text-ink">Diario</a>
           </nav>
-          <div className="flex items-center gap-2.5">
-            <a href="#/dash" className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-semibold text-stone hover:text-ink transition-colors px-2.5 py-1.5 border border-line bg-card/60">
-              <I n="shield" s={13} /> Panel interno
-            </a>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <button onClick={() => setSearchOpen(true)} className="p-2.5 hover:bg-paper2 transition-colors" aria-label="Buscar en el sitio">
+              <I n="search" s={19} />
+            </button>
+            <button onClick={() => setAccountOpen(!accountOpen)} className="p-2.5 hover:bg-paper2 transition-colors" aria-label="Mi cuenta">
+              {cuenta ? (
+                <span className="w-6 h-6 bg-ink text-paper text-[10px] font-bold flex items-center justify-center">{cuenta[0]?.toUpperCase()}</span>
+              ) : (
+                <I n="user" s={19} />
+              )}
+            </button>
+            <button onClick={() => setWishOpen(true)} className="relative p-2.5 hover:bg-paper2 transition-colors" aria-label="Mis deseos">
+              <I n="heart" s={19} />
+              {wish.length > 0 && (
+                <span key={wish.length} className="fade-in absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-maroon text-cream text-[10px] font-bold flex items-center justify-center tnum">
+                  {wish.length}
+                </span>
+              )}
+            </button>
             <button onClick={() => setCartOpen(true)} className="relative p-2.5 hover:bg-paper2 transition-colors" aria-label="Abrir carrito">
-              <I n="cart" s={20} />
+              <I n="cart" s={19} />
               {count > 0 && (
                 <span key={count} className="fade-in absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 bg-maroon text-cream text-[10px] font-bold flex items-center justify-center tnum">
                   {count}
@@ -100,7 +132,7 @@ export default function Storefront() {
               )}
             </button>
             <button onClick={() => setMenu(true)} className="md:hidden p-2.5 hover:bg-paper2" aria-label="Menú">
-              <I n="menu" s={20} />
+              <I n="menu" s={19} />
             </button>
           </div>
         </div>
@@ -114,10 +146,97 @@ export default function Storefront() {
             <button onClick={() => setMenu(false)} className="p-2.5" aria-label="Cerrar"><I n="close" s={20} /></button>
           </div>
           <nav className="flex flex-col p-8 gap-6 font-display text-3xl">
-            {[["#coleccion", "Colección"], ["#taller", "Taller"], ["#servicios", "Servicios"], ["#diario", "Diario"], ["#/dash", "Panel interno"]].map(([h, t]) => (
-              <a key={h} href={h} onClick={() => setMenu(false)} className="hover:text-maroon transition-colors">{t}</a>
+            {site.menus.tienda.map((m) => (
+              <a key={m.label} href={m.url} onClick={() => setMenu(false)} className="hover:text-maroon transition-colors">{m.label}</a>
             ))}
           </nav>
+        </div>
+      )}
+
+      {/* popup de cuenta */}
+      {accountOpen && (
+        <>
+          <div className="fixed inset-0 z-[84]" onClick={() => setAccountOpen(false)} />
+          <div className="fixed z-[85] top-[4.4rem] right-4 sm:right-8 w-[300px] bg-card border border-line shadow-[0_24px_60px_rgba(20,16,10,0.22)] slide-up">
+            {cuenta ? (
+              <div className="p-5">
+                <p className="eyebrow">Hola de nuevo</p>
+                <p className="font-display font-medium text-[20px] mt-2">{cuenta}</p>
+                <p className="text-[12.5px] text-stone mt-1">Tus pedidos y deseos quedan guardados en este dispositivo.</p>
+                <button onClick={() => { setCuenta(""); localStorage.removeItem("bletia-cuenta"); setAccountOpen(false); }}
+                  className="w-full mt-4 border border-linedark text-[12.5px] font-semibold py-2.5 hover:bg-paper2 transition-colors">
+                  Cerrar sesión
+                </button>
+              </div>
+            ) : (
+              <div className="p-5">
+                <p className="eyebrow">Mi cuenta</p>
+                <p className="text-[13px] text-ink2 mt-2 mb-4">Guarda tu nombre para agilizar tus próximas compras.</p>
+                <input value={accForm.nombre} onChange={(e) => setAccForm({ ...accForm, nombre: e.target.value })}
+                  className={`${inp} mb-2.5`} placeholder="Nombre" />
+                <input value={accForm.email} onChange={(e) => setAccForm({ ...accForm, email: e.target.value })}
+                  className={inp} placeholder="Correo (opcional)" />
+                <button onClick={saveCuenta} className="w-full mt-3.5 bg-ink text-paper text-[12.5px] font-semibold py-3 hover:bg-maroon transition-colors">
+                  Entrar
+                </button>
+                <p className="text-[10.5px] text-stone mt-3 text-center">¿Eres del equipo? <a href="#/dash" className="underline underline-offset-2 hover:text-ink">bletia.ec/dash</a></p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* búsqueda global del sitio */}
+      <BusquedaGlobal open={searchOpen} onClose={() => setSearchOpen(false)}
+        onProduct={(p) => { setSearchOpen(false); setQuick(p); }} />
+
+      {/* lista de deseos */}
+      {wishOpen && (
+        <div className="fixed inset-0 z-[85]">
+          <div className="absolute inset-0 bg-ink/45 fade-in" onClick={() => setWishOpen(false)} />
+          <aside className="absolute right-0 top-0 h-full w-full max-w-[400px] bg-paper border-l border-line slide-in-right flex flex-col">
+            <div className="flex items-center justify-between px-6 h-16 border-b border-line shrink-0">
+              <p className="font-display font-medium text-lg">Mis deseos <span className="text-stone text-sm tnum">({wish.length})</span></p>
+              <button onClick={() => setWishOpen(false)} className="p-2 hover:bg-paper2" aria-label="Cerrar"><I n="close" s={18} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {wish.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center gap-4 text-stone">
+                  <I n="heart" s={34} className="text-linedark" />
+                  <p className="text-[14px]">Aún no guardas piezas en tus deseos.</p>
+                  <button onClick={() => setWishOpen(false)} className="text-[13px] font-semibold text-ink u-grow">Descubrir la colección</button>
+                </div>
+              ) : (
+                <ul className="space-y-5">
+                  {wish.map((id) => {
+                    const p = PRODUCTS.find((x) => x.id === id);
+                    if (!p) return null;
+                    return (
+                      <li key={id} className="flex gap-4 fade-in">
+                        <button onClick={() => { setQuick(p); setWishOpen(false); }} className="w-[72px] h-[88px] bg-paper2 shrink-0 overflow-hidden">
+                          <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between gap-3">
+                            <p className="font-display font-medium text-[15px] leading-tight">{p.name}</p>
+                            <button onClick={() => toggleWish(id)} className="text-stone hover:text-bad transition-colors" aria-label="Quitar"><I n="close" s={13} /></button>
+                          </div>
+                          <p className="text-[11.5px] text-stone mt-0.5">{p.material}</p>
+                          <div className="flex items-center justify-between mt-3">
+                            <p className="font-semibold text-[14px] tnum">{fmt(p.price)}</p>
+                            <button onClick={() => { add(id); toggleWish(id); setWishOpen(false); setCartOpen(true); }}
+                              className="text-[11.5px] font-semibold px-3 py-2 bg-ink text-paper hover:bg-maroon transition-colors flex items-center gap-1.5">
+                              <I n="cart" s={12} /> Al carrito
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </aside>
         </div>
       )}
 
@@ -187,21 +306,6 @@ export default function Storefront() {
           </div>
         </div>
 
-        {/* marquee */}
-        <div className="border-y border-ink bg-ink text-cream overflow-hidden py-3.5">
-          <div className="marquee-track">
-            {[0, 1].map((k) => (
-              <div key={k} className="flex shrink-0">
-                {MARQUEE.map((m) => (
-                  <span key={k + m} className="flex items-center text-[11.5px] font-medium tracking-[0.28em] uppercase whitespace-nowrap">
-                    <span className="px-6">{m}</span>
-                    <span className="w-1 h-1 bg-maroon rotate-45" />
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ================= COLECCIÓN ================= */}
@@ -237,10 +341,15 @@ export default function Storefront() {
                     {p.origin === "Taller BLETIA" ? "Taller" : "Curaduría"}
                   </span>
                   {p.stock <= 3 && (
-                    <span className="absolute top-3.5 right-3.5 text-[10px] font-bold tracking-[0.14em] uppercase px-2.5 py-1.5 bg-card/95 text-warn">
+                    <span className="absolute top-[46px] left-3.5 text-[10px] font-bold tracking-[0.14em] uppercase px-2.5 py-1.5 bg-card/95 text-warn">
                       Últimas {p.stock}
                     </span>
                   )}
+                  <button onClick={(e) => { e.stopPropagation(); toggleWish(p.id); }}
+                    aria-label={wish.includes(p.id) ? "Quitar de deseos" : "Guardar en deseos"}
+                    className={`absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-card/95 backdrop-blur transition-all duration-300 hover:scale-110 ${wish.includes(p.id) ? "text-maroon" : "text-ink/70 hover:text-ink"}`}>
+                    <I n={wish.includes(p.id) ? "heart-fill" : "heart"} s={16} />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); add(p.id); setCartOpen(true); }}
                     className="absolute bottom-0 inset-x-0 bg-ink text-paper text-[12.5px] font-semibold py-3.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-400 hover:bg-maroon"
@@ -404,17 +513,17 @@ export default function Storefront() {
             </div>
             <div className="md:col-span-2">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Tienda</p>
-              {["Colección", "Taller", "Servicios", "Diario"].map((t) => (
-                <a key={t} href={`#${t.toLowerCase()}`} className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">{t}</a>
+              {site.menus.tienda.map((m) => (
+                <a key={m.label} href={m.url} className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">{m.label}</a>
               ))}
             </div>
             <div className="md:col-span-2">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Empresa</p>
-              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Panel interno</a>
-              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Proveedores</a>
-              <a href="#/dash" className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">Trabaja con nosotros</a>
+              {site.menus.empresa.map((m) => (
+                <a key={m.label} href={m.url} className="block text-[13.5px] text-cream/75 hover:text-cream py-1.5 u-grow w-fit">{m.label}</a>
+              ))}
             </div>
-            <div className="md:col-span-3">
+            <div className="md:col-span-3" id="legal">
               <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-cream/40 mb-4">Legal · Ecuador</p>
               <p className="text-[12.5px] text-cream/60 leading-relaxed">
                 BLETIA S.A.S. · RUC 1793442001001<br />
@@ -429,7 +538,7 @@ export default function Storefront() {
           </div>
           <div className="border-t border-cream/15 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
             <span>© 2026 BLETIA. Hecho en Ecuador, a mano y a tiempo.</span>
-            <span className="tnum">v2.4.1 · staging → producción sin fricción</span>
+            <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon" /> bletia.ec</span>
           </div>
         </div>
       </footer>
@@ -467,6 +576,11 @@ export default function Storefront() {
                 )}
               </div>
               <div className="flex gap-3 mt-6">
+                <button onClick={() => toggleWish(quick.id)}
+                  aria-label="Guardar en deseos"
+                  className={`w-[52px] shrink-0 border flex items-center justify-center transition-colors ${wish.includes(quick.id) ? "border-maroon text-maroon bg-maroon/5" : "border-linedark text-ink2 hover:border-ink hover:text-ink"}`}>
+                  <I n={wish.includes(quick.id) ? "heart-fill" : "heart"} s={17} />
+                </button>
                 <button onClick={() => { add(quick.id); setQuick(null); setCartOpen(true); }}
                   className="flex-1 bg-ink text-paper text-[13px] font-semibold py-4 hover:bg-maroon transition-colors flex items-center justify-center gap-2">
                   <I n="cart" s={15} /> Añadir al carrito
@@ -552,6 +666,94 @@ export default function Storefront() {
           onFinish={finishOrder}
         />
       )}
+    </div>
+  );
+}
+
+/* ---- Búsqueda global de todo el sitio público ---- */
+const SECCIONES = [
+  { label: "Colección", url: "#coleccion" },
+  { label: "Taller", url: "#taller" },
+  { label: "Servicios", url: "#servicios" },
+  { label: "Diario", url: "#diario" },
+];
+
+function BusquedaGlobal({ open, onClose, onProduct }: {
+  open: boolean; onClose: () => void; onProduct: (p: Product) => void;
+}) {
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    if (open) setQ("");
+  }, [open]);
+  if (!open) return null;
+
+  const t = q.trim().toLowerCase();
+  const posts = loadCMS().filter((p) => p.estado === "Publicado");
+  const prods = t ? PRODUCTS.filter((p) =>
+    [p.name, p.category, p.material, p.sku, p.desc].join(" ").toLowerCase().includes(t)) : [];
+  const notas = t ? posts.filter((p) => (p.titulo + " " + p.tag).toLowerCase().includes(t)) : [];
+  const secciones = t ? SECCIONES.filter((s) => s.label.toLowerCase().includes(t)) : [];
+  const vacio = t && prods.length === 0 && notas.length === 0 && secciones.length === 0;
+
+  const goAnchor = (url: string) => { onClose(); window.location.hash = ""; setTimeout(() => { document.querySelector(url)?.scrollIntoView({ behavior: "smooth" }); }, 60); };
+
+  return (
+    <div className="fixed inset-0 z-[90]">
+      <div className="absolute inset-0 bg-ink/50 backdrop-blur-[2px] fade-in" onClick={onClose} />
+      <div className="relative max-w-[620px] mx-auto mt-[10vh] px-4">
+        <div className="bg-card border border-line shadow-[0_30px_80px_rgba(20,16,10,0.35)] slide-up">
+          <div className="flex items-center gap-3 px-5 border-b border-line">
+            <I n="search" s={18} className="text-stone shrink-0" />
+            <input autoFocus value={q} onChange={(e) => setQ(e.target.value)}
+              placeholder="Busca muebles, materiales, notas del diario…"
+              className="flex-1 py-4 bg-transparent outline-none text-[15px] placeholder:text-stone/70" />
+            <button onClick={onClose} className="p-1.5 hover:bg-paper2" aria-label="Cerrar"><I n="close" s={16} /></button>
+          </div>
+          <div className="max-h-[52vh] overflow-y-auto p-3">
+            {!t && (
+              <div className="p-6 text-center text-[13px] text-stone">
+                Escribe para buscar en toda la tienda: piezas, categorías y el diario de taller.
+              </div>
+            )}
+            {vacio && (
+              <div className="p-6 text-center text-[13px] text-stone">Sin resultados para «{q}». Prueba con «nogal», «mesa» o «entrega».</div>
+            )}
+            {prods.length > 0 && <p className="px-3 pt-2 pb-1 text-[10px] font-bold tracking-[0.18em] uppercase text-stone">Piezas</p>}
+            {prods.map((p) => (
+              <button key={p.id} onClick={() => onProduct(p)}
+                className="w-full flex items-center gap-3.5 px-3 py-2.5 text-left hover:bg-paper2 transition-colors">
+                <img src={p.img} alt="" className="w-11 h-13 h-[52px] object-cover shrink-0 bg-paper2" />
+                <span className="flex-1 min-w-0">
+                  <span className="block font-medium text-[14px]">{p.name}</span>
+                  <span className="block text-[11.5px] text-stone truncate">{p.material} · {p.category}</span>
+                </span>
+                <span className="text-[13px] font-semibold tnum">{fmt(p.price)}</span>
+              </button>
+            ))}
+            {notas.length > 0 && <p className="px-3 pt-3 pb-1 text-[10px] font-bold tracking-[0.18em] uppercase text-stone">Diario de taller</p>}
+            {notas.map((n) => (
+              <button key={n.id} onClick={() => goAnchor("#diario")}
+                className="w-full flex items-center gap-3.5 px-3 py-2.5 text-left hover:bg-paper2 transition-colors">
+                <I n="doc" s={16} className="text-stone shrink-0" />
+                <span className="flex-1 min-w-0">
+                  <span className="block font-medium text-[14px]">{n.titulo}</span>
+                  <span className="block text-[11.5px] text-stone">{n.fecha} · {n.tag}</span>
+                </span>
+                <I n="chev-r" s={13} className="text-stone" />
+              </button>
+            ))}
+            {secciones.length > 0 && <p className="px-3 pt-3 pb-1 text-[10px] font-bold tracking-[0.18em] uppercase text-stone">Secciones</p>}
+            {secciones.map((s) => (
+              <button key={s.url} onClick={() => goAnchor(s.url)}
+                className="w-full flex items-center gap-3.5 px-3 py-2.5 text-left hover:bg-paper2 transition-colors">
+                <I n="arrow" s={15} className="text-stone shrink-0" />
+                <span className="flex-1 font-medium text-[14px]">{s.label}</span>
+                <I n="chev-r" s={13} className="text-stone" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

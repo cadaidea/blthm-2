@@ -185,6 +185,29 @@ export function CMS() {
   const [editing, setEditing] = useState<CMSPost | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
 
+  /* menús del sitio público (footer + navegación) */
+  const [menus, setMenus] = useState(() => loadSite().menus);
+  const [menusSaved, setMenusSaved] = useState(false);
+  const editMenu = (grupo: "tienda" | "empresa", i: number, campo: "label" | "url", valor: string) =>
+    setMenus((m) => ({ ...m, [grupo]: m[grupo].map((it, x) => (x === i ? { ...it, [campo]: valor } : it)) }));
+  const moverMenu = (grupo: "tienda" | "empresa", i: number, dir: -1 | 1) =>
+    setMenus((m) => {
+      const arr = [...m[grupo]];
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return m;
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      return { ...m, [grupo]: arr };
+    });
+  const quitarMenu = (grupo: "tienda" | "empresa", i: number) =>
+    setMenus((m) => ({ ...m, [grupo]: m[grupo].filter((_, x) => x !== i) }));
+  const agregarMenu = (grupo: "tienda" | "empresa") =>
+    setMenus((m) => ({ ...m, [grupo]: [...m[grupo], { label: "Nuevo enlace", url: "#" }] }));
+  const guardarMenus = () => {
+    saveSite({ ...loadSite(), menus });
+    setMenusSaved(true);
+    setTimeout(() => setMenusSaved(false), 1800);
+  };
+
   const publicados = posts.filter((p) => p.estado === "Publicado").length;
   const borradores = posts.length - publicados;
 
@@ -228,6 +251,67 @@ export function CMS() {
         <Stat label="Próximo número" value={nextNum} sub="Serie del Diario" />
         <Stat label="Canal" value="Diario de taller" sub="bletia.ec/#diario" />
       </div>
+
+      {/* menús del sitio */}
+      <Card className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+              <I n="menu" s={16} className="text-stone" /> Menús del sitio
+            </h3>
+            <p className="text-[12px] text-stone mt-0.5">
+              Cambia los enlaces del pie de página de bletia.ec como desees. Usa anclas internas (<code className="font-mono">#coleccion</code>, <code className="font-mono">#diario</code>…) o URLs externas.
+            </p>
+          </div>
+          <button onClick={guardarMenus} className={btnDark}>
+            <I n={menusSaved ? "check" : "doc"} s={14} /> {menusSaved ? "Guardado" : "Publicar menús"}
+          </button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 mt-5">
+          {(["tienda", "empresa"] as const).map((grupo) => (
+            <div key={grupo}>
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-stone">
+                  Columna «{grupo === "tienda" ? "Tienda" : "Empresa"}»
+                </p>
+                <button onClick={() => agregarMenu(grupo)}
+                  className="text-[11.5px] font-semibold text-maroon hover:text-maroon2 flex items-center gap-1">
+                  <I n="plus" s={12} /> Añadir
+                </button>
+              </div>
+              <div className="space-y-2">
+                {menus[grupo].map((it, i) => (
+                  <div key={i} className="flex items-center gap-2 fade-in">
+                    <input value={it.label} onChange={(e) => editMenu(grupo, i, "label", e.target.value)}
+                      className={`${inp} !py-2 flex-1 min-w-0`} placeholder="Texto" />
+                    <input value={it.url} onChange={(e) => editMenu(grupo, i, "url", e.target.value)}
+                      className={`${inp} !py-2 w-[130px] font-mono text-[12px]`} placeholder="#ancla o url" />
+                    <div className="flex flex-col shrink-0">
+                      <button onClick={() => moverMenu(grupo, i, -1)} disabled={i === 0}
+                        className="text-stone hover:text-ink disabled:opacity-25 leading-none p-0.5" aria-label="Subir">
+                        <I n="chev-r" s={11} className="-rotate-90" />
+                      </button>
+                      <button onClick={() => moverMenu(grupo, i, 1)} disabled={i === menus[grupo].length - 1}
+                        className="text-stone hover:text-ink disabled:opacity-25 leading-none p-0.5" aria-label="Bajar">
+                        <I n="chev-r" s={11} className="rotate-90" />
+                      </button>
+                    </div>
+                    <button onClick={() => quitarMenu(grupo, i)}
+                      className="text-stone hover:text-bad transition-colors shrink-0 p-1" aria-label="Eliminar">
+                      <I n="close" s={13} />
+                    </button>
+                  </div>
+                ))}
+                {menus[grupo].length === 0 && (
+                  <p className="text-[12px] text-stone border border-dashed border-linedark px-3 py-4 text-center">
+                    Sin enlaces. Añade el primero.
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">

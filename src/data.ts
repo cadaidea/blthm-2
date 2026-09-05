@@ -299,6 +299,8 @@ export const CMS_POSTS_SEED: CMSPost[] = [
   { id: "post-15", num: "N° 15", fecha: "próximamente", titulo: "Cuero vegetalizado: por qué tarda 9 meses en curtirse", tag: "Materia", estado: "Borrador", cuerpo: "Corteza de quebracho, agua y tiempo. El curtido vegetal no se acelera: se espera." },
 ];
 
+export type MenuItem = { label: string; url: string };
+
 export type SiteConfig = {
   anuncioActivo: boolean;
   anuncioTexto: string;
@@ -308,6 +310,7 @@ export type SiteConfig = {
   pagoLink: boolean;
   pagoDirecto: boolean;
   colecciones: Record<string, boolean>;
+  menus: { tienda: MenuItem[]; empresa: MenuItem[] };
 };
 
 export const SITE_DEFAULTS: SiteConfig = {
@@ -319,6 +322,19 @@ export const SITE_DEFAULTS: SiteConfig = {
   pagoLink: true,
   pagoDirecto: true,
   colecciones: { Asientos: true, Mesas: true, Almacenaje: true, Descanso: true },
+  menus: {
+    tienda: [
+      { label: "Colección", url: "#coleccion" },
+      { label: "Taller", url: "#taller" },
+      { label: "Servicios", url: "#servicios" },
+      { label: "Diario", url: "#diario" },
+    ],
+    empresa: [
+      { label: "Proyectos a medida", url: "#servicios" },
+      { label: "Materiales", url: "#taller" },
+      { label: "Legal", url: "#legal" },
+    ],
+  },
 };
 
 export function loadCMS(): CMSPost[] {
