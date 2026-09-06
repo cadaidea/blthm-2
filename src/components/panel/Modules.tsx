@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { TTL_CACHE_MS, detectarDocumento } from "../../utils/sri";
 import {
   CITIES, CUSTOMERS, ORDER_FLOW, ORDERS, PRODUCTS, SUPPLIERS,
-  fmt, fmt2, loadCustomProducts, saveCustomProduct, savePimOverride,
+  fmt, fmt2, loadCategoriasProducto, loadCustomProducts, removeCustomProduct, saveCustomProduct, savePimOverride,
   type Customer, type Order, type Product,
 } from "../../data";
 import { I, Modal, toast } from "../ui";
@@ -448,7 +448,8 @@ export function CRM() {
 export function PIM() {
   const [list, setList] = useState<Product[]>(() => [...PRODUCTS, ...loadCustomProducts()]);
   const [openNew, setOpenNew] = useState(false);
-  const [np, setNp] = useState({ name: "", sku: "", category: "Sofás" as Product["category"], price: "", material: "" });
+  const [np, setNp] = useState({ name: "", sku: "", category: "Sofás", price: "", material: "", dims: "", stock: "", desc: "", img: "", mto: "" });
+  const cats = loadCategoriasProducto().filter((c) => c.activa).map((c) => c.nombre);
 
   const toggle = (id: string) =>
     setList((l) =>
@@ -461,20 +462,31 @@ export function PIM() {
       }),
     );
 
+  const del = (id: string) => {
+    const p = list.find((x) => x.id === id);
+    if (!p) return;
+    if (!window.confirm(`¿Eliminar «${p.name}»? Esta acción no se puede deshacer.`)) return;
+    removeCustomProduct(id);
+    setList((l) => l.filter((x) => x.id !== id));
+    toast(`«${p.name}» eliminado`, "bad");
+  };
+
   const add = () => {
     const price = parseFloat(np.price);
-    if (np.name.trim().length < 2 || !price || price <= 0) return;
+    if (np.name.trim().length < 2) return toast("Escribe al menos el nombre del producto", "bad");
+    if (!price || price <= 0) return toast("Escribe un precio válido (mayor a 0)", "bad");
     const p: Product = {
       id: `p${Date.now()}`, sku: np.sku.trim() || `BLT-${900 + list.length}`, name: np.name.trim(),
-      category: np.category, price, material: np.material.trim() || "Por definir en ficha",
-      dims: "—", img: "", stock: 0, state: "Borrador", origin: "Taller BLETIA",
-      lead: "Por estimar", desc: "Ficha creada desde el PIM; completa materiales y dimensiones antes de publicar.",
-      channels: ["Showroom"],
+      category: np.category.trim() || "General", price, material: np.material.trim() || "Por definir en ficha",
+      dims: np.dims.trim() || "—", img: np.img.trim(), stock: parseInt(np.stock) || 0,
+      state: "Borrador", origin: "Taller BLETIA",
+      lead: "Por estimar", desc: np.desc.trim() || "Ficha creada desde el PIM.",
+      channels: ["Showroom"], mto: np.mto.trim() || undefined,
     };
     saveCustomProduct(p);
     setList((l) => [p, ...l]);
     toast(`Ficha «${p.name}» creada como borrador`, "ok");
-    setNp({ name: "", sku: "", category: "Sofás", price: "", material: "" });
+    setNp({ name: "", sku: "", category: np.category, price: "", material: "", dims: "", stock: "", desc: "", img: "", mto: "" });
     setOpenNew(false);
   };
 
@@ -487,16 +499,33 @@ export function PIM() {
       />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Stat label="Referencias" value={list.length} sub="7 colecciones activas" />
-        <Stat label="Publicadas en web" value={list.filter((p) => p.state === "Publicado").length} sub="Sincronizadas en <1 s" />
+        <Stat label="Referencias" value={list.length} sub={list.length ? `${new Set(list.map((p) => p.category)).size} categorías` : "Aún sin productos"} />
+        <Stat label="Publicadas en web" value={list.filter((p) => p.state === "Publicado").length} sub={list.filter((p) => p.state === "Publicado").length ? "Sincronizadas en <1 s" : "Nada visible en la tienda"} />
         <Stat label="En fabricación" value={list.filter((p) => p.state === "En taller").length} sub="Series numeradas" />
-        <Stat label="Valor de inventario" value="$86.4k" sub="Costo · IVA excluido" />
+        <Stat label="Unidades en stock" value={list.reduce((a, p) => a + p.stock, 0)} sub="Suma de todas las fichas" />
       </div>
 
+      {list.length === 0 ? (
+        <Card className="border-dashed !border-2 !border-linedark">
+          <div className="py-20 text-center px-6">
+            <div className="inline-flex w-14 h-14 rounded-full bg-paper2 items-center justify-center mb-5">
+              <I n="tag" s={24} className="text-stone" />
+            </div>
+            <h3 className="font-display font-medium text-[22px]">Aún no tienes productos.</h3>
+            <p className="text-[13.5px] text-stone mt-2 max-w-[46ch] mx-auto leading-relaxed">
+              Crea tu primera ficha con el botón de arriba. Todo lo que cargues aquí es lo que verán tus clientes
+              en la tienda cuando lo publiques — y queda guardado para siempre.
+            </p>
+            <button onClick={() => setOpenNew(true)} className={`${btnDark} mt-6`}>
+              <I n="plus" s={14} /> Crear mi primer producto
+            </button>
+          </div>
+        </Card>
+      ) : (
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px]">
-            <thead><tr><Th>Producto</Th><Th>Categoría</Th><Th>Precio (IVA incl.)</Th><Th>Stock</Th><Th>Origen</Th><Th>Canales</Th><Th>Estado</Th></tr></thead>
+            <thead><tr><Th>Producto</Th><Th>Categoría</Th><Th>Precio (IVA incl.)</Th><Th>Stock</Th><Th>Origen</Th><Th>Canales</Th><Th>Estado</Th><Th> </Th></tr></thead>
             <tbody>
               {list.map((p) => (
                 <tr key={p.id} className="hover:bg-paper2/50 transition-colors fade-in">
@@ -538,6 +567,12 @@ export function PIM() {
                       <StatusChip s={p.state} />
                     </button>
                   </Td>
+                  <Td>
+                    <button onClick={() => del(p.id)} title={`Eliminar ${p.name}`}
+                      className="p-2 text-stone hover:text-bad hover:bg-badbg transition-colors">
+                      <I n="close" s={15} />
+                    </button>
+                  </Td>
                 </tr>
               ))}
             </tbody>
@@ -548,6 +583,7 @@ export function PIM() {
           Los precios incluyen IVA 15%. Un cambio aquí se propaga a la web, al catálogo PDF y a contabilidad como un solo evento PIM.
         </div>
       </Card>
+      )}
 
       <Modal open={openNew} onClose={() => setOpenNew(false)}>
         <div className="p-6 sm:p-8">
@@ -557,7 +593,7 @@ export function PIM() {
           </div>
           <div className="grid sm:grid-cols-2 gap-4 mt-5">
             <label className="block sm:col-span-2">
-              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Nombre</span>
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Nombre *</span>
               <input value={np.name} onChange={(e) => setNp({ ...np, name: e.target.value })} className={inp} placeholder="Ej. Banco Río" />
             </label>
             <label className="block">
@@ -566,22 +602,44 @@ export function PIM() {
             </label>
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Categoría</span>
-              <select value={np.category} onChange={(e) => setNp({ ...np, category: e.target.value as Product["category"] })} className={inp}>
-                {["Asientos", "Mesas", "Almacenaje", "Descanso"].map((c) => <option key={c}>{c}</option>)}
-              </select>
+              <input value={np.category} onChange={(e) => setNp({ ...np, category: e.target.value })} className={inp} placeholder="Ej. Mesas" list="cats-pim" />
+              <datalist id="cats-pim">{cats.map((c) => <option key={c} value={c} />)}</datalist>
             </label>
             <label className="block">
-              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Precio final USD (IVA incl.)</span>
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Precio final USD (IVA incl.) *</span>
               <input value={np.price} onChange={(e) => setNp({ ...np, price: e.target.value })} className={inp} placeholder="0.00" inputMode="decimal" />
             </label>
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Material</span>
               <input value={np.material} onChange={(e) => setNp({ ...np, material: e.target.value })} className={inp} placeholder="Ej. Nogal · cuero" />
             </label>
+            <label className="block">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Dimensiones</span>
+              <input value={np.dims} onChange={(e) => setNp({ ...np, dims: e.target.value })} className={inp} placeholder="Ej. 120 × 45 × 42 cm" />
+            </label>
+            <label className="block">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Stock</span>
+              <input value={np.stock} onChange={(e) => setNp({ ...np, stock: e.target.value })} className={inp} placeholder="0" inputMode="numeric" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">URL de la foto</span>
+              <input value={np.img} onChange={(e) => setNp({ ...np, img: e.target.value })} className={inp} placeholder="https://… (opcional)" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Descripción</span>
+              <textarea value={np.desc} onChange={(e) => setNp({ ...np, desc: e.target.value })} className={`${inp} resize-y`} rows={3} placeholder="Cuenta la historia de la pieza…" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Made to Order (opcional)</span>
+              <input value={np.mto} onChange={(e) => setNp({ ...np, mto: e.target.value })} className={inp} placeholder="Ej. Disponible a medida · +2 semanas" />
+            </label>
           </div>
           <button onClick={add} className={`${btnDark} w-full mt-6 !py-3.5`}>
             <I n="plus" s={14} /> Crear como borrador
           </button>
+          <p className="text-[11px] text-stone text-center mt-3">
+            Se crea como borrador. Para que aparezca en la tienda, publícalo con el interruptor de la tabla.
+          </p>
         </div>
       </Modal>
     </div>

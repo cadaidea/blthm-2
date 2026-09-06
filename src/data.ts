@@ -6,7 +6,7 @@
 
 /* Versión visible de la plataforma: permite verificar a simple vista si el
    servidor sirve la versión nueva (se muestra en login, panel y pie de la tienda). */
-export const VERSION = "v1.1.0";
+export const VERSION = "v1.1.1";
 
 export const IVA = 0.15;
 
@@ -174,7 +174,7 @@ export type Product = {
   mto?: string; // Made to Order: texto editable, se muestra en detalles y resumen
 };
 
-export const PRODUCTS: Product[] = [
+export const PRODUCTS: Product[] = seed<Product[]>("bletia-productos", [
   {
     id: "p1", sku: "BLT-101", name: "Butaca Aura", slug: "butaca-aura", category: "Sillones",
     price: 1190, material: "Nogal americano · Bouclé crudo", dims: "78 × 82 × 74 cm",
@@ -234,7 +234,7 @@ export const PRODUCTS: Product[] = [
     channels: ["Web", "Showroom", "Catálogo"],
     mto: "Disponible a medida en otras dimensiones · +2 semanas",
   },
-];
+]);
 
 /* ---------- CRM ---------- */
 export type Customer = {
@@ -554,12 +554,12 @@ export function loadCompras(): CompraOC[] {
 }
 export function saveCompras(list: CompraOC[]) { localStorage.setItem("bletia-compras", JSON.stringify(list)); }
 
-export const CMS_POSTS_SEED: CMSPost[] = [
+export const CMS_POSTS_SEED: CMSPost[] = seed<CMSPost[]>("bletia-cms", [
   { id: "post-14", num: "N° 14", fecha: "08 feb 2026", titulo: "Por qué el nogal se trabaja en luna menguante", tag: "Materia", estado: "Publicado", etiquetas: ["nogal", "hecho-a-mano"], autor: "dp", cuerpo: "La savia baja, la madera se estabiliza y el corte sufre menos. No es superstición: es humedad interna. Cuando la luna mengua, el árbol concentra sus líquidos en la raíz y la fibra queda más estable. Es el momento exacto para talar, y el que respetamos desde hace tres generaciones." },
   { id: "post-13", num: "N° 13", fecha: "24 ene 2026", titulo: "Entrega guante blanco: el último centímetro importa", tag: "Servicio", estado: "Publicado", etiquetas: ["entrega"], autor: "mj", cuerpo: "Armamos en sitio, retiramos el embalaje y nivelamos cada pata. El mueble se estrena en su lugar final. La entrega no termina cuando el camión llega: termina cuando tú te sientas por primera vez." },
   { id: "post-12", num: "N° 12", fecha: "10 ene 2026", titulo: "Serie Bruma: ranurar a mano toma 11 horas. Vale cada una", tag: "Taller", estado: "Publicado", etiquetas: ["serie-bruma", "hecho-a-mano"], autor: "ec", cuerpo: "El flautín del aparador Bruma se ranura pieza por pieza. La máquina lo haría en 20 minutos; la mano lo hace irrepetible. Cada ranura tiene una profundidad que responde a la veta de esa tabla, y ninguna es igual a la anterior." },
   { id: "post-15", num: "N° 15", fecha: "próximamente", titulo: "Cuero vegetalizado: por qué tarda 9 meses en curtirse", tag: "Materia", estado: "Borrador", etiquetas: ["cuero"], autor: "dp", cuerpo: "Corteza de quebracho, agua y tiempo. El curtido vegetal no se acelera: se espera. Nueve meses de tambor y paciencia dan un cuero que envejece con carácter, no que se deteriora." },
-];
+]);
 
 export const minutosLectura = (cuerpo: string): number =>
   Math.max(1, Math.round(cuerpo.split(/\s+/).filter(Boolean).length / 180));
@@ -746,6 +746,9 @@ export function loadCustomProducts(): Product[] {
 export function saveCustomProduct(p: Product) {
   const list = loadCustomProducts();
   localStorage.setItem("bletia-pim-custom", JSON.stringify([p, ...list]));
+}
+export function removeCustomProduct(id: string) {
+  localStorage.setItem("bletia-pim-custom", JSON.stringify(loadCustomProducts().filter((p) => p.id !== id)));
 }
 
 /* Catálogo vivo: seed + creados + overrides; solo "Publicado" sale a la tienda */
