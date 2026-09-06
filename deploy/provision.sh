@@ -7,7 +7,7 @@
 set -euo pipefail
 
 APP_BASE="/home/ubuntu/bletia"
-REPO_URL="https://github.com/cadaidea/blthm.git"
+REPO_URL="https://github.com/cadaidea/blthm-2.git"
 BRANCH="web"
 
 echo "── BLETIA · Provisión del VPS ─────────────────────────────"

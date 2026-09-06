@@ -569,20 +569,22 @@ npm run build
 # Si prefieres terminal sobre SSH (tu VPS: 54.39.21.79):
 # (la ruta exacta de htdocs la ves en CloudPanel → tu sitio → Settings → Document Root)
 scp -r dist/* cloudpanel@54.39.21.79:/home/cloudpanel/htdocs/`} />
-            <CodeBlock title="Scripts de despliegue (carpeta deploy/ del proyecto)" code={`# Los scripts ya están hechos: deploy/provision.sh · deploy.sh · rollback.sh
-# Guíate por deploy/README.md. Resumen:
+            <CodeBlock title="Despliegue directo desde GitHub (cadaidea/blthm-2 · PR #1)" code={`# El VPS jala el código directo de GitHub. Publicas en la rama 'web'
+# (tu PR #1). deploy/ tiene: provision.sh · deploy.sh · rollback.sh
 
-# UNA SOLA VEZ (prepara el VPS: Node 22 + repo + estructura):
+# UNA SOLA VEZ (prepara el VPS: Node 22 + clona blthm-2 + estructura):
 ssh ubuntu@54.39.21.79
 cd /home/ubuntu/bletia && bash provision.sh
 #   → luego edita deploy.conf (DOC_ROOT) y deja tus .woff2 en shared/fonts/
 
-# PRIMER DESPLIEGUE:
+# PRIMER DESPLIEGUE (jala la rama web, compila, publica):
 bash deploy.sh
 
-# CADA MEJORA (sin caída, con respaldo automático previo):
-git push origin web        # desde tu PC
-bash deploy.sh             # en el VPS
+# CADA MEJORA: mergea tu PR a 'web' en GitHub, y en el VPS:
+bash deploy.sh             # sin caída + respaldo automático previo
+
+# PROBAR EL PR SIN MERGE (revisarlo en el servidor):
+bash deploy.sh origin/pr/1/head
 
 # SI ALGO SALE MAL (vuelve al release anterior en 10 s):
 bash rollback.sh`} />

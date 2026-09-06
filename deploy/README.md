@@ -25,26 +25,22 @@ El script compila y **sincroniza** ese release hacia `htdocs`. Nunca toca
 
 ---
 
-## FASE 0 · Llevar este proyecto a tu GitHub (una sola vez)
+## FASE 0 · Publicar el proyecto en GitHub (ya lo hiciste ✅)
 
-El código vive en el entorno de trabajo, no en tu repo. Bájalo y súbelo a una
-**rama nueva llamada `web`** (así no pisa tu código viejo de Laravel en `main`):
-
-1. En la interfaz de este entorno, descarga el proyecto (menú superior →
-   *Download* / *Export* → ZIP). Descomprímelo en tu PC.
-2. Abre una terminal dentro de la carpeta descomprimida:
+El proyecto se publica en **`cadaidea/blthm-2`** (PR #1), en la rama **`web`**.
+Esa rama queda separada de `main` (tu código Laravel original), para no mezclarlos.
 
 ```bash
 git init
 git checkout -b web
 git add .
 git commit -m "feat: BLETIA web v1.0.0 — tienda + panel"
-git remote add origin https://github.com/cadaidea/blthm.git
+git remote add origin https://github.com/cadaidea/blthm-2.git
 git push -u origin web
 ```
 
-> Si ya existe el remote, usa `git remote set-url origin …`.
-> La rama `web` queda separada de `main` (tu Laravel). Producción lee `web`.
+> Producción lee la rama configurada en `deploy.conf` (por defecto `web`).
+> El PR #1 es tu punto de publicación: lo que mergees a `web` es lo que se despliega.
 
 ---
 
@@ -104,13 +100,22 @@ las fuentes → publica en `htdocs` → conserva los últimos 5 releases.
 Cada vez que quieras publicar una mejora:
 
 ```bash
-# 1) En tu PC, dentro del proyecto:
+# 1) En tu PC, dentro del proyecto (o mergea el PR a la rama web en GitHub):
 git add . && git commit -m "feat: mi mejora"
 git push origin web
 
-# 2) En el VPS:
+# 2) En el VPS (jala directo de GitHub, compila y publica):
 ssh ubuntu@54.39.21.79
 cd /home/ubuntu/bletia && bash deploy.sh
+```
+
+**Probar un PR antes de mergear** (sin tocar producción estable):
+
+```bash
+# En el VPS: publica el PR #1 tal cual está, para revisarlo
+bash deploy.sh origin/pr/1/head
+# Si no te convence, vuelves al release anterior:
+bash rollback.sh
 ```
 
 - **Sin caída:** nginx sigue sirviendo mientras se compila; la publicación es
