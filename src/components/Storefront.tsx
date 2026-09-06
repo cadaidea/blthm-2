@@ -138,20 +138,22 @@ export default function Storefront() {
           </div>
           <div className="lg:col-span-5 relative lg:min-h-[calc(100vh-4rem)]">
             <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
-              <img src={IMG.hero} alt="Butaca Aura de nogal y bouclé" className="kenburns w-full h-full object-cover" />
-              <button onClick={() => setQuick(destacado)}
-                className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5">
-                <div className="w-12 h-14 overflow-hidden shrink-0">
-                  <img src={destacado.img} alt="" className="w-full h-full object-cover" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-display font-medium text-[15px] leading-tight truncate">{destacado.name}</p>
-                  <p className="text-[11.5px] text-stone mt-0.5">{destacado.material} — {fmt(destacado.price)}</p>
-                  <p className="text-[11px] font-semibold text-maroon mt-1.5 flex items-center gap-1 group-hover:gap-2 transition-all">
-                    Ver pieza <I n="chev-r" s={11} />
-                  </p>
-                </div>
-              </button>
+              <img src={IMG.hero} alt="Mueblería BLETIA" className="kenburns w-full h-full object-cover" />
+              {destacado && (
+                <button onClick={() => setQuick(destacado)}
+                  className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5">
+                  <div className="w-12 h-14 overflow-hidden shrink-0">
+                    <img src={destacado.img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-display font-medium text-[15px] leading-tight truncate">{destacado.name}</p>
+                    <p className="text-[11.5px] text-stone mt-0.5">{destacado.material} — {fmt(destacado.price)}</p>
+                    <p className="text-[11px] font-semibold text-maroon mt-1.5 flex items-center gap-1 group-hover:gap-2 transition-all">
+                      Ver pieza <I n="chev-r" s={11} />
+                    </p>
+                  </div>
+                </button>
+              )}
             </div>
             <span className="hidden xl:block absolute -right-7 top-1/2 -translate-y-1/2 rotate-90 origin-center text-[10px] font-semibold tracking-[0.5em] text-stone uppercase">
               Serie 2026
@@ -178,6 +180,14 @@ export default function Storefront() {
           </div>
         </div>
       </Reveal>
+      {shown.length === 0 ? (
+        <Reveal>
+          <div className="border border-dashed border-linedark bg-card/50 py-24 text-center">
+            <p className="font-display font-medium text-[24px] text-ink2">Nuestra colección está en camino.</p>
+            <p className="text-[13.5px] text-stone mt-2.5">Las piezas se publican aquí en cuanto salen del taller.</p>
+          </div>
+        </Reveal>
+      ) : (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-14">
         {shown.map((p, i) => (
           <Reveal key={p.id} delay={(i % 3) * 90}>
@@ -221,6 +231,7 @@ export default function Storefront() {
           </Reveal>
         ))}
       </div>
+      )}
       </div>
     </section>
   );

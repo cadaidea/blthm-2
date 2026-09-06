@@ -209,13 +209,18 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
               <label className="block">
                 <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Correo del administrador</span>
                 <input value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }}
-                  placeholder="tu@empresa.ec" type="email" className={campo} />
+                  placeholder="bletia@zohomail.com" type="email" className={campo} />
               </label>
               <label className="block">
                 <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Contraseña</span>
                 <input value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }}
                   onKeyDown={(e) => e.key === "Enter" && submit()} type="password" className={campo} />
               </label>
+              <p className="text-[11px] text-stone leading-relaxed border border-line bg-paper2/50 px-3 py-2.5">
+                <strong className="text-ink">Acceso inicial:</strong> es el único dato que viene de fábrica.
+                Entra con <span className="font-mono">bletia@zohomail.com</span> y tu contraseña, y desde el panel
+                cargas toda la información de tu empresa.
+              </p>
             </div>
           ) : (
             <label className="block mt-6">

@@ -34,18 +34,52 @@ export function seed<T>(key: string, demo: T): T {
   return demo;
 }
 
+/* ---------- Arranque limpio versionado ----------
+   Cuando se publica una versión nueva de la plataforma, el navegador del dueño
+   puede conservar datos de una versión previa (p. ej. la demo). La primera vez
+   que se carga ESTE esquema se borra todo lo anterior para arrancar de cero con
+   el administrador predefinido. Una vez marcado el esquema, NUNCA vuelve a
+   borrar: los datos que el dueño cree después se conservan para siempre. */
+const ESQUEMA = "bletia-esquema-v1";
+const CLAVES_A_LIMPIAR = [
+  "bletia-demo", "bletia-produccion", "bletia-admin", "bletia-session-v2",
+  "bletia-productos", "bletia-pim-custom", "bletia-pim-overrides", "bletia-cms",
+  "bletia-blog-cats", "bletia-prod-cats", "bletia-atributos", "bletia-rrhh",
+  "bletia-areas", "bletia-compras", "bletia-orders", "bletia-customers",
+  "bletia-facturas", "bletia-cashflow", "bletia-suppliers", "bletia-workorders",
+  "bletia-assets", "bletia-suscriptores", "bletia-listas", "bletia-formularios",
+  "bletia-stock-movs", "bletia-bom", "bletia-guias", "bletia-links",
+  "bletia-home", "bletia-paginas", "bletia-sitio", "bletia-login",
+  "bletia-suscriptores-web", "bletia-cart", "bletia-wish", "bletia-cuenta",
+];
+if (typeof localStorage !== "undefined" && !localStorage.getItem(ESQUEMA)) {
+  CLAVES_A_LIMPIAR.forEach((k) => localStorage.removeItem(k));
+  localStorage.setItem(ESQUEMA, "1");
+}
+
 /* ---------- Usuario administrador (se crea una sola vez, "de cajón") ----------
    El primer acceso al panel muestra un asistente para crearlo. Sin él no se
    puede cargar información de la empresa. Se guarda localmente hasta que se
    migre a la base de datos (Fase 2). */
 export type AdminUser = { nombre: string; email: string; empresa: string; pass: string; creado: string };
 
+/* Administrador predefinido "de cajón": es el ÚNICO dato que existe al iniciar.
+   Con él entras al panel y cargas todo lo demás de tu empresa. */
+const ADMIN_DEFAULT: AdminUser = {
+  nombre: "bletia",
+  email: "bletia@zohomail.com",
+  empresa: "BLETIA",
+  pass: "obvio123",
+  creado: "—",
+};
+
 export function loadAdmin(): AdminUser | null {
   const a = _ls("bletia-admin");
-  return a && typeof a === "object" && (a as AdminUser).email ? (a as AdminUser) : null;
+  if (a && typeof a === "object" && (a as AdminUser).email) return a as AdminUser;
+  return ADMIN_DEFAULT;
 }
 export function saveAdmin(a: AdminUser) { localStorage.setItem("bletia-admin", JSON.stringify(a)); }
-export function adminCreado(): boolean { return loadAdmin() !== null; }
+export function adminCreado(): boolean { return true; }
 
 /* ---------- Tipos de relación laboral (RRHH) ---------- */
 export type TipoRelacion = "Relación de dependencia" | "Servicios profesionales" | "Voluntario";

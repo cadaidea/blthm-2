@@ -147,6 +147,23 @@
    manual; Fase 2 = API + PostgreSQL en el VPS para que pedidos/clientes sean compartidos y automáticos.
 5. ✅ Build verde (43 módulos). Todo lo anterior permanece intacto.
 
+## 7. Arranque en cero + administrador predefinido (completada ✅)
+1. ✅ **La empresa nace vacía**: TODOS los datos (productos, clientes, pedidos, facturas, empleados,
+   categorías, artículos, etiquetas, atributos, compras, stock…) pasan por `seed()` y en modo real
+   inician vacíos. Solo se llenan con lo que el dueño crea, y persisten hasta que él los borre.
+2. ✅ **Administrador "de cajón"**: el único dato que existe al iniciar es el admin predefinido
+   `bletia` · `bletia@zohomail.com` · contraseña `obvio123`. Se elimina el asistente de configuración:
+   el primer acceso va directo al login, que valida esas credenciales.
+3. ✅ **Arranque limpio versionado** (`bletia-esquema-v1`): la primera vez que se carga esta versión,
+   se borran datos de versiones previas (p. ej. la demo) para arrancar de cero. Una vez marcado el
+   esquema, NUNCA vuelve a borrar → lo que el dueño cree después se conserva para siempre.
+4. ✅ **Indicadores del panel dinámicos**: Ventas/Pedidos/Facturado se calculan de los datos reales
+   (inician en cero). La tabla de últimos pedidos y las secciones de colección/diario muestran estados
+   vacíos elegantes cuando no hay contenido. La tarjeta de producto destacado del hero solo aparece si
+   hay productos publicados.
+5. ✅ Lo que se conserva (estructura, no datos): secciones de la portada, páginas legales, módulos.
+6. ✅ Build verde (43 módulos).
+
 ## 7. Lenguaje de lujo + Portada editable (completada ✅)
 1. ✅ **Fuera el tono "IA"**: eliminada la fila de promesas del hero (Garantía/IVA/Entrega) y el
    slogan del footer. La apertura ahora es factual ("Madera noble, hecha a mano en Cuenca").

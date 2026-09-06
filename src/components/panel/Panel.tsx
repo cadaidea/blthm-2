@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ORDERS, EVENT_TYPES, fmt2 } from "../../data";
+import { ORDERS, INVOICES, EVENT_TYPES, fmt2, seed } from "../../data";
 import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
@@ -396,13 +396,18 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
   const latency = stress ? 19 + Math.round(Math.random() * 9) : 7 + Math.round(Math.random() * 4);
   const queue = stress ? 210 + Math.round(Math.random() * 90) : 3 + Math.round(Math.random() * 9);
 
+  /* Indicadores calculados de los datos reales (inician en cero con la empresa vacía) */
+  const ventas = ORDERS.reduce((a, o) => a + o.total, 0);
+  const activos = ORDERS.filter((o) => o.status !== "Entregado").length;
+  const facturado = INVOICES.reduce((a, f) => a + f.total, 0);
+
   return (
     <div className="fade-in space-y-6">
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <Stat label="Ventas de hoy" value={fmt2(3840)} sub={<span className="text-ok font-semibold">▲ 12,4% vs ayer</span>} />
-        <Stat label="Pedidos activos" value={14} sub="3 en taller · 2 en transporte" />
+        <Stat label="Ventas registradas" value={fmt2(ventas)} sub={ORDERS.length ? `${ORDERS.length} pedidos` : "Aún sin ventas"} />
+        <Stat label="Pedidos activos" value={activos} sub={activos ? "en proceso" : "Sin pedidos en curso"} />
         <Stat label="Eventos por segundo" value={eps.toLocaleString("es-EC")} live sub={stress ? <span className="text-warn font-semibold">Prueba de carga en curso</span> : "Redis + BullMQ · sin caídas"} />
-        <Stat label="Facturación febrero" value="$48.600" sub="IVA por declarar: $6.348" />
+        <Stat label="Facturado" value={fmt2(facturado)} sub={INVOICES.length ? `${INVOICES.length} facturas SRI` : "Sin facturas emitidas"} />
       </div>
 
       <div className="grid xl:grid-cols-3 gap-6">
@@ -478,6 +483,13 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
                     <Td><StatusChip s={o.status} /></Td>
                   </tr>
                 ))}
+                {ORDERS.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-10 text-center text-[13px] text-stone">
+                      Aún no hay pedidos. Cuando entre el primero, aparecerá aquí.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
