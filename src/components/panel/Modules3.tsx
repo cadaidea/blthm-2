@@ -569,6 +569,25 @@ npm run build
 # Si prefieres terminal sobre SSH (tu VPS: 54.39.21.79):
 # (la ruta exacta de htdocs la ves en CloudPanel → tu sitio → Settings → Document Root)
 scp -r dist/* cloudpanel@54.39.21.79:/home/cloudpanel/htdocs/`} />
+            <CodeBlock title="Pipeline de build en el VPS por SSH (para actualizar sin bajar nada)" code={`# 1) Conecta a tu VPS (como siempre lo haces)
+ssh TU_USUARIO@54.39.21.79
+
+# 2) Instala Node.js 22 (solo la primera vez)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs && node -v
+
+# 3) Clona el repo (SOLO si este proyecto ya está en tu GitHub)
+cd ~ && git clone https://github.com/cadaidea/TU_REPO.git bletia-web
+cd bletia-web
+
+# 4) Instala dependencias y compila (2 núcleos / 4 GB alcanzan de sobra)
+npm install && npm run build
+
+# 5) Copia el build al sitio de CloudPanel
+# (Document Root lo ves en CloudPanel → tu sitio → Settings)
+sudo cp -r dist/* /RUTA/DE/HTDOCS/
+
+# Para la próxima mejora: git pull && npm install && npm run build && sudo cp -r dist/* /RUTA/DE/HTDOCS/`} />
             <div className="bg-okbg/60 border border-ok/30 p-4">
               <p className="text-[12px] font-bold text-ok flex items-center gap-1.5"><I n="check" s={14} /> Ventaja de este build</p>
               <p className="text-[11.5px] text-ink2 leading-snug mt-1.5">
