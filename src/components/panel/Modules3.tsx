@@ -523,16 +523,32 @@ export function Infra() {
           <Chip tone="maroon" dot>Listo para producción</Chip>
         </div>
 
+        {/* ficha real del servidor */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-line border border-line mt-5">
+          {[
+            ["Proveedor", "OVH Cloud"],
+            ["Hostname", "vps-9cb251e8"],
+            ["IPv4 pública", "54.39.21.79"],
+            ["Sistema", "Ubuntu 26.04"],
+            ["Recursos", "2 vCPU · 4 GB RAM"],
+          ].map(([k, v]) => (
+            <div key={k} className="bg-card p-3">
+              <p className="text-[9.5px] font-bold tracking-[0.14em] uppercase text-stone">{k}</p>
+              <p className="text-[12.5px] font-semibold font-mono mt-1">{v}</p>
+            </div>
+          ))}
+        </div>
+
         <div className="grid md:grid-cols-2 gap-5 mt-5">
           <div className="space-y-3">
             {[
               ["0", "Tus fuentes Geomanist", "Copia tus 3 .woff2 licenciados a public/fonts/ (Geomanist-Regular/Medium/Bold.woff2). Vite los mete solos en dist/ al compilar."],
               ["1", "Compila el proyecto", "En tu equipo: npm run build. Se genera la carpeta dist/ con la tienda y el panel listos para internet."],
               ["2", "Comprime dist/", "Haz un .zip con el CONTENIDO de dist/ (no la carpeta en sí, sino lo que hay dentro)."],
-              ["3", "Crea el sitio en CloudPanel", "Sites → Add Site → Static Site. Dominio: bletia.ec (y www.bletia.ec). CloudPanel crea la carpeta htdocs."],
-              ["4", "Apunta el dominio", "En tu registrador de dominio: registro A de bletia.ec → IP de tu VPS OVH. Espera propagación (minutos a horas)."],
-              ["5", "Sube los archivos", "CloudPanel → File Manager → entra a htdocs del sitio → sube el .zip y extráelo ahí (o usa SFTP)."],
-              ["6", "Activa el SSL gratis", "CloudPanel → SSL → Let's Encrypt → Issue. En segundos tu sitio responde con https://."],
+              ["3", "Crea el sitio: STATIC SITE", "CloudPanel → Sites → Add Site → Static Site (NO Reverse Proxy). Vhost: Default · Dominio: bletia.ec. CloudPanel crea htdocs."],
+              ["4", "Apunta el dominio", "En tu registrador: registro A · bletia.ec → 54.39.21.79 (y www → igual). Espera propagación (minutos a horas)."],
+              ["5", "Sube los archivos", "CloudPanel → File Manager → htdocs del sitio → sube el .zip y extráelo ahí. O por SFTP/SCP a esa carpeta."],
+              ["6", "Activa el SSL gratis", "CloudPanel → SSL → Let's Encrypt → Issue para bletia.ec. En segundos responde con https://."],
               ["7", "Verifica", "Abre https://bletia.ec (tienda) y https://bletia.ec/#/dash (panel). Si se ven, estás en producción."],
             ].map(([n, t, d]) => (
               <div key={n} className="flex gap-3.5 border border-line bg-card p-3.5 hover:border-maroon/40 transition-colors">
