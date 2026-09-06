@@ -372,7 +372,7 @@ export type SeccionHome = {
 };
 
 export const SECCIONES_HOME_SEED: SeccionHome[] = [
-  { id: "hero", tipo: "hero", visible: true, titulo: "Cada pieza define tu espacio.", texto: "Muebles de nogal, roble y cuero vegetalizado: fabricados en nuestro taller y curados para durar décadas. Pagas con PayPhone — por link de un solo uso o directo en la web — y recibes en todo el Ecuador." },
+  { id: "hero", tipo: "hero", visible: true, titulo: "Madera noble, hecha a mano en Cuenca.", texto: "Sofás, sillones, mesas y centros de nogal y roble, trabajados en nuestro taller. Compra en la web con PayPhone y recibe en todo el Ecuador." },
   { id: "coleccion", tipo: "coleccion", visible: true, titulo: "Objetos serenos, líneas exactas.", texto: "" },
   { id: "taller", tipo: "taller", visible: true, titulo: "De la tabla al objeto.", texto: "Una parte de la colección nace aquí: madera certificada, ensambles de espiga y acabados a mano. Cada pieza de taller sale numerada, firmada y con su historia de fabricación trazable de punta a punta." },
   { id: "servicios", tipo: "servicios", visible: true, titulo: "Comprar es la parte fácil.", texto: "Detrás de cada entrega hay una red propia de transporte, proveedores auditados y facturación electrónica al instante." },

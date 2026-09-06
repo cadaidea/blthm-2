@@ -135,13 +135,6 @@ export default function Storefront() {
                 <a href="#taller" className="u-grow text-[13px] font-semibold text-ink2 hover:text-ink">Nuestro taller</a>
               </div>
             </Reveal>
-            <Reveal delay={340}>
-              <div className="flex flex-wrap gap-x-8 gap-y-2 mt-12 pt-6 border-t border-line text-[11.5px] font-medium text-stone tracking-wide">
-                <span className="flex items-center gap-2"><I n="shield" s={13} /> Garantía de 5 años</span>
-                <span className="flex items-center gap-2"><I n="card" s={13} /> IVA 15% incluido · Factura SRI</span>
-                <span className="flex items-center gap-2"><I n="truck" s={13} /> Entrega guante blanco nacional</span>
-              </div>
-            </Reveal>
           </div>
           <div className="lg:col-span-5 relative lg:min-h-[calc(100vh-4rem)]">
             <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
@@ -170,7 +163,8 @@ export default function Storefront() {
   );
 
   const secColeccion = (cfg: SeccionHome) => (
-    <section id="coleccion" className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28 scroll-mt-16">
+    <section id="coleccion" className="bg-paper2 scroll-mt-16">
+      <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-28">
       <Reveal>
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
           <h2 className="font-display font-medium text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.05]">{cfg.titulo}</h2>
@@ -226,6 +220,7 @@ export default function Storefront() {
             </article>
           </Reveal>
         ))}
+      </div>
       </div>
     </section>
   );
@@ -313,7 +308,7 @@ export default function Storefront() {
   );
 
   const secDiario = (cfg: SeccionHome) => (
-    <section id="diario" className="border-t border-line bg-paper2/60 scroll-mt-16">
+    <section id="diario" className="bg-paper2 scroll-mt-16">
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20">
         <Reveal>
           <div className="flex items-end justify-between gap-6 mb-10">
@@ -380,7 +375,7 @@ export default function Storefront() {
   );
 
   const secCustom = (cfg: SeccionHome) => (
-    <section id={`sec-${cfg.id}`} className={`scroll-mt-16 ${cfg.oscuro ? "bg-coal text-cream" : "border-t border-line bg-paper2/60"}`}>
+    <section id={`sec-${cfg.id}`} className={`scroll-mt-16 ${cfg.oscuro ? "bg-coal text-cream" : "bg-paper2"}`}>
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 py-20 sm:py-24">
         <div className={`grid gap-10 lg:gap-16 items-center ${cfg.img ? "lg:grid-cols-2" : "lg:grid-cols-1"}`}>
           <Reveal>
@@ -634,13 +629,7 @@ export default function Storefront() {
               ))}
             </div>
           </div>
-          {/* slogan de cierre (abajo, como pide la marca) */}
-          <div className="border-t border-cream/15 mt-14 pt-10">
-            <p className="font-display font-medium text-[clamp(1.7rem,3.6vw,2.8rem)] leading-tight text-cream max-w-[22ch]">
-              Cada pieza define tu espacio<span className="text-maroon">.</span>
-            </p>
-          </div>
-          <div className="border-t border-cream/15 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
+          <div className="border-t border-cream/15 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
             <span>© 2026 BLETIA. Hecho en Ecuador, a mano y a tiempo.</span>
             <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon" /> bletia.ec</span>
           </div>

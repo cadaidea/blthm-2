@@ -7,7 +7,7 @@ import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
 import { OMS15 } from "./Modules5";
-import { CMS, SitioPublico } from "./Modules6";
+import { CMS, EditorHome, SitioPublico } from "./Modules6";
 import { Marketing, Stock, Variantes } from "./Modules7";
 import { Compras, RRHH } from "./Modules8";
 import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth";
@@ -15,7 +15,7 @@ import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth"
 export type Mod =
   | "vision" | "oms" | "logistica" | "taller" | "bom" | "stock"
   | "relaciones" | "cobros" | "compras" | "pim" | "variantes" | "dam"
-  | "conta" | "rrhh" | "seguridad" | "infra" | "sitio" | "cms" | "marketing";
+  | "conta" | "rrhh" | "seguridad" | "infra" | "sitio" | "cms" | "marketing" | "home";
 
 /* Estructura de TALLER UNO (rama ac8f5) — 15 módulos en 6 grupos */
 const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] }[] = [
@@ -46,6 +46,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
     { id: "infra", label: "Ajustes & despliegue", icon: "server" },
   ]},
   { group: "Canal digital", items: [
+    { id: "home", label: "Portada · Home", icon: "image" },
     { id: "sitio", label: "Sitio público", icon: "eye" },
     { id: "cms", label: "Contenido web · CMS", icon: "doc" },
     { id: "marketing", label: "Marketing · Digest", icon: "pulse" },
@@ -59,7 +60,7 @@ const TITLES: Record<Mod, string> = {
   conta: "Contabilidad & SRI", seguridad: "Seguridad & porting",
   infra: "Ajustes & despliegue", sitio: "Sitio público · bletia.ec", cms: "Contenido web · CMS",
   variantes: "Variables & variantes", stock: "Stock & bodegas", marketing: "Marketing · Digest",
-  compras: "Compras · Órdenes al proveedor", rrhh: "RRHH · Nómina",
+  compras: "Compras · Órdenes al proveedor", rrhh: "RRHH · Nómina", home: "Portada · bletia.ec",
 };
 
 /* Cada rol ve solo su área. Gerencia lo ve todo.
@@ -78,12 +79,13 @@ const ACCESS: Record<Mod, Role[]> = {
   seguridad: ["gerencia"],
   infra: ["gerencia"],
   sitio: ["gerencia", "ventas"],
-  cms: ["gerencia", "ventas"],
+  cms: ["gerencia"],
   marketing: ["gerencia", "ventas"],
   variantes: ["gerencia", "ventas", "taller"],
   stock: ["gerencia", "taller", "logistica"],
   compras: ["gerencia", "logistica", "contabilidad"],
   rrhh: ["gerencia", "contabilidad"],
+  home: ["gerencia"],
 };
 
 /* ---- motor de eventos simulado (Redis + BullMQ en producción) ---- */
@@ -342,6 +344,7 @@ export default function Panel() {
           {mod === "infra" && <Infra />}
           {mod === "sitio" && <SitioPublico />}
           {mod === "cms" && <CMS />}
+          {mod === "home" && <EditorHome />}
           {mod === "marketing" && <Marketing />}
         </main>
       </div>

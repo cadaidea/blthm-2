@@ -146,3 +146,16 @@
 4. ✅ **Fases de persistencia documentadas**: Fase 1 (v1.0.0) = datos en el navegador con respaldo
    manual; Fase 2 = API + PostgreSQL en el VPS para que pedidos/clientes sean compartidos y automáticos.
 5. ✅ Build verde (43 módulos). Todo lo anterior permanece intacto.
+
+## 7. Lenguaje de lujo + Portada editable (completada ✅)
+1. ✅ **Fuera el tono "IA"**: eliminada la fila de promesas del hero (Garantía/IVA/Entrega) y el
+   slogan del footer. La apertura ahora es factual ("Madera noble, hecha a mano en Cuenca").
+2. ✅ **Sin líneas divisorias**: las secciones se separan por bloques de color a sangría completa
+   (colección y diario en hueso, taller en carbón, servicios en blanco) — cero hairlines entre secciones.
+3. ✅ **Nuevo módulo "Portada · Home"** en Canal digital (SOLO administrador): maqueta en vivo del
+   apilado, reordenar, ocultar/mostrar, editar títulos/textos, banda clara/oscura, añadir secciones
+   libres y restaurar la original. Publica al instante en `bletia-home`.
+4. ✅ **Editor de categorías** dentro del CMS: CRUD de categorías de blog y de producto (crear/eliminar).
+5. ✅ **CMS ahora solo administrador** (`cms: ["gerencia"]`, `home: ["gerencia"]`): el control total
+   del contenido web (artículos, categorías, portada, menús) es del dueño, como pidió.
+6. ✅ Build verde (43 módulos). Todo lo anterior permanece intacto.

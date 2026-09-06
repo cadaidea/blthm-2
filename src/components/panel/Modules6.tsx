@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import {
-  BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, autorDe, loadCMS, loadPaginas,
-  loadSite, minutosLectura, saveCMS, savePaginas, saveSite, type CMSPost, type Pagina, type SiteConfig,
+  BLOG_AUTORES, BLOG_ETIQUETAS, CMS_POSTS_SEED, PRODUCTS, SECCIONES_HOME_SEED, autorDe,
+  loadBlogCategorias, loadCMS, loadCategoriasProducto, loadPaginas, loadSecciones, loadSite,
+  minutosLectura, saveBlogCategorias, saveCMS, saveCategoriasProducto, savePaginas, saveSecciones,
+  saveSite, type BlogCategoria, type CMSPost, type CategoriaProducto, type Pagina,
+  type SeccionHome, type SiteConfig,
 } from "../../data";
 import { I, Modal, toast } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -307,6 +310,9 @@ export function CMS() {
         <Stat label="Canal" value="Diario de taller" sub="bletia.ec/#diario" />
       </div>
 
+      {/* categorías (blog + producto) */}
+      <CategoriasEditor />
+
       {/* menús del sitio */}
       <Card className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
@@ -496,6 +502,189 @@ export function CMS() {
           </div>
         </div>
       </Modal>
+    </div>
+  );
+}
+
+/* ================= Portada · Home (composición de la página de inicio) ================= */
+const TIPO_LABEL: Record<SeccionHome["tipo"], string> = {
+  hero: "Apertura", coleccion: "Colección", taller: "Taller",
+  servicios: "Servicios", diario: "Diario", custom: "Sección libre",
+};
+const TIPO_BG: Record<SeccionHome["tipo"], string> = {
+  hero: "bg-paper", coleccion: "bg-paper2", taller: "bg-coal",
+  servicios: "bg-paper", diario: "bg-paper2", custom: "bg-paper2",
+};
+
+export function EditorHome() {
+  const [secs, setSecs] = useState<SeccionHome[]>(() => loadSecciones());
+  const [saved, setSaved] = useState(false);
+
+  const upd = (id: string, patch: Partial<SeccionHome>) =>
+    setSecs((l) => l.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  const mover = (i: number, dir: -1 | 1) =>
+    setSecs((l) => {
+      const j = i + dir;
+      if (j < 0 || j >= l.length) return l;
+      const c = [...l];
+      [c[i], c[j]] = [c[j], c[i]];
+      return c;
+    });
+  const quitar = (id: string) => setSecs((l) => l.filter((s) => s.id !== id));
+  const agregar = () =>
+    setSecs((l) => [...l, { id: `custom-${Date.now()}`, tipo: "custom", visible: true, titulo: "Nueva sección", texto: "Escribe aquí el contenido de tu sección.", oscuro: false }]);
+  const restaurar = () => { setSecs(SECCIONES_HOME_SEED); toast("Se restauró la portada original", "info"); };
+  const publicar = () => {
+    saveSecciones(secs);
+    setSaved(true);
+    toast("Portada publicada en bletia.ec", "ok");
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="fade-in space-y-6">
+      <SectionTitle
+        title="Portada · bletia.ec"
+        sub="Compones la página de inicio: ordena, oculta, edita textos y añade secciones. Se publica al instante."
+        right={
+          <div className="flex gap-2">
+            <button onClick={restaurar} className={btnGhost}>Restaurar original</button>
+            <button onClick={publicar} className={`${btnDark} ${saved ? "!bg-ok !border-ok" : ""}`}>
+              <I n={saved ? "check" : "spark"} s={14} /> {saved ? "Publicada" : "Publicar portada"}
+            </button>
+          </div>
+        }
+      />
+
+      {/* maqueta en vivo del orden */}
+      <Card className="p-5">
+        <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-stone mb-3">Así se apila tu portada (de arriba a abajo)</p>
+        <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1">
+          {secs.map((s) => (
+            <div key={s.id}
+              className={`shrink-0 w-[110px] border ${s.visible ? "border-linedark" : "border-dashed border-linedark opacity-40"} ${TIPO_BG[s.tipo] === "bg-coal" ? "bg-coal text-cream" : "bg-card"}`}>
+              <div className={`h-9 ${TIPO_BG[s.tipo]}`} />
+              <p className="text-[10px] font-semibold px-2 py-1.5 truncate">{TIPO_LABEL[s.tipo]}</p>
+            </div>
+          ))}
+          <button onClick={agregar}
+            className="shrink-0 w-[110px] border border-dashed border-linedark hover:border-maroon hover:text-maroon transition-colors flex flex-col items-center justify-center gap-1 text-stone">
+            <I n="plus" s={16} />
+            <span className="text-[10px] font-semibold">Añadir</span>
+          </button>
+        </div>
+      </Card>
+
+      {/* lista de secciones */}
+      <div className="space-y-3">
+        {secs.map((s, i) => (
+          <Card key={s.id} className={`p-4 sm:p-5 transition-opacity ${s.visible ? "" : "opacity-50"}`}>
+            <div className="flex items-start gap-3.5">
+              <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
+                <button onClick={() => mover(i, -1)} disabled={i === 0} aria-label="Subir"
+                  className="text-stone hover:text-ink disabled:opacity-25 transition-colors"><I n="chev-r" s={14} className="-rotate-90" /></button>
+                <span className="text-[10px] font-bold text-stone tnum">{i + 1}</span>
+                <button onClick={() => mover(i, 1)} disabled={i === secs.length - 1} aria-label="Bajar"
+                  className="text-stone hover:text-ink disabled:opacity-25 transition-colors"><I n="chev-r" s={14} className="rotate-90" /></button>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5 mb-2">
+                  <Chip tone={s.tipo === "custom" ? "maroon" : "neutral"}>{TIPO_LABEL[s.tipo]}</Chip>
+                  {s.tipo === "custom" && (
+                    <button onClick={() => upd(s.id, { oscuro: !s.oscuro })}
+                      className={`text-[10.5px] font-bold uppercase tracking-wider px-2 py-1 border transition-colors ${s.oscuro ? "bg-coal text-cream border-coal" : "border-linedark text-ink2"}`}>
+                      {s.oscuro ? "Banda oscura" : "Banda clara"}
+                    </button>
+                  )}
+                </div>
+                <input value={s.titulo} onChange={(e) => upd(s.id, { titulo: e.target.value })}
+                  className={`${inp} font-display !text-[16px]`} placeholder="Título de la sección" />
+                {(s.tipo === "hero" || s.tipo === "taller" || s.tipo === "servicios" || s.tipo === "custom") && (
+                  <textarea value={s.texto} onChange={(e) => upd(s.id, { texto: e.target.value })} rows={2}
+                    className={`${inp} resize-y mt-2`} placeholder="Texto de la sección" />
+                )}
+              </div>
+
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <Sw on={s.visible} onClick={() => upd(s.id, { visible: !s.visible })} />
+                <span className="text-[10px] font-semibold text-stone">{s.visible ? "Visible" : "Oculta"}</span>
+                {s.tipo === "custom" && (
+                  <button onClick={() => quitar(s.id)} className="text-[11px] font-semibold text-bad hover:underline mt-1">Eliminar</button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================= Categorías (blog + producto) ================= */
+export function CategoriasEditor() {
+  const [blog, setBlog] = useState<BlogCategoria[]>(() => loadBlogCategorias());
+  const [prod, setProd] = useState<CategoriaProducto[]>(() => loadCategoriasProducto());
+  const [nb, setNb] = useState("");
+  const [npr, setNpr] = useState("");
+
+  const addBlog = () => {
+    const n = nb.trim();
+    if (!n || blog.some((c) => c.nombre.toLowerCase() === n.toLowerCase())) return;
+    const l = [...blog, { id: `bc${Date.now()}`, nombre: n }];
+    setBlog(l); saveBlogCategorias(l); setNb("");
+    toast(`Categoría de blog «${n}» creada`, "ok");
+  };
+  const delBlog = (id: string) => {
+    const l = blog.filter((c) => c.id !== id);
+    setBlog(l); saveBlogCategorias(l);
+    toast("Categoría de blog eliminada", "warn");
+  };
+  const addProd = () => {
+    const n = npr.trim();
+    if (!n || prod.some((c) => c.nombre.toLowerCase() === n.toLowerCase())) return;
+    const l = [...prod, { id: `cp${Date.now()}`, nombre: n, activa: true }];
+    setProd(l); saveCategoriasProducto(l); setNpr("");
+    toast(`Categoría de producto «${n}» creada`, "ok");
+  };
+  const delProd = (id: string) => {
+    const l = prod.filter((c) => c.id !== id);
+    setProd(l); saveCategoriasProducto(l);
+    toast("Categoría de producto eliminada", "warn");
+  };
+
+  const Bloque = ({ titulo, ayuda, items, onAdd, onDel, val, setVal, addLabel }: {
+    titulo: string; ayuda: string; items: { id: string; nombre: string }[];
+    onAdd: () => void; onDel: (id: string) => void; val: string; setVal: (v: string) => void; addLabel: string;
+  }) => (
+    <Card className="p-5">
+      <h3 className="font-bold text-[15px] tracking-tight">{titulo}</h3>
+      <p className="text-[12px] text-stone mt-0.5">{ayuda}</p>
+      <div className="flex flex-wrap gap-1.5 mt-4">
+        {items.map((c) => (
+          <span key={c.id} className="inline-flex items-center gap-1.5 border border-linedark px-2.5 py-1.5 text-[12px] font-medium fade-in">
+            {c.nombre}
+            <button onClick={() => onDel(c.id)} className="text-stone hover:text-bad transition-colors" aria-label={`Eliminar ${c.nombre}`}>
+              <I n="close" s={11} />
+            </button>
+          </span>
+        ))}
+        {items.length === 0 && <span className="text-[12px] text-stone">Sin categorías.</span>}
+      </div>
+      <div className="flex gap-2 mt-4">
+        <input value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onAdd()}
+          className={inp} placeholder={addLabel} />
+        <button onClick={onAdd} className={`${btnDark} !py-2.5 whitespace-nowrap`}><I n="plus" s={13} /> Añadir</button>
+      </div>
+    </Card>
+  );
+
+  return (
+    <div className="grid md:grid-cols-2 gap-5">
+      <Bloque titulo="Categorías del blog" ayuda="Agrupan los artículos del diario (Materia, Taller…)."
+        items={blog} onAdd={addBlog} onDel={delBlog} val={nb} setVal={setNb} addLabel="Nueva categoría de blog" />
+      <Bloque titulo="Categorías de producto" ayuda="Agrupan las piezas de la tienda y sus filtros."
+        items={prod} onAdd={addProd} onDel={delProd} val={npr} setVal={setNpr} addLabel="Nueva categoría de producto" />
     </div>
   );
 }
