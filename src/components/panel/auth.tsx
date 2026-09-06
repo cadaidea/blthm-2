@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { adminCreado, loadAdmin, loadLogin, saveAdmin } from "../../data";
+import { VERSION, adminCreado, loadAdmin, loadLogin, saveAdmin } from "../../data";
 import { I } from "../ui";
 
 /* ---------- Modelo de roles ---------- */
@@ -241,6 +241,9 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
           </p>
           <p className="text-center mt-4">
             <a href="#top" className="text-[11.5px] font-semibold text-stone hover:text-ink u-grow">← Volver a la tienda pública</a>
+          </p>
+          <p className="text-center mt-5 text-[10px] font-semibold tracking-[0.22em] uppercase text-stone/60">
+            BLETIA OS · {VERSION}
           </p>
         </div>
       </div>

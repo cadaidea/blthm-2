@@ -77,7 +77,11 @@ fi
 echo "[5/6] Publicando en ${DOC_ROOT}…"
 mkdir -p "${DOC_ROOT}"
 rsync -a --delete "${RELEASE_DIR}/" "${DOC_ROOT}/"
-echo "      ok."
+# Sello verificable: abrir bletia.ec/version.txt muestra qué hay publicado y cuándo
+printf 'BLETIA · %s · commit %s · publicado %s\n' \
+  "${TARGET}" "$(git -C "${REPO}" rev-parse --short HEAD)" "$(date '+%Y-%m-%d %H:%M')" \
+  > "${DOC_ROOT}/version.txt"
+echo "      ok. (verifica en bletia.ec/version.txt)"
 
 # 6) Marcar versión actual + limpiar releases viejos
 echo "[6/6] Limpiando…"

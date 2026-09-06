@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ORDERS, INVOICES, EVENT_TYPES, fmt2, seed } from "../../data";
+import { ORDERS, INVOICES, EVENT_TYPES, VERSION, fmt2, seed } from "../../data";
 import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
@@ -270,7 +270,7 @@ export default function Panel() {
             <span className={`w-2 h-2 rounded-full ${env === "producción" ? "bg-ok pulse-ok" : "bg-warn"}`} />
             <span className="text-[11px] font-semibold text-cream/70">Entorno: {env}</span>
           </div>
-          <p className="text-[10.5px] text-cream/35 leading-relaxed">OVH VPS · nginx 1.24 · PM2 cluster<br />v2.4.1 · datos intactos ✓</p>
+          <p className="text-[10.5px] text-cream/35 leading-relaxed">OVH Cloud · CloudPanel<br />BLETIA OS {VERSION} · arranque vacío</p>
         </div>
       </aside>
       {nav && <div className="fixed inset-0 z-[65] bg-ink/50 lg:hidden fade-in" onClick={() => setNav(false)} />}

@@ -4,6 +4,10 @@
    Cédulas/RUC calculados con Módulo 10/11 reales (utils/sri.ts)
    ========================================================= */
 
+/* Versión visible de la plataforma: permite verificar a simple vista si el
+   servidor sirve la versión nueva (se muestra en login, panel y pie de la tienda). */
+export const VERSION = "v1.1.0";
+
 export const IVA = 0.15;
 
 export const fmt = (n: number): string =>

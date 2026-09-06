@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product, type SeccionHome } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, VERSION, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product, type SeccionHome } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 
@@ -642,7 +642,7 @@ export default function Storefront() {
           </div>
           <div className="border-t border-cream/15 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11.5px] text-cream/40">
             <span>© 2026 BLETIA. Hecho en Ecuador, a mano y a tiempo.</span>
-            <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon" /> bletia.ec</span>
+            <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon" /> bletia.ec <span className="text-cream/25 tnum">· {VERSION}</span></span>
           </div>
         </div>
       </footer>
