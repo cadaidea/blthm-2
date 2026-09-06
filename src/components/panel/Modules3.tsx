@@ -526,6 +526,7 @@ export function Infra() {
         <div className="grid md:grid-cols-2 gap-5 mt-5">
           <div className="space-y-3">
             {[
+              ["0", "Tus fuentes Geomanist", "Copia tus 3 .woff2 licenciados a public/fonts/ (Geomanist-Regular/Medium/Bold.woff2). Vite los mete solos en dist/ al compilar."],
               ["1", "Compila el proyecto", "En tu equipo: npm run build. Se genera la carpeta dist/ con la tienda y el panel listos para internet."],
               ["2", "Comprime dist/", "Haz un .zip con el CONTENIDO de dist/ (no la carpeta en sí, sino lo que hay dentro)."],
               ["3", "Crea el sitio en CloudPanel", "Sites → Add Site → Static Site. Dominio: bletia.ec (y www.bletia.ec). CloudPanel crea la carpeta htdocs."],
