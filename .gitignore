@@ -3,3 +3,12 @@ node_modules/
 dist/
 build/
 *.log
+
+# secretos — jamás al repo
+.env
+.env.*
+!.env.example
+*.p12
+*.pem
+*.key
+backups/
