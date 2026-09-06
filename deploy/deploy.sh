@@ -35,15 +35,29 @@ else
   echo "      (primer despliegue: no hay versión previa que respaldar)"
 fi
 
-# 2) Traer el código
+# 2) Traer el código (detecta si GitHub no recibió el Push)
 echo "[2/6] Actualizando código (${TARGET})…"
-# --prune y el refspec de PRs permiten desplegar también un PR sin merge:
-#   bash deploy.sh origin/pr/1/head   → publica el PR #1 tal cual está
-git -C "${REPO}" fetch origin --prune --tags \
-  "+refs/pull/*/head:refs/remotes/origin/pr/*"
+PREV="$(git -C "${REPO}" rev-parse --short HEAD 2>/dev/null || echo 'ninguno')"
+git -C "${REPO}" fetch origin --prune
 git -C "${REPO}" checkout --detach "${TARGET}"
 git -C "${REPO}" clean -fd
-echo "      en $(git -C "${REPO}" rev-parse --short HEAD)"
+NUEVO="$(git -C "${REPO}" rev-parse --short HEAD)"
+echo "      en ${NUEVO}"
+if [ "${PREV}" = "${NUEVO}" ]; then
+  echo ""
+  echo "⚠️  SIN CAMBIOS: GitHub sigue en ${NUEVO} — tu Push no llegó a GitHub."
+  echo "    Revisa GitHub Desktop en tu PC:"
+  echo "    1) ¿Hay archivos en la lista de la izquierda? → escribe un mensaje y pulsa 'Commit to main'."
+  echo "    2) ¿Arriba aparece 'Push origin'? → púlsalo y espera a que termine."
+  echo "    3) ¿Dice 'Publish repository'? → la carpeta perdió su conexión: clona de"
+  echo "       nuevo (File → Clone repository → bletia-web), copia el contenido nuevo"
+  echo "       DENTRO de la carpeta clonada, y haz Commit + Push origin."
+  echo "    Verifica en github.com/cadaidea/bletia-web → pestaña commits: el último"
+  echo "    debe ser tu commit nuevo (no 'Up' ${NUEVO})."
+  echo "    Cuando el commit nuevo esté en GitHub, repite: bash deploy.sh"
+  echo ""
+  exit 1
+fi
 
 # 3) Compilar (detecta solo si el código está en la raíz o dentro de una subcarpeta)
 echo "[3/6] Compilando (npm ci + build)…"
