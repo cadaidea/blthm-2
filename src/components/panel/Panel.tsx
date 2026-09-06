@@ -10,7 +10,8 @@ import { OMS15 } from "./Modules5";
 import { CMS, EditorHome, SitioPublico } from "./Modules6";
 import { Marketing, Stock, Variantes } from "./Modules7";
 import { Compras, RRHH } from "./Modules8";
-import { BletiaMark, LoginScreen, ROLE_LABEL, useAuth, type Role } from "./auth";
+import { adminCreado } from "../../data";
+import { BletiaMark, LoginScreen, ROLE_LABEL, SetupScreen, useAuth, type Role } from "./auth";
 
 export type Mod =
   | "vision" | "oms" | "logistica" | "taller" | "bom" | "stock"
@@ -204,12 +205,20 @@ export default function Panel() {
 
   /* al entrar, asegura que el rol esté viendo un módulo permitido */
   useEffect(() => {
-    if (!ACCESS[mod].includes(session.role)) setMod("vision");
+    if (session && !ACCESS[mod].includes(session.role)) setMod("vision");
   }, [session, mod]);
 
   /* entrada de colaboradores (los trabajadores eligen su rol aquí) */
   if (workerLogin)
     return <LoginScreen onLogin={(s) => { login(s); setWorkerLogin(false); setMod("vision"); }} onBack={() => setWorkerLogin(false)} />;
+
+  /* primer acceso: crear el administrador (una sola vez) */
+  if (!adminCreado())
+    return <SetupScreen onDone={(s) => { login(s); setMod("vision"); }} />;
+
+  /* sin sesión: mostrar login */
+  if (!session)
+    return <LoginScreen onLogin={(s) => { login(s); setMod("vision"); }} />;
 
   const role = session.role;
   const visibleNav = NAV.map((g) => ({ ...g, items: g.items.filter((it) => ACCESS[it.id].includes(role)) }))

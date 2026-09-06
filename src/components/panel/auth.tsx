@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { loadLogin } from "../../data";
+import { useState } from "react";
+import { adminCreado, loadAdmin, loadLogin, saveAdmin } from "../../data";
 import { I } from "../ui";
 
 /* ---------- Modelo de roles ---------- */
@@ -42,9 +42,8 @@ export function BletiaMark({ light = false, size = 22 }: { light?: boolean; size
 const KEY = "bletia-session-v2";
 export type Session = { role: Role; name: string };
 
-/* El dueño siempre aterriza en Gerencia (los 13 módulos) si no hay una sesión
-   de trabajador válida guardada. Los colaboradores cierran sesión y eligen su rol. */
-const OWNER_SESSION: Session = { role: "gerencia", name: "Gerencia BLETIA" };
+/* El dueño entra con su correo+contraseña (rol gerencia, los 15 módulos).
+   Los colaboradores eligen su rol. Si no hay sesión, se muestra el login. */
 const VALID_ROLES: Role[] = ["gerencia", "ventas", "taller", "logistica", "contabilidad"];
 
 function isSession(s: unknown): s is Session {
@@ -55,26 +54,106 @@ function isSession(s: unknown): s is Session {
 }
 
 export function useAuth() {
-  const [session, setSession] = useState<Session>(() => {
+  const [session, setSession] = useState<Session | null>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-      return isSession(saved) ? saved : OWNER_SESSION;
-    } catch { return OWNER_SESSION; }
+      return isSession(saved) ? saved : null;
+    } catch { return null; }
   });
   const login = (s: Session) => { localStorage.setItem(KEY, JSON.stringify(s)); setSession(s); };
-  /* salir del modo trabajador: vuelve a la sesión de dueño (Gerencia, todo visible) */
-  const logout = () => { localStorage.removeItem(KEY); setSession(OWNER_SESSION); };
+  const logout = () => { localStorage.removeItem(KEY); setSession(null); };
   return { session, login, logout };
 }
+
+/* ---------- Asistente de configuración inicial (crear el admin, una sola vez) ---------- */
+export function SetupScreen({ onDone }: { onDone: (s: Session) => void }) {
+  const [f, setF] = useState({ empresa: "", nombre: "", email: "", pass: "", pass2: "" });
+  const [err, setErr] = useState("");
+
+  const crear = () => {
+    if (f.empresa.trim().length < 2) return setErr("Escribe el nombre de tu empresa.");
+    if (f.nombre.trim().length < 2) return setErr("Escribe tu nombre (serás el administrador).");
+    if (!/^\S+@\S+\.\S+$/.test(f.email.trim())) return setErr("Escribe un correo válido.");
+    if (f.pass.length < 6) return setErr("La contraseña debe tener al menos 6 caracteres.");
+    if (f.pass !== f.pass2) return setErr("Las contraseñas no coinciden.");
+    saveAdmin({
+      nombre: f.nombre.trim(), email: f.email.trim().toLowerCase(), empresa: f.empresa.trim(),
+      pass: f.pass, creado: new Date().toLocaleDateString("es-EC"),
+    });
+    onDone({ role: "gerencia", name: f.nombre.trim() });
+  };
+
+  return (
+    <div className="min-h-screen grid place-items-center bg-paper font-dash text-ink p-6">
+      <div className="w-full max-w-[460px] fade-in">
+        <BletiaMark size={26} />
+        <h1 className="font-display font-medium text-[clamp(1.8rem,3vw,2.4rem)] leading-[1.05] mt-8">
+          Bienvenido. Configuremos tu empresa.
+        </h1>
+        <p className="text-[13.5px] text-stone leading-relaxed mt-3">
+          Este es el primer acceso. Crea tu <strong className="text-ink">usuario administrador</strong>: con él
+          entrarás al panel y cargarás toda la información de tu negocio. Guárdalo bien, que no se puede recuperar.
+        </p>
+
+        <div className="grid gap-3.5 mt-7">
+          <label className="block">
+            <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Nombre de la empresa</span>
+            <input value={f.empresa} onChange={(e) => { setF({ ...f, empresa: e.target.value }); setErr(""); }} placeholder="Ej. BLETIA S.A.S." className={campo} />
+          </label>
+          <label className="block">
+            <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Tu nombre (administrador)</span>
+            <input value={f.nombre} onChange={(e) => { setF({ ...f, nombre: e.target.value }); setErr(""); }} placeholder="Ej. Diego Pillacela" className={campo} />
+          </label>
+          <label className="block">
+            <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Correo</span>
+            <input value={f.email} onChange={(e) => { setF({ ...f, email: e.target.value }); setErr(""); }} placeholder="tu@empresa.ec" type="email" className={campo} />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Contraseña</span>
+              <input value={f.pass} onChange={(e) => { setF({ ...f, pass: e.target.value }); setErr(""); }} type="password" className={campo} />
+            </label>
+            <label className="block">
+              <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Repítela</span>
+              <input value={f.pass2} onChange={(e) => { setF({ ...f, pass2: e.target.value }); setErr(""); }} type="password" onKeyDown={(e) => e.key === "Enter" && crear()} className={campo} />
+            </label>
+          </div>
+        </div>
+
+        {err && <p className="text-bad text-[12.5px] font-medium mt-4 flex items-center gap-2"><I n="alert" s={14} />{err}</p>}
+
+        <button onClick={crear}
+          className="w-full mt-6 bg-ink text-paper text-[13px] font-semibold py-4 hover:bg-maroon transition-colors flex items-center justify-center gap-2">
+          Crear administrador y entrar <I n="arrow" s={15} />
+        </button>
+        <p className="text-[11px] text-stone text-center mt-4 flex items-center justify-center gap-1.5">
+          <I n="shield" s={12} /> Solo tú verás esta pantalla, una única vez.
+        </p>
+      </div>
+    </div>
+  );
+}
+const campo = "w-full border border-linedark bg-card px-3.5 py-3 text-[13.5px] outline-none focus:border-ink transition-colors placeholder:text-stone/60";
 
 /* ---------- Pantalla de login (bletia.ec/dash/login) ---------- */
 export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void; onBack?: () => void }) {
   const cfg = loadLogin();
   const [role, setRole] = useState<Role>("gerencia");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
 
   const submit = () => {
+    if (role === "gerencia") {
+      const admin = loadAdmin();
+      if (!admin) return setErr("Aún no hay administrador creado.");
+      if (email.trim().toLowerCase() !== admin.email || pass !== admin.pass) {
+        return setErr("Correo o contraseña incorrectos.");
+      }
+      onLogin({ role, name: admin.nombre });
+      return;
+    }
     if (name.trim().length < 2) { setErr("Escribe tu nombre para entrar."); return; }
     onLogin({ role, name: name.trim() });
   };
@@ -125,13 +204,27 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
             ))}
           </div>
 
-          <label className="block mt-6">
-            <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Tu nombre</span>
-            <input value={name} onChange={(e) => { setName(e.target.value); setErr(""); }}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="Ej. Rosa Burbano"
-              className="w-full border border-linedark bg-card px-3.5 py-3 text-[13.5px] outline-none focus:border-ink transition-colors placeholder:text-stone/60" />
-          </label>
+          {role === "gerencia" ? (
+            <div className="grid gap-3.5 mt-6">
+              <label className="block">
+                <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Correo del administrador</span>
+                <input value={email} onChange={(e) => { setEmail(e.target.value); setErr(""); }}
+                  placeholder="tu@empresa.ec" type="email" className={campo} />
+              </label>
+              <label className="block">
+                <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Contraseña</span>
+                <input value={pass} onChange={(e) => { setPass(e.target.value); setErr(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && submit()} type="password" className={campo} />
+              </label>
+            </div>
+          ) : (
+            <label className="block mt-6">
+              <span className="block text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Tu nombre</span>
+              <input value={name} onChange={(e) => { setName(e.target.value); setErr(""); }}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+                placeholder="Ej. Rosa Burbano" className={campo} />
+            </label>
+          )}
           {err && <p className="text-bad text-[12px] font-medium mt-3 flex items-center gap-2"><I n="alert" s={13} />{err}</p>}
 
           <button onClick={submit}

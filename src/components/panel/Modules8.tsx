@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import {
-  BODEGAS, COMPRAS_SEED, LOGIN_DEFAULTS, SUPPLIERS, fmt, fmt2, loadCompras, loadEmpleados,
-  loadLogin, randomCode, saveCompras, saveEmpleados, saveLogin,
-  type CompraOC, type Empleado, type LoginConfig,
+  BODEGAS, COMPRAS_SEED, LOGIN_DEFAULTS, SUPPLIERS, TIPOS_RELACION, fmt, fmt2, loadAreas,
+  loadCompras, loadEmpleados, loadLogin, randomCode, saveAreas, saveCompras, saveEmpleados,
+  saveLogin, type CompraOC, type Empleado, type LoginConfig, type TipoRelacion,
 } from "../../data";
 import { CopyBtn, I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -60,13 +60,25 @@ function LoginEditor() {
 export function RRHH() {
   const [emps, setEmps] = useState<Empleado[]>(() => loadEmpleados());
   const [openNew, setOpenNew] = useState(false);
-  const [nf, setNf] = useState({ nombre: "", cargo: "", area: "Taller", sueldo: "", email: "" });
+  const [areas, setAreas] = useState<string[]>(() => loadAreas());
+  const [nuevaArea, setNuevaArea] = useState("");
+  const [nf, setNf] = useState<{ nombre: string; cargo: string; area: string; sueldo: string; email: string; relacion: TipoRelacion }>({
+    nombre: "", cargo: "", area: loadAreas()[0] || "Taller", sueldo: "", email: "", relacion: "Relación de dependencia",
+  });
 
   const activos = emps.filter((e) => e.estado === "Activo");
   const masa = activos.reduce((a, e) => a + e.sueldo, 0);
   const autores = emps.filter((e) => e.esAutor).length;
 
   const persist = (next: Empleado[]) => { setEmps(next); saveEmpleados(next); };
+
+  const agregarArea = () => {
+    const a = nuevaArea.trim();
+    if (!a || areas.some((x) => x.toLowerCase() === a.toLowerCase())) return;
+    const next = [...areas, a];
+    setAreas(next); saveAreas(next); setNuevaArea("");
+    toast(`Área «${a}» creada`, "ok");
+  };
 
   const toggleAutor = (id: string) => {
     const target = emps.find((e) => e.id === id);
@@ -81,11 +93,11 @@ export function RRHH() {
       id: `e${Date.now()}`, nombre: nf.nombre.trim(), cargo: nf.cargo.trim() || "Colaborador",
       area: nf.area, sueldo, estado: "Activo", ingreso: "2026",
       email: nf.email.trim() || `${nf.nombre.trim().split(" ")[0].toLowerCase()}@bletia.ec`,
-      esAutor: false,
+      esAutor: false, relacion: nf.relacion,
     };
     persist([e, ...emps]);
     toast(`${e.nombre} ingresó a la nómina`, "ok");
-    setNf({ nombre: "", cargo: "", area: "Taller", sueldo: "", email: "" });
+    setNf({ nombre: "", cargo: "", area: areas[0] || "Taller", sueldo: "", email: "", relacion: "Relación de dependencia" });
     setOpenNew(false);
   };
 
@@ -107,7 +119,7 @@ export function RRHH() {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px]">
-            <thead><tr><Th>Colaborador</Th><Th>Cargo</Th><Th>Área</Th><Th>Sueldo</Th><Th>Estado</Th><Th>Autor del diario</Th></tr></thead>
+            <thead><tr><Th>Colaborador</Th><Th>Cargo</Th><Th>Área</Th><Th>Relación</Th><Th>Sueldo</Th><Th>Estado</Th><Th>Autor del diario</Th></tr></thead>
             <tbody>
               {emps.map((e) => (
                 <tr key={e.id} className="hover:bg-paper2/50 transition-colors fade-in">
@@ -124,6 +136,11 @@ export function RRHH() {
                   </Td>
                   <Td className="text-ink2">{e.cargo}</Td>
                   <Td><Chip tone="neutral">{e.area}</Chip></Td>
+                  <Td>
+                    <Chip tone={e.relacion === "Relación de dependencia" ? "neutral" : e.relacion === "Servicios profesionales" ? "maroon" : "warn"}>
+                      {e.relacion === "Relación de dependencia" ? "Dependencia" : e.relacion === "Servicios profesionales" ? "Servicios prof." : "Voluntario"}
+                    </Chip>
+                  </Td>
                   <Td className="tnum font-semibold">{fmt(e.sueldo)}</Td>
                   <Td>
                     <Chip tone={e.estado === "Activo" ? "ok" : e.estado === "Vacaciones" ? "warn" : "bad"} dot>{e.estado}</Chip>
@@ -163,7 +180,17 @@ export function RRHH() {
             <label className="block">
               <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Área</span>
               <select value={nf.area} onChange={(e) => setNf({ ...nf, area: e.target.value })} className={inp}>
-                {["Taller", "Diseño", "Gerencia", "Finanzas", "Ventas", "Logística"].map((a) => <option key={a}>{a}</option>)}
+                {(areas.length ? areas : ["Taller", "Diseño", "Gerencia", "Finanzas", "Ventas", "Logística"]).map((a) => <option key={a}>{a}</option>)}
+              </select>
+              <span className="flex gap-1.5 mt-2">
+                <input value={nuevaArea} onChange={(e) => setNuevaArea(e.target.value)} className={`${inp} !py-1.5 text-[12px]`} placeholder="Nueva área…" />
+                <button onClick={agregarArea} className="shrink-0 px-2.5 border border-linedark text-[11px] font-semibold hover:bg-ink hover:text-paper transition-colors" aria-label="Añadir área"><I n="plus" s={13} /></button>
+              </span>
+            </label>
+            <label className="block">
+              <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Relación laboral</span>
+              <select value={nf.relacion} onChange={(e) => setNf({ ...nf, relacion: e.target.value as TipoRelacion })} className={inp}>
+                {TIPOS_RELACION.map((r) => <option key={r}>{r}</option>)}
               </select>
             </label>
             <label className="block">

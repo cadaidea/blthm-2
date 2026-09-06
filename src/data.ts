@@ -21,7 +21,10 @@ const _ls = (k: string): unknown => {
   try { const s = localStorage.getItem(k); if (s !== null) return JSON.parse(s); } catch { /* corrupto */ }
   return null;
 };
-export const enProduccion = (): boolean => _ls("bletia-produccion") === true;
+/* La empresa nace VACÍA: por defecto estamos en modo real y los módulos
+   inician sin datos. Solo se ven datos de ejemplo si existe el flag
+   bletia-demo=true (útil en staging para probar con contenido). */
+export const enProduccion = (): boolean => _ls("bletia-demo") !== true;
 
 /** Devuelve el override del dueño si existe; si no, vacío en producción; si no, la demo. */
 export function seed<T>(key: string, demo: T): T {
@@ -30,6 +33,31 @@ export function seed<T>(key: string, demo: T): T {
   if (enProduccion()) return (Array.isArray(demo) ? [] : demo) as T;
   return demo;
 }
+
+/* ---------- Usuario administrador (se crea una sola vez, "de cajón") ----------
+   El primer acceso al panel muestra un asistente para crearlo. Sin él no se
+   puede cargar información de la empresa. Se guarda localmente hasta que se
+   migre a la base de datos (Fase 2). */
+export type AdminUser = { nombre: string; email: string; empresa: string; pass: string; creado: string };
+
+export function loadAdmin(): AdminUser | null {
+  const a = _ls("bletia-admin");
+  return a && typeof a === "object" && (a as AdminUser).email ? (a as AdminUser) : null;
+}
+export function saveAdmin(a: AdminUser) { localStorage.setItem("bletia-admin", JSON.stringify(a)); }
+export function adminCreado(): boolean { return loadAdmin() !== null; }
+
+/* ---------- Tipos de relación laboral (RRHH) ---------- */
+export type TipoRelacion = "Relación de dependencia" | "Servicios profesionales" | "Voluntario";
+export const TIPOS_RELACION: TipoRelacion[] = ["Relación de dependencia", "Servicios profesionales", "Voluntario"];
+
+/* ---------- Áreas / departamentos de la empresa (RRHH) ---------- */
+export function loadAreas(): string[] {
+  const a = _ls("bletia-areas");
+  if (Array.isArray(a)) return a as string[];
+  return enProduccion() ? [] : ["Gerencia", "Taller", "Ventas", "Logística", "Contabilidad"];
+}
+export function saveAreas(areas: string[]) { localStorage.setItem("bletia-areas", JSON.stringify(areas)); }
 
 /** Claves de datos operativos que se limpian al pasar a producción. */
 export const CLAVES_OPERATIVAS = [
@@ -374,13 +402,14 @@ export type Empleado = {
   id: string; nombre: string; cargo: string; area: string;
   sueldo: number; estado: "Activo" | "Vacaciones" | "Inactivo";
   ingreso: string; email: string; esAutor: boolean; bio?: string;
+  relacion: TipoRelacion; // cómo está vinculado a la empresa
 };
 export const EMPLEADOS_SEED: Empleado[] = [
-  { id: "dp", nombre: "Diego Pillacela", cargo: "Fundador", area: "Gerencia", sueldo: 3200, estado: "Activo", ingreso: "2018", email: "diego@bletia.ec", esAutor: true, bio: "Tercera generación de carpinteros. Dirige el taller y la curaduría de maderas." },
-  { id: "mj", nombre: "María José Velasco", cargo: "Diseñadora industrial", area: "Diseño", sueldo: 1800, estado: "Activo", ingreso: "2020", email: "mariajose@bletia.ec", esAutor: true, bio: "Firma la Serie Bruma y la paleta de tapices." },
-  { id: "ec", nombre: "Edison Cuarán", cargo: "Maestro de taller", area: "Taller", sueldo: 1400, estado: "Activo", ingreso: "2019", email: "edison@bletia.ec", esAutor: true, bio: "32 años de oficio. Especialista en ensambles de espiga y acabados a mano." },
-  { id: "rb", nombre: "Rocío Burbano", cargo: "Contadora", area: "Finanzas", sueldo: 1500, estado: "Activo", ingreso: "2021", email: "rocio@bletia.ec", esAutor: false },
-  { id: "pv", nombre: "Pedro Vaca", cargo: "Tapicero", area: "Taller", sueldo: 980, estado: "Vacaciones", ingreso: "2022", email: "pedro@bletia.ec", esAutor: false },
+  { id: "dp", nombre: "Diego Pillacela", cargo: "Fundador", area: "Gerencia", sueldo: 3200, estado: "Activo", ingreso: "2018", email: "diego@bletia.ec", esAutor: true, relacion: "Relación de dependencia", bio: "Tercera generación de carpinteros. Dirige el taller y la curaduría de maderas." },
+  { id: "mj", nombre: "María José Velasco", cargo: "Diseñadora industrial", area: "Diseño", sueldo: 1800, estado: "Activo", ingreso: "2020", email: "mariajose@bletia.ec", esAutor: true, relacion: "Relación de dependencia", bio: "Firma la Serie Bruma y la paleta de tapices." },
+  { id: "ec", nombre: "Edison Cuarán", cargo: "Maestro de taller", area: "Taller", sueldo: 1400, estado: "Activo", ingreso: "2019", email: "edison@bletia.ec", esAutor: true, relacion: "Relación de dependencia", bio: "32 años de oficio. Especialista en ensambles de espiga y acabados a mano." },
+  { id: "rb", nombre: "Rocío Burbano", cargo: "Contadora", area: "Finanzas", sueldo: 1500, estado: "Activo", ingreso: "2021", email: "rocio@bletia.ec", esAutor: false, relacion: "Servicios profesionales" },
+  { id: "pv", nombre: "Pedro Vaca", cargo: "Tapicero", area: "Taller", sueldo: 980, estado: "Vacaciones", ingreso: "2022", email: "pedro@bletia.ec", esAutor: false, relacion: "Relación de dependencia" },
 ];
 export function loadEmpleados(): Empleado[] {
   try { const s = localStorage.getItem("bletia-rrhh"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
@@ -441,13 +470,14 @@ export const BLOG_CATEGORIAS_SEED: BlogCategoria[] = [
 ];
 export function loadBlogCategorias(): BlogCategoria[] {
   try { const s = localStorage.getItem("bletia-blog-cats"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
-  return BLOG_CATEGORIAS_SEED;
+  return seed("bletia-blog-cats", BLOG_CATEGORIAS_SEED);
 }
 export function saveBlogCategorias(list: BlogCategoria[]) { localStorage.setItem("bletia-blog-cats", JSON.stringify(list)); }
-/* compat: nombres planos de categorías */
-export const BLOG_CATEGORIAS = BLOG_CATEGORIAS_SEED.map((c) => c.nombre);
+/* compat: nombres planos de categorías (vive de lo que cargue el dueño) */
+export const BLOG_CATEGORIAS = loadBlogCategorias().map((c) => c.nombre);
 
-export const BLOG_ETIQUETAS = ["nogal", "roble", "cuero", "lino", "entrega", "hecho-a-mano", "serie-bruma"];
+export const BLOG_ETIQUETAS = seed<string[]>("bletia-etiquetas-blog", ["nogal", "roble", "cuero", "lino", "entrega", "hecho-a-mano", "serie-bruma"]);
+export function saveEtiquetasBlog(list: string[]) { localStorage.setItem("bletia-etiquetas-blog", JSON.stringify(list)); }
 
 /* compat: autores = empleados autores (mismo shape que antes) */
 export const BLOG_AUTORES = autoresBlog().map((e) => ({ id: e.id, nombre: e.nombre, cargo: e.cargo, bio: e.bio || "" }));
@@ -459,7 +489,7 @@ export const CATEGORIAS_PRODUCTO_SEED: CategoriaProducto[] = [
 ].map((n, i) => ({ id: `cp${i + 1}`, nombre: n, activa: true }));
 export function loadCategoriasProducto(): CategoriaProducto[] {
   try { const s = localStorage.getItem("bletia-prod-cats"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
-  return CATEGORIAS_PRODUCTO_SEED;
+  return seed("bletia-prod-cats", CATEGORIAS_PRODUCTO_SEED);
 }
 export function saveCategoriasProducto(list: CategoriaProducto[]) { localStorage.setItem("bletia-prod-cats", JSON.stringify(list)); }
 
@@ -569,7 +599,7 @@ export type Atributo = {
   id: string; nombre: string; tipo: "color" | "texto" | "imagen";
   opciones: { id: string; valor: string; color?: string }[];
 };
-export const ATRIBUTOS: Atributo[] = [
+export const ATRIBUTOS: Atributo[] = seed<Atributo[]>("bletia-atributos", [
   { id: "at-tapiz", nombre: "Tapiz", tipo: "color", opciones: [
     { id: "op-beige", valor: "Beige", color: "#d8cbb4" }, { id: "op-gris", valor: "Gris piedra", color: "#b0aca3" },
     { id: "op-verde", valor: "Verde salvia", color: "#a3b18a" }, { id: "op-teja", valor: "Teja", color: "#b0603f" },
@@ -580,7 +610,7 @@ export const ATRIBUTOS: Atributo[] = [
   { id: "at-acabado", nombre: "Acabado", tipo: "texto", opciones: [
     { id: "op-nogal", valor: "Nogal" }, { id: "op-roble", valor: "Roble" }, { id: "op-negro", valor: "Negro" },
   ]},
-];
+]);
 export type Variante = {
   id: string; productoId: string; opciones: Record<string, string>; pvp: number; costo: number;
 };
