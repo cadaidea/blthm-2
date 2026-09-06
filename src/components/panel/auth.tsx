@@ -172,9 +172,8 @@ export function LoginScreen({ onLogin, onBack }: { onLogin: (s: Session) => void
           </p>
         </div>
         <div className="flex items-center gap-6 text-[11px] font-semibold tracking-[0.18em] uppercase text-cream/40">
-          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon pulse-maroon" />15 módulos</span>
-          <span>+2.000 ev/s</span>
-          <span>OVH Cloud</span>
+          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-maroon pulse-maroon" />Suite BLETIA OS</span>
+          <span>Stack open source</span>
         </div>
       </div>
 

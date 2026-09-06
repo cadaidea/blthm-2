@@ -406,7 +406,7 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Stat label="Ventas registradas" value={fmt2(ventas)} sub={ORDERS.length ? `${ORDERS.length} pedidos` : "Aún sin ventas"} />
         <Stat label="Pedidos activos" value={activos} sub={activos ? "en proceso" : "Sin pedidos en curso"} />
-        <Stat label="Eventos por segundo" value={eps.toLocaleString("es-EC")} live sub={stress ? <span className="text-warn font-semibold">Prueba de carga en curso</span> : "Redis + BullMQ · sin caídas"} />
+        <Stat label="Eventos por segundo" value={eps.toLocaleString("es-EC")} live sub={stress ? <span className="text-warn font-semibold">Prueba de carga en curso</span> : <span className="text-stone">Simulación · bus real en Fase 2</span>} />
         <Stat label="Facturado" value={fmt2(facturado)} sub={INVOICES.length ? `${INVOICES.length} facturas SRI` : "Sin facturas emitidas"} />
       </div>
 
@@ -414,8 +414,14 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
         <Card className="xl:col-span-2 p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <div>
-              <h3 className="font-bold text-[15px] tracking-tight">Bus de eventos</h3>
-              <p className="text-[12px] text-stone mt-0.5">Ingesta desacoplada: la web jamás se bloquea, aunque entren +2.000 eventos simultáneos.</p>
+              <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+                Bus de eventos
+                <span className="text-[9px] font-bold tracking-[0.16em] uppercase px-2 py-1 bg-warnbg text-warn">Simulación</span>
+              </h3>
+              <p className="text-[12px] text-stone mt-1">
+                Maqueta del stack objetivo (Redis + BullMQ). Muestra cómo se comportará la ingesta en producción;
+                los eventos de negocio reales llegarán con la base de datos (Fase 2).
+              </p>
             </div>
             <button onClick={startStress} disabled={stress}
               className={`${stress ? btnGhost + " opacity-60 cursor-wait" : btnDark}`}>
@@ -449,7 +455,7 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
 
         <Card className="p-5 sm:p-6 flex flex-col">
           <h3 className="font-bold text-[15px] tracking-tight">Cola de procesamiento</h3>
-          <p className="text-[12px] text-stone mt-0.5 mb-4">Workers por módulo consumiendo en paralelo.</p>
+          <p className="text-[12px] text-stone mt-0.5 mb-4">Ejemplo del tráfico que procesarán los workers por módulo.</p>
           <div className="flex-1 space-y-1 overflow-hidden">
             {log.map((l, i) => (
               <div key={l.t + i + l.type} className={`flex items-center gap-2.5 py-1.5 border-b border-line/60 ${i === 0 ? "anim-feed" : ""}`}>
@@ -502,11 +508,12 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
             <p className="font-display font-medium text-[18px]">Todo operativo</p>
           </div>
           <p className="text-[12px] text-cream/55 mt-2 leading-relaxed">
-            API 8 ms · PayPhone webhook OK · SRI en línea · MinIO 62% usado. Último deploy: hoy 03:12, cero caída.
+            Fase 1 en línea: tienda y panel publicados en tu VPS; los datos se guardan en este navegador.
+            Fase 2 (API + PostgreSQL en el mismo VPS) convertirá eventos, pedidos y clientes en datos de servidor.
           </p>
           <div className="mt-4 pt-4 border-t border-cream/15 grid grid-cols-2 gap-3 text-[11px] text-cream/50">
-            <span className="flex items-center gap-1.5"><I n="shield" s={12} className="text-ok" /> LOPDP en curso</span>
-            <span className="flex items-center gap-1.5"><I n="link" s={12} className="text-maroon" /> Links atómicos</span>
+            <span className="flex items-center gap-1.5"><I n="check" s={12} className="text-ok" /> Fase 1 · activa</span>
+            <span className="flex items-center gap-1.5"><I n="server" s={12} className="text-maroon" /> Fase 2 · base de datos</span>
           </div>
         </Card>
       </div>

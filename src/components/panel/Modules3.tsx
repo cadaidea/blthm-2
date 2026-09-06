@@ -124,6 +124,14 @@ export function Contabilidad() {
             <span className="flex items-center gap-2"><span className="w-3 h-3 bg-linedark" /> Egresos</span>
           </div>
         </div>
+        {CASHFLOW.length === 0 ? (
+          <div className="border border-dashed border-linedark bg-card/50 h-44 flex items-center justify-center">
+            <p className="text-[13px] text-stone text-center leading-relaxed">
+              Aún no hay movimientos registrados.<br />
+              El flujo se dibuja solo cuando existan cobros y pagos del mes.
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-6 gap-3 sm:gap-5 items-end h-44">
           {CASHFLOW.map((c) => (
             <div key={c.m} className="flex flex-col items-center gap-2 h-full justify-end group">
