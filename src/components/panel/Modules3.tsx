@@ -413,14 +413,193 @@ const STACK = [
   { n: "Docker Compose", r: "Entorno", d: "Staging y producción idénticos: si funciona ahí, funciona acá." },
 ];
 
+/* ---------- Respaldo & restauración (los datos del panel, como un banco) ----------
+   Exporta TODO lo guardado (clientes, pedidos, CMS, RRHH, compras, secciones…)
+   en un solo JSON descargable, y lo restaura completo cuando quieras. */
+const BACKUP_KEYS = [
+  ["bletia-cart", "Carritos"],
+  ["bletia-wish", "Listas de deseos"],
+  ["bletia-cuenta", "Cuentas de visitante"],
+  ["bletia-cms", "Blog / diario"],
+  ["bletia-paginas", "Páginas (Políticas, Contacto…)"],
+  ["bletia-sitio", "Configuración del sitio"],
+  ["bletia-suscriptores-web", "Suscriptores newsletter"],
+  ["bletia-rrhh", "RRHH / nómina"],
+  ["bletia-compras", "Órdenes de compra"],
+  ["bletia-home", "Secciones de la portada"],
+  ["bletia-blog-cats", "Categorías del blog"],
+  ["bletia-prod-cats", "Categorías de producto"],
+  ["bletia-login", "Pantalla de acceso"],
+  ["bletia-pim-custom", "Productos creados en el PIM"],
+  ["bletia-pim-overrides", "Publicar / ocultar productos"],
+  ["bletia-session-v2", "Sesión del panel"],
+] as const;
+
+function Respaldo() {
+  const existentes = BACKUP_KEYS.filter(([k]) => localStorage.getItem(k) !== null);
+
+  const exportar = () => {
+    const datos: Record<string, string> = {};
+    BACKUP_KEYS.forEach(([k]) => { const v = localStorage.getItem(k); if (v !== null) datos[k] = v; });
+    const blob = new Blob([JSON.stringify({ app: "BLETIA", version: "1.0.0", fecha: new Date().toISOString(), datos }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `bletia-respaldo-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`Respaldo descargado (${Object.keys(datos).length} áreas)`, "ok");
+  };
+
+  const importar = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(String(reader.result));
+        if (json.app !== "BLETIA" || !json.datos) throw new Error("formato");
+        let n = 0;
+        Object.entries(json.datos).forEach(([k, v]) => { localStorage.setItem(k, String(v)); n++; });
+        toast(`Respaldo restaurado (${n} áreas). Recargando…`, "ok");
+        setTimeout(() => window.location.reload(), 900);
+      } catch {
+        toast("El archivo no es un respaldo BLETIA válido", "bad");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+            <I n="shield" s={16} className="text-maroon" /> Respaldo & restauración
+          </h3>
+          <p className="text-[12px] text-stone mt-0.5 max-w-[56ch]">
+            Descarga todo lo que has cargado (clientes, pedidos, blog, RRHH, compras, secciones) en un solo archivo.
+            Si cambias de navegador o de equipo, lo restauras y no pierdes nada. Como un banco: tu información, siempre recuperable.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <label className={`${btnGhost} cursor-pointer`}>
+            <I n="doc" s={14} /> Restaurar respaldo
+            <input type="file" accept="application/json,.json" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) importar(f); e.target.value = ""; }} />
+          </label>
+          <button onClick={exportar} className={btnDark}>
+            <I n="spark" s={14} /> Descargar respaldo
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5 mt-4">
+        {existentes.map(([k, label]) => (
+          <span key={k} className="text-[10.5px] font-semibold bg-paper2 text-ink2 px-2 py-1 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-ok" /> {label}
+          </span>
+        ))}
+        {existentes.length === 0 && <span className="text-[11.5px] text-stone">Aún no hay datos guardados en este navegador.</span>}
+      </div>
+    </Card>
+  );
+}
+
 export function Infra() {
   return (
     <div className="fade-in space-y-6">
       <SectionTitle
         title="Infraestructura & despliegue"
         sub="Stack 100% open source sobre tu VPS de OVH Cloud. Staging primero, producción después, datos siempre intactos."
-        right={<Chip tone="ok" dot>VPS OVH · operativo</Chip>}
+        right={<Chip tone="ok" dot>VPS OVH · CloudPanel · v1.0.0</Chip>}
       />
+
+      {/* Lanzamiento a producción con CloudPanel */}
+      <Card className="p-5 sm:p-6 border-maroon/40">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+              <span className="w-2 h-2 bg-maroon pulse-maroon" /> Lanzamiento oficial · v1.0.0 en bletia.ec
+            </h3>
+            <p className="text-[12px] text-stone mt-0.5">Guía exacta para publicar en tu VPS OVH con CloudPanel y dominio real.</p>
+          </div>
+          <Chip tone="maroon" dot>Listo para producción</Chip>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-5 mt-5">
+          <div className="space-y-3">
+            {[
+              ["1", "Compila el proyecto", "En tu equipo: npm run build. Se genera la carpeta dist/ con la tienda y el panel listos para internet."],
+              ["2", "Comprime dist/", "Haz un .zip con el CONTENIDO de dist/ (no la carpeta en sí, sino lo que hay dentro)."],
+              ["3", "Crea el sitio en CloudPanel", "Sites → Add Site → Static Site. Dominio: bletia.ec (y www.bletia.ec). CloudPanel crea la carpeta htdocs."],
+              ["4", "Apunta el dominio", "En tu registrador de dominio: registro A de bletia.ec → IP de tu VPS OVH. Espera propagación (minutos a horas)."],
+              ["5", "Sube los archivos", "CloudPanel → File Manager → entra a htdocs del sitio → sube el .zip y extráelo ahí (o usa SFTP)."],
+              ["6", "Activa el SSL gratis", "CloudPanel → SSL → Let's Encrypt → Issue. En segundos tu sitio responde con https://."],
+              ["7", "Verifica", "Abre https://bletia.ec (tienda) y https://bletia.ec/#/dash (panel). Si se ven, estás en producción."],
+            ].map(([n, t, d]) => (
+              <div key={n} className="flex gap-3.5 border border-line bg-card p-3.5 hover:border-maroon/40 transition-colors">
+                <span className="w-6 h-6 shrink-0 bg-ink text-paper text-[11px] font-bold flex items-center justify-center">{n}</span>
+                <div>
+                  <p className="text-[13px] font-bold leading-tight">{t}</p>
+                  <p className="text-[11.5px] text-stone leading-snug mt-1">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <CodeBlock title="Comandos en tu equipo (opcional, vía SSH/SFTP)" code={`# Compilar la versión de producción
+npm run build
+
+# La carpeta dist/ es lo que subes a CloudPanel.
+# Si prefieres terminal sobre SSH (OVH):
+scp -r dist/* usuario@TU_IP:/home/usuario/bletia.ec/htdocs/`} />
+            <div className="bg-okbg/60 border border-ok/30 p-4">
+              <p className="text-[12px] font-bold text-ok flex items-center gap-1.5"><I n="check" s={14} /> Ventaja de este build</p>
+              <p className="text-[11.5px] text-ink2 leading-snug mt-1.5">
+                Usamos rutas con <code className="font-mono">#/</code> (hash), así que <strong>no necesitas configurar nginx</strong>:
+                tienda, blog, productos y panel funcionan tal cual los subas. Cero configuración extra en CloudPanel.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Fases de persistencia: la verdad sobre los datos */}
+      <Card className="p-5 sm:p-6">
+        <h3 className="font-bold text-[15px] tracking-tight">Cómo se protegen tus datos (como un banco)</h3>
+        <p className="text-[12px] text-stone mt-0.5 mb-5">Dos fases. La v1.0.0 lanza la Fase 1; la Fase 2 conecta el servidor para que todo sea compartido y automático.</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="border border-warn/40 bg-warnbg/40 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[12.5px] font-bold text-warn">Fase 1 · v1.0.0 (hoy)</p>
+              <Chip tone="warn" dot>Activa</Chip>
+            </div>
+            <ul className="text-[11.5px] text-ink2 leading-relaxed mt-2.5 space-y-1.5">
+              <li className="flex gap-2"><I n="check" s={13} className="text-warn shrink-0 mt-0.5" /> La tienda y el panel funcionan completos en tu VPS.</li>
+              <li className="flex gap-2"><I n="check" s={13} className="text-warn shrink-0 mt-0.5" /> Lo que cargas en el panel se guarda en <strong>tu navegador</strong> (localStorage).</li>
+              <li className="flex gap-2"><I n="check" s={13} className="text-warn shrink-0 mt-0.5" /> Puedes descargar/restaurar TODO con «Respaldo» (arriba).</li>
+              <li className="flex gap-2"><I n="alert" s={13} className="text-warn shrink-0 mt-0.5" /> Los cambios del panel se ven en tu navegador; los visitantes ven lo compilado en el build.</li>
+            </ul>
+          </div>
+          <div className="border border-ok/40 bg-okbg/40 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[12.5px] font-bold text-ok">Fase 2 · Servidor (siguiente)</p>
+              <Chip tone="ok" dot>Planeada</Chip>
+            </div>
+            <ul className="text-[11.5px] text-ink2 leading-relaxed mt-2.5 space-y-1.5">
+              <li className="flex gap-2"><I n="check" s={13} className="text-ok shrink-0 mt-0.5" /> API + PostgreSQL en el mismo VPS: los datos viven en el servidor, no en el navegador.</li>
+              <li className="flex gap-2"><I n="check" s={13} className="text-ok shrink-0 mt-0.5" /> Los pedidos reales de los clientes llegan solos al panel.</li>
+              <li className="flex gap-2"><I n="check" s={13} className="text-ok shrink-0 mt-0.5" /> Todos los colaboradores ven la misma información, al instante.</li>
+              <li className="flex gap-2"><I n="check" s={13} className="text-ok shrink-0 mt-0.5" /> Respaldos automáticos diarios de la base de datos.</li>
+            </ul>
+          </div>
+        </div>
+        <p className="text-[11.5px] text-stone mt-4 flex items-start gap-2">
+          <I n="shield" s={13} className="mt-0.5 shrink-0 text-maroon" />
+          Ninguna mejora futura borra tus datos: el código se actualiza por separado de la información. En Fase 1 usas «Respaldo»; en Fase 2 la base de datos se respalda sola.
+        </p>
+      </Card>
+
+      {/* Respaldo funcional */}
+      <Respaldo />
 
       {/* Arquitectura de eventos */}
       <Card className="p-5 sm:p-6">

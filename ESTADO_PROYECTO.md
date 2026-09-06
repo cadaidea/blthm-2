@@ -132,3 +132,17 @@
 4. ✅ **Made to Order (MTO)**: campo `mto` en Mesa Raíz y Aparador Bruma; se muestra como fila de
    especificación y badge oscuro en la ficha.
 5. ✅ Build verde (41 módulos). Todo lo anterior permanece intacto.
+
+## 6. Lanzamiento oficial v1.0.0 · producción en OVH + CloudPanel (completada ✅)
+1. ✅ **Portada editable**: el home ya no está fijo; se compone de secciones (Apertura, Colección,
+   Taller, Servicios, Diario y personalizadas) que se ordenan, muestran/ocultan, editan y añaden
+   desde el panel. Se persisten en `bletia-home`.
+2. ✅ **Guía de lanzamiento en CloudPanel** (módulo Ajustes & despliegue): 7 pasos exactos para
+   compilar, crear el sitio, apuntar el dominio, subir `dist/`, activar SSL Let's Encrypt y verificar.
+   Sin configuración de nginx (rutas `#/`).
+3. ✅ **Respaldo & restauración funcional**: descarga TODOS los datos del panel (clientes, pedidos,
+   blog, RRHH, compras, secciones, categorías…) en un JSON y los restaura completo. Claves reales:
+   `bletia-home`, `bletia-blog-cats`, `bletia-prod-cats`, `bletia-rrhh`, `bletia-compras`, etc.
+4. ✅ **Fases de persistencia documentadas**: Fase 1 (v1.0.0) = datos en el navegador con respaldo
+   manual; Fase 2 = API + PostgreSQL en el VPS para que pedidos/clientes sean compartidos y automáticos.
+5. ✅ Build verde (43 módulos). Todo lo anterior permanece intacto.
