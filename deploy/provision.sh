@@ -23,6 +23,23 @@ read -rp "2) Rama que tiene el código [main]: " BRANCH
 BRANCH="${BRANCH:-main}"
 read -rp "3) Carpeta htdocs del sitio (CloudPanel → sitio → Settings → Document Root) [${HOME}/htdocs]: " DOC_ROOT
 DOC_ROOT="${DOC_ROOT:-${HOME}/htdocs}"
+echo ""
+echo "NOTA: Si ya clonaste el repo en el paso anterior (con tu token en"
+echo "la dirección), pulsa Enter en las preguntas 4 y 5 para saltarlas."
+echo "Solo respóndelas si este script debe descargar el repo por primera"
+echo "vez. El token se crea en GitHub → Settings → Developer settings →"
+echo "Personal access tokens → Tokens (classic) → Generate → marca 'repo'."
+echo ""
+read -rp "4) Tu usuario de GitHub (Enter = saltar) [cadaidea]: " GH_USER
+GH_USER="${GH_USER:-cadaidea}"
+read -rsp "5) Pega tu Personal Access Token (Enter = saltar): " GH_TOKEN
+echo ""
+if [ -n "${GH_TOKEN}" ]; then
+  # URL autenticada: permite clonar y que los futuros 'git fetch' funcionen
+  AUTH_URL="${REPO_URL/https:\/\/github.com\//https://${GH_USER}:${GH_TOKEN}@github.com/}"
+else
+  AUTH_URL="${REPO_URL}"
+fi
 
 # 1) Herramientas base
 echo ""
@@ -44,16 +61,20 @@ echo "[3/5] Creando estructura en ${APP_BASE}…"
 mkdir -p "${APP_BASE}"/{releases,shared/fonts,backups}
 echo "      ok."
 
-# 4) Clonar el repositorio
+# 4) Clonar el repositorio (con la llave, sin mostrarla en pantalla)
 echo "[4/5] Clonando ${REPO_URL} (rama ${BRANCH})…"
 if [ -d "${APP_BASE}/repo/.git" ]; then
   echo "      El repo ya existe, actualizando…"
-  git -C "${APP_BASE}/repo" remote set-url origin "${REPO_URL}"
+  # Solo se toca la dirección si se entregó un token nuevo;
+  # si no, se conserva la que ya tiene la llave incrustada.
+  if [ -n "${GH_TOKEN}" ]; then
+    git -C "${APP_BASE}/repo" remote set-url origin "${AUTH_URL}"
+  fi
   git -C "${APP_BASE}/repo" fetch --all --prune
   git -C "${APP_BASE}/repo" checkout "${BRANCH}"
   git -C "${APP_BASE}/repo" pull origin "${BRANCH}"
 else
-  git clone --branch "${BRANCH}" "${REPO_URL}" "${APP_BASE}/repo"
+  git clone --branch "${BRANCH}" "${AUTH_URL}" "${APP_BASE}/repo"
 fi
 echo "      ok."
 
