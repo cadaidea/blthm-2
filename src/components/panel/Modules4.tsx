@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { fmt2 } from "../../data";
+import { fmt2, seed } from "../../data";
 import { I, Modal } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { StatusChip } from "./Panel";
@@ -9,12 +9,12 @@ type Guia = {
   id: string; num: string; order: string; carrier: string; origin: string; dest: string;
   fecha: string; bultos: number; auth: string; status: "Autorizada" | "En tránsito" | "Entregada";
 };
-const GUIAS: Guia[] = [
+const GUIAS: Guia[] = seed<Guia[]>("bletia-guias", [
   { id: "g1", num: "001-002-000000321", order: "BL-2026-0144", carrier: "TransCosta Logística", origin: "Bodega Quito", dest: "Manta", fecha: "07 feb 2026", bultos: 2, auth: "07022026061793445522001123456789100321", status: "En tránsito" },
   { id: "g2", num: "001-002-000000320", order: "BL-2026-0143", carrier: "Sierra Express Carga", origin: "Bodega Quito", dest: "Quito · entrega local", fecha: "06 feb 2026", bultos: 7, auth: "06022026061791228843001123456789100320", status: "En tránsito" },
   { id: "g3", num: "001-002-000000318", order: "BL-2026-0139", carrier: "TransCosta Logística", origin: "Bodega Quito", dest: "Guayaquil", fecha: "20 ene 2026", bultos: 8, auth: "20012026060993118802001123456789100318", status: "Entregada" },
   { id: "g4", num: "001-002-000000322", order: "BL-2026-0145", carrier: "Fletes del Austro", origin: "Taller BLETIA", dest: "Cuenca", fecha: "hoy", bultos: 18, auth: "—", status: "Autorizada" },
-];
+]);
 
 export function Logistica() {
   const [sel, setSel] = useState<Guia | null>(null);
@@ -99,13 +99,13 @@ export function Logistica() {
 
 /* ================= BOM & MRP ================= */
 type BomItem = { id: string; comp: string; qty: number; unit: string; cost: number; stock: number; need: number };
-const BOM_ITEMS: BomItem[] = [
+const BOM_ITEMS: BomItem[] = seed<BomItem[]>("bletia-bom", [
   { id: "b1", comp: "Tablero nogal 25 mm", qty: 2.4, unit: "m²", cost: 96, stock: 18, need: 43 },
   { id: "b2", comp: "Cuero vegetalizado cognac", qty: 1.6, unit: "m²", cost: 74, stock: 30, need: 29 },
   { id: "b3", comp: "Espiga de haya 8 mm", qty: 32, unit: "ud", cost: 0.4, stock: 900, need: 576 },
   { id: "b4", comp: "Aceite natural mate", qty: 0.35, unit: "L", cost: 22, stock: 12, need: 6 },
   { id: "b5", comp: "Pies de latón torneado", qty: 4, unit: "ud", cost: 9.5, stock: 40, need: 72 },
-];
+]);
 
 export function BOM() {
   const rollup = useMemo(

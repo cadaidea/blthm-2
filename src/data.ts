@@ -9,6 +9,51 @@ export const IVA = 0.15;
 export const fmt = (n: number): string =>
   "$" + Math.round(n).toLocaleString("es-EC");
 
+/* =========================================================
+   MODO PRODUCCIÓN · separa los datos de demostración de los reales.
+   - Sin el flag: se muestran los datos de ejemplo (para staging/pruebas).
+   - Con el flag `bletia-produccion`: los módulos operativos inician VACÍOS
+     y solo se llenan con lo que el dueño guarda (overrides en localStorage).
+   - El escaparate (productos, diario, portada) lo gestiona el dueño desde
+     el PIM/CMS; se vacía aparte con "vaciar catálogo".
+   ========================================================= */
+const _ls = (k: string): unknown => {
+  try { const s = localStorage.getItem(k); if (s !== null) return JSON.parse(s); } catch { /* corrupto */ }
+  return null;
+};
+export const enProduccion = (): boolean => _ls("bletia-produccion") === true;
+
+/** Devuelve el override del dueño si existe; si no, vacío en producción; si no, la demo. */
+export function seed<T>(key: string, demo: T): T {
+  const ov = _ls(key);
+  if (ov !== null) return ov as T;
+  if (enProduccion()) return (Array.isArray(demo) ? [] : demo) as T;
+  return demo;
+}
+
+/** Claves de datos operativos que se limpian al pasar a producción. */
+export const CLAVES_OPERATIVAS = [
+  "bletia-orders", "bletia-customers", "bletia-facturas", "bletia-cashflow",
+  "bletia-suppliers", "bletia-workorders", "bletia-assets", "bletia-suscriptores",
+  "bletia-listas", "bletia-formularios", "bletia-stock-movs", "bletia-compras",
+  "bletia-rrhh", "bletia-bom",
+];
+
+/** Pasa a producción: limpia overrides operativos y activa el modo. */
+export function activarProduccion() {
+  CLAVES_OPERATIVAS.forEach((k) => localStorage.removeItem(k));
+  localStorage.setItem("bletia-produccion", "true");
+}
+/** Vuelve a modo demo (útil en staging). */
+export function volverADemo() {
+  localStorage.removeItem("bletia-produccion");
+}
+/** Vacía el escaparate de ejemplo (catálogo + diario). */
+export function vaciarEscaparate() {
+  localStorage.setItem("bletia-productos", "[]");
+  localStorage.setItem("bletia-cms", "[]");
+}
+
 export const fmt2 = (n: number): string =>
   "$" + n.toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -133,7 +178,7 @@ export type Customer = {
   timeline: { date: string; text: string; kind: "pago" | "pedido" | "nota" | "entrega" }[];
 };
 
-export const CUSTOMERS: Customer[] = [
+export const CUSTOMERS: Customer[] = seed<Customer[]>("bletia-customers", [
   {
     id: "c1", name: "María Fernanda Jaramillo", contact: "mfjaramillo@gmail.com · 099 412 8830",
     city: "Quito", segment: "Residencial", orders: 3, ltv: 5480, last: "hace 2 días", doc: "1714552203001",
@@ -188,7 +233,7 @@ export const CUSTOMERS: Customer[] = [
       { date: "10 ene 2026", text: "Mantenimiento anual de cortesía programado", kind: "nota" },
     ],
   },
-];
+]);
 
 /* ---------- OMS ---------- */
 export type OrderStatus = "Pago pendiente" | "Pago aprobado" | "En taller" | "En transporte" | "Entregado";
@@ -202,7 +247,7 @@ export type Order = {
   spec?: string;
 };
 
-export const ORDERS: Order[] = [
+export const ORDERS: Order[] = seed<Order[]>("bletia-orders", [
   { id: "o1", code: "BL-2026-0147", customer: "Estudio Alvarado & Reyes", city: "Guayaquil", item: "2 × Mesa Raíz", total: 3500, pay: "Link PayPhone", status: "Pago pendiente", carrier: "—", date: "hoy, 09:41", tipo: "Venta pedido", spec: "Extensión a 260 cm · acabado roble ahumado" },
   { id: "o2", code: "BL-2026-0146", customer: "Lucía Briones", city: "Loja", item: "1 × Estantería Trama", total: 1320, pay: "Web PayPhone", status: "Pago aprobado", carrier: "—", date: "hoy, 08:15", tipo: "Venta stock" },
   { id: "o3", code: "BL-2026-0145", customer: "Hotel Casa del Patio", city: "Cuenca", item: "18 × Silla Vela", total: 7560, pay: "Link PayPhone", status: "En taller", carrier: "—", date: "ayer, 17:02", tipo: "Venta pedido", spec: "Tapiz cuero vegetalizado natural · grabado logo hotel" },
@@ -210,7 +255,7 @@ export const ORDERS: Order[] = [
   { id: "o5", code: "BL-2026-0143", customer: "Corporativo Andino S.A.", city: "Quito", item: "6 × Silla Vela · 1 × Aparador Bruma", total: 4500, pay: "Link PayPhone", status: "En transporte", carrier: "Sierra Express Carga", date: "05 feb, 15:44", tipo: "Venta pedido", spec: "Sillas en nogal negro · aparador serie numerada" },
   { id: "o6", code: "BL-2026-0141", customer: "María Fernanda Jaramillo", city: "Quito", item: "1 × Butaca Aura", total: 1190, pay: "Web PayPhone", status: "Entregado", carrier: "Flota propia BLETIA", date: "28 ene, 10:05", tipo: "Venta stock" },
   { id: "o7", code: "BL-2026-0139", customer: "Boutique Hotel Yaku", city: "Guayaquil", item: "4 × Cama Duna", total: 8560, pay: "Transferencia", status: "Entregado", carrier: "TransCosta Logística", date: "21 ene, 09:12", tipo: "Venta stock" },
-];
+]);
 
 /* ---------- Proveedores ---------- */
 export type Supplier = {
@@ -218,14 +263,14 @@ export type Supplier = {
   city: string; lead: string; rating: number; active: number; sla: string; contact: string;
 };
 
-export const SUPPLIERS: Supplier[] = [
+export const SUPPLIERS: Supplier[] = seed<Supplier[]>("bletia-suppliers", [
   { id: "s1", name: "Casa Roble Import", type: "Muebles", specialty: "Sofás y camas tapizadas", city: "Guayaquil", lead: "5 semanas", rating: 4.8, active: 2, sla: "98,2% entregas a tiempo", contact: "pedidos@casaroble.ec" },
   { id: "s2", name: "Nórdica EC", type: "Muebles", specialty: "Sistemas de almacenaje modulares", city: "Quito", lead: "2 semanas", rating: 4.6, active: 1, sla: "96,7% entregas a tiempo", contact: "b2b@nordica.ec" },
   { id: "s3", name: "Maderera del Austro", type: "Muebles", specialty: "Tableros de nogal y roble certificado", city: "Cuenca", lead: "10 días", rating: 4.9, active: 3, sla: "99,1% entregas a tiempo", contact: "ventas@maderaustral.ec" },
   { id: "s4", name: "Sierra Express Carga", type: "Transporte", specialty: "Carga consolidada Sierra centro", city: "Quito", lead: "2–4 días", rating: 4.7, active: 3, sla: "97,4% a tiempo · seguro incluido", contact: "ops@sierraexpress.ec" },
   { id: "s5", name: "TransCosta Logística", type: "Transporte", specialty: "Ruta Costa · mudanzas guante blanco", city: "Guayaquil", lead: "3–5 días", rating: 4.5, active: 2, sla: "95,9% a tiempo · GPS en ruta", contact: "cargas@transcosta.ec" },
   { id: "s6", name: "Fletes del Austro", type: "Transporte", specialty: "Última milla Cuenca y Loja", city: "Cuenca", lead: "24–48 h", rating: 4.4, active: 1, sla: "94,8% a tiempo", contact: "despachos@fletesaustro.ec" },
-];
+]);
 
 /* ---------- Taller (órdenes de fabricación) ---------- */
 export type Phase = "Corte" | "Ensamble" | "Acabado" | "Control de calidad";
@@ -236,12 +281,12 @@ export type WorkOrder = {
   phase: number; progress: number; artisan: string; due: string; wood: string;
 };
 
-export const WORK_ORDERS: WorkOrder[] = [
+export const WORK_ORDERS: WorkOrder[] = seed<WorkOrder[]>("bletia-workorders", [
   { id: "w1", ref: "OF-2212", piece: "Aparador Bruma · serie 08", qty: 2, order: "Stock taller", phase: 1, progress: 55, artisan: "Maestro E. Cuarán", due: "28 feb 2026", wood: "Nogal americano" },
   { id: "w2", ref: "OF-2210", piece: "Silla Vela", qty: 18, order: "BL-2026-0145 · Hotel Casa del Patio", phase: 0, progress: 22, artisan: "Línea 2 · J. Espinoza", due: "05 mar 2026", wood: "Nogal + cuero" },
   { id: "w3", ref: "OF-2209", piece: "Mesa Raíz 260 cm", qty: 1, order: "BL-2026-0138 · a medida", phase: 2, progress: 80, artisan: "Maestro E. Cuarán", due: "19 feb 2026", wood: "Roble ahumado" },
   { id: "w4", ref: "OF-2207", piece: "Butaca Aura · serie 12", qty: 4, order: "Reposición showroom", phase: 3, progress: 96, artisan: "QC · R. Mena", due: "14 feb 2026", wood: "Nogal americano" },
-];
+]);
 
 /* ---------- DAM ---------- */
 export type Asset = {
@@ -249,7 +294,7 @@ export type Asset = {
   size: string; tags: string[]; status: "Aprobado" | "En revisión"; uses: number; date: string;
 };
 
-export const ASSETS: Asset[] = [
+export const ASSETS: Asset[] = seed<Asset[]>("bletia-assets", [
   { id: "a1", name: "butaca-aura_editorial_01.jpg", img: IMG.hero, kind: "Fotografía", size: "4,2 MB", tags: ["aura", "web", "hero"], status: "Aprobado", uses: 14, date: "02 feb 2026" },
   { id: "a2", name: "sofa-nudo_frontal.jpg", img: IMG.sofa, kind: "Fotografía", size: "3,8 MB", tags: ["nudo", "web", "catálogo"], status: "Aprobado", uses: 9, date: "02 feb 2026" },
   { id: "a3", name: "mesa-raiz_lateral.jpg", img: IMG.mesa, kind: "Fotografía", size: "3,5 MB", tags: ["raíz", "web"], status: "Aprobado", uses: 7, date: "28 ene 2026" },
@@ -259,7 +304,7 @@ export const ASSETS: Asset[] = [
   { id: "a7", name: "aparador-bruma_front.jpg", img: IMG.aparador, kind: "Fotografía", size: "3,9 MB", tags: ["bruma", "showroom"], status: "En revisión", uses: 1, date: "07 feb 2026" },
   { id: "a8", name: "materiales_cuero-nogal.jpg", img: IMG.detalle, kind: "Material", size: "2,7 MB", tags: ["materiales", "blog", "prensa"], status: "Aprobado", uses: 11, date: "15 ene 2026" },
   { id: "a9", name: "taller_proceso-sanded.jpg", img: IMG.taller, kind: "Campaña", size: "5,1 MB", tags: ["taller", "blog", "nosotros"], status: "Aprobado", uses: 8, date: "12 ene 2026" },
-];
+]);
 
 /* ---------- Contabilidad (SRI Ecuador) ---------- */
 export type Invoice = {
@@ -267,7 +312,7 @@ export type Invoice = {
   base: number; iva: number; total: number; auth: string; status: "Autorizada" | "En contingencia";
 };
 
-export const INVOICES: Invoice[] = [
+export const INVOICES: Invoice[] = seed<Invoice[]>("bletia-facturas", [
   { id: "f1", number: "001-001-000001244", date: "08 feb 2026", customer: "Andrés Valencia", ruc: "1312884402", base: 2513.04, iva: 376.96, total: 2890, auth: "080220260113128844021234567891044", status: "Autorizada" },
   { id: "f2", number: "001-001-000001243", date: "06 feb 2026", customer: "Lucía Briones", ruc: "1104229875", base: 1147.83, iva: 172.17, total: 1320, auth: "060220260111042298751234567891043", status: "Autorizada" },
   { id: "f3", number: "001-001-000001242", date: "04 feb 2026", customer: "Hotel Casa del Patio", ruc: "0190445528001", base: 6573.91, iva: 986.09, total: 7560, auth: "040220260101904455281234567891042", status: "Autorizada" },
@@ -275,13 +320,13 @@ export const INVOICES: Invoice[] = [
   { id: "f5", number: "001-001-000001240", date: "29 ene 2026", customer: "Estudio Alvarado & Reyes", ruc: "0992334870001", base: 7330.43, iva: 1099.57, total: 8430, auth: "290120260109923348701234567891040", status: "Autorizada" },
   { id: "f6", number: "001-001-000001239", date: "28 ene 2026", customer: "María F. Jaramillo", ruc: "1714552203001", base: 1034.78, iva: 155.22, total: 1190, auth: "280120260117145522031234567891039", status: "Autorizada" },
   { id: "f7", number: "001-001-000001238", date: "21 ene 2026", customer: "Boutique Hotel Yaku", ruc: "0993118801001", base: 7443.48, iva: 1116.52, total: 8560, auth: "210120260109931188011234567891038", status: "En contingencia" },
-];
+]);
 
-export const CASHFLOW = [
+export const CASHFLOW = seed("bletia-cashflow", [
   { m: "Sep", in: 31200, out: 19800 }, { m: "Oct", in: 35800, out: 21400 },
   { m: "Nov", in: 40100, out: 22900 }, { m: "Dic", in: 52400, out: 27600 },
   { m: "Ene", in: 44900, out: 24100 }, { m: "Feb", in: 48600, out: 23200 },
-];
+]);
 
 /* ---------- Enlaces de un solo uso ---------- */
 export type PayLink = {
@@ -289,14 +334,14 @@ export type PayLink = {
   who: string; amount: number | null; expires: string; status: "Activo" | "Usado" | "Revocado" | "Expirado";
 };
 
-export const LINKS_SEED: PayLink[] = [
+export const LINKS_SEED: PayLink[] = seed<PayLink[]>("bletia-links", [
   { id: "l1", code: "8FK2-Q9ZD", type: "Pago PayPhone", who: "Estudio Alvarado & Reyes", amount: 3500, expires: "24 h", status: "Activo" },
   { id: "l2", code: "M3TP-W21A", type: "Acceso al panel", who: "R. Burbano · Contador externo", amount: null, expires: "1 uso", status: "Activo" },
   { id: "l3", code: "ZK77-HD4C", type: "Catálogo mayorista", who: "Hotel Casa del Patio", amount: null, expires: "7 días", status: "Usado" },
   { id: "l4", code: "Q1BV-88RN", type: "Seguimiento de pedido", who: "Andrés Valencia · BL-2026-0144", amount: null, expires: "1 uso", status: "Activo" },
   { id: "l5", code: "T5XJ-00PL", type: "Pago PayPhone", who: "Lucía Briones", amount: 1320, expires: "24 h", status: "Usado" },
   { id: "l6", code: "W9CC-3F6M", type: "Acceso al panel", who: "J. Espinoza · Jefe de taller", amount: null, expires: "1 uso", status: "Expirado" },
-];
+]);
 
 /* ---------- Motor de eventos ---------- */
 export const EVENT_TYPES = [
@@ -339,7 +384,7 @@ export const EMPLEADOS_SEED: Empleado[] = [
 ];
 export function loadEmpleados(): Empleado[] {
   try { const s = localStorage.getItem("bletia-rrhh"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
-  return EMPLEADOS_SEED;
+  return seed("bletia-rrhh", EMPLEADOS_SEED);
 }
 export function saveEmpleados(list: Empleado[]) { localStorage.setItem("bletia-rrhh", JSON.stringify(list)); }
 /* Los autores del blog son empleados marcados como autores */
@@ -437,7 +482,7 @@ export const COMPRAS_SEED: CompraOC[] = [
 ];
 export function loadCompras(): CompraOC[] {
   try { const s = localStorage.getItem("bletia-compras"); if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; } } catch { /* semilla */ }
-  return COMPRAS_SEED;
+  return seed("bletia-compras", COMPRAS_SEED);
 }
 export function saveCompras(list: CompraOC[]) { localStorage.setItem("bletia-compras", JSON.stringify(list)); }
 
@@ -515,7 +560,7 @@ export function loadCMS(): CMSPost[] {
     const s = localStorage.getItem("bletia-cms");
     if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length) return p; }
   } catch { /* semilla */ }
-  return CMS_POSTS_SEED;
+  return seed("bletia-cms", CMS_POSTS_SEED);
 }
 export function saveCMS(posts: CMSPost[]) { localStorage.setItem("bletia-cms", JSON.stringify(posts)); }
 
@@ -557,23 +602,23 @@ export type Suscriptor = {
   id: string; email: string; nombre: string; estado: "Pendiente" | "Confirmado" | "Baja" | "Rebotado";
   listas: string[]; fuente: string; fecha: string;
 };
-export const SUSCRIPTORES_SEED: Suscriptor[] = [
+export const SUSCRIPTORES_SEED: Suscriptor[] = seed<Suscriptor[]>("bletia-suscriptores", [
   { id: "s1", email: "maria.fj@gmail.com", nombre: "María Fernanda", estado: "Confirmado", listas: ["Newsletter"], fuente: "Footer", fecha: "02 feb 2026" },
   { id: "s2", email: "estudio@alvarado.ec", nombre: "Estudio Alvarado", estado: "Confirmado", listas: ["Newsletter", "Arquitectos"], fuente: "Popup", fecha: "28 ene 2026" },
   { id: "s3", email: "lucia.briones@outlook.com", nombre: "Lucía Briones", estado: "Pendiente", listas: ["Newsletter"], fuente: "Footer", fecha: "09 feb 2026" },
   { id: "s4", email: "hotel@casadelpatio.ec", nombre: "Hotel Casa del Patio", estado: "Confirmado", listas: ["Hoteleros"], fuente: "Slide-in", fecha: "15 ene 2026" },
   { id: "s5", email: "rebotado@correo.com", nombre: "—", estado: "Rebotado", listas: ["Newsletter"], fuente: "Footer", fecha: "04 ene 2026" },
-];
-export const LISTAS_SEED = [
+]);
+export const LISTAS_SEED = seed("bletia-listas", [
   { id: "li1", nombre: "Newsletter", slug: "newsletter", suscriptores: 3 },
   { id: "li2", nombre: "Arquitectos", slug: "arquitectos", suscriptores: 1 },
   { id: "li3", nombre: "Hoteleros", slug: "hoteleros", suscriptores: 1 },
-];
-export const FORMULARIOS_SEED = [
+]);
+export const FORMULARIOS_SEED = seed("bletia-formularios", [
   { id: "f1", nombre: "Newsletter footer", tipo: "inline", listas: ["Newsletter"], activo: true },
   { id: "f2", nombre: "Popup 10% primera compra", tipo: "popup", listas: ["Newsletter"], activo: true },
   { id: "f3", nombre: "Slide-in catálogo", tipo: "slide_in", listas: ["Newsletter", "Arquitectos"], activo: false },
-];
+]);
 
 /* ---------- Stock & bodegas (movimientos entrada/salida/ajuste) ---------- */
 export type MovStock = {
@@ -581,13 +626,13 @@ export type MovStock = {
   bodega: string; qty: number; motivo: string;
 };
 export const BODEGAS = ["Showroom Quito", "Taller", "Bodega Central"];
-export const MOV_STOCK_SEED: MovStock[] = [
+export const MOV_STOCK_SEED: MovStock[] = seed<MovStock[]>("bletia-stock-movs", [
   { id: "m1", fecha: "09 feb 2026", tipo: "Salida", sku: "BLT-011", pieza: "Butaca Aura", bodega: "Showroom Quito", qty: -1, motivo: "Venta BL-2026-0148" },
   { id: "m2", fecha: "08 feb 2026", tipo: "Entrada", sku: "BLT-021", pieza: "Mesa Raíz", bodega: "Taller", qty: 2, motivo: "Producción OF-2207" },
   { id: "m3", fecha: "07 feb 2026", tipo: "Ajuste", sku: "BLT-031", pieza: "Estantería Trama", bodega: "Bodega Central", qty: -1, motivo: "Inventario físico" },
   { id: "m4", fecha: "05 feb 2026", tipo: "Entrada", sku: "BLT-041", pieza: "Silla Vela", bodega: "Bodega Central", qty: 18, motivo: "Compra proveedor" },
   { id: "m5", fecha: "03 feb 2026", tipo: "Salida", sku: "BLT-051", pieza: "Cama Duna", bodega: "Bodega Central", qty: -1, motivo: "Despacho BL-2026-0144" },
-];
+]);
 
 /* Suscriptores capturados en el footer de la tienda (opt-in doble: nacen "Pendiente") */
 export type WebSuscriptor = { email: string; fecha: string };
@@ -638,14 +683,14 @@ export function saveCustomProduct(p: Product) {
 /* Catálogo vivo: seed + creados + overrides; solo "Publicado" sale a la tienda */
 export function productosActivos(): Product[] {
   const ov = loadPimOverrides();
-  return [...PRODUCTS, ...loadCustomProducts()]
+  return [...seed("bletia-productos", PRODUCTS), ...loadCustomProducts()]
     .map((p) => (ov[p.id] ? { ...p, ...ov[p.id], state: (ov[p.id].estado as Product["state"]) || p.state } : p))
     .map((p) => ({ ...p, img: p.img || IMG.detalle }))
     .filter((p) => p.state === "Publicado");
 }
 export function productoPorSlug(slug: string): Product | undefined {
   const ov = loadPimOverrides();
-  return [...PRODUCTS, ...loadCustomProducts()]
+  return [...seed("bletia-productos", PRODUCTS), ...loadCustomProducts()]
     .map((p) => (ov[p.id] ? { ...p, ...ov[p.id] } : p))
     .map((p) => ({ ...p, img: p.img || IMG.detalle }))
     .find((p) => slugDe(p.slug || p.name) === slug);
