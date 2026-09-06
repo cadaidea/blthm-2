@@ -145,6 +145,7 @@ export function Contabilidad() {
             </div>
           ))}
         </div>
+        )}
       </Card>
 
       {/* Pestañas: facturas / partida doble / formulario 104 */}
