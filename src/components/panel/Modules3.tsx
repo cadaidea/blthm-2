@@ -545,7 +545,7 @@ export function Infra() {
               ["0", "Tus fuentes Geomanist", "Copia tus 3 .woff2 licenciados a public/fonts/ (Geomanist-Regular/Medium/Bold.woff2). Vite los mete solos en dist/ al compilar."],
               ["1", "Compila el proyecto", "En tu equipo: npm run build. Se genera la carpeta dist/ con la tienda y el panel listos para internet."],
               ["2", "Comprime dist/", "Haz un .zip con el CONTENIDO de dist/ (no la carpeta en sí, sino lo que hay dentro)."],
-              ["3", "Crea el sitio: STATIC SITE", "CloudPanel → Sites → Add Site → Static Site (NO Reverse Proxy). Vhost: Default · Dominio: bletia.ec. CloudPanel crea htdocs."],
+              ["3", "Crea el sitio: STATIC SITE", "CloudPanel → Sites → Add Site → tarjeta «Static Site» (NUNCA «PHP Site»: esa es para Laravel/WordPress y mostrará errores PHP; NO Reverse Proxy). Vhost: Default · Dominio: bletia.ec. CloudPanel crea htdocs."],
               ["4", "Apunta el dominio", "En tu registrador: registro A · bletia.ec → 54.39.21.79 (y www → igual). Espera propagación (minutos a horas)."],
               ["5", "Sube los archivos", "CloudPanel → File Manager → htdocs del sitio → sube el .zip y extráelo ahí. O por SFTP/SCP a esa carpeta."],
               ["6", "Activa el SSL gratis", "CloudPanel → SSL → Let's Encrypt → Issue para bletia.ec. En segundos responde con https://."],
@@ -565,9 +565,10 @@ export function Infra() {
             <CodeBlock title="Comandos en tu equipo (opcional, vía SSH/SFTP)" code={`# Compilar la versión de producción
 npm run build
 
-# La carpeta dist/ es lo que subes a CloudPanel.
-# Si prefieres terminal sobre SSH (OVH):
-scp -r dist/* usuario@TU_IP:/home/usuario/bletia.ec/htdocs/`} />
+# La carpeta dist/ es lo que subes a CloudPanel (solo su CONTENIDO).
+# Si prefieres terminal sobre SSH (tu VPS: 54.39.21.79):
+# (la ruta exacta de htdocs la ves en CloudPanel → tu sitio → Settings → Document Root)
+scp -r dist/* cloudpanel@54.39.21.79:/home/cloudpanel/htdocs/`} />
             <div className="bg-okbg/60 border border-ok/30 p-4">
               <p className="text-[12px] font-bold text-ok flex items-center gap-1.5"><I n="check" s={14} /> Ventaja de este build</p>
               <p className="text-[11.5px] text-ink2 leading-snug mt-1.5">
@@ -575,6 +576,32 @@ scp -r dist/* usuario@TU_IP:/home/usuario/bletia.ec/htdocs/`} />
                 tienda, blog, productos y panel funcionan tal cual los subas. Cero configuración extra en CloudPanel.
               </p>
             </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Troubleshooting de despliegue */}
+      <Card className="p-5 sm:p-6 border-warn/40">
+        <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
+          <I n="alert" s={16} className="text-warn" /> Si CloudPanel muestra «Laravel» o errores PHP
+        </h3>
+        <p className="text-[12px] text-stone mt-0.5 mb-4">Este proyecto NO usa Laravel ni PHP: es 100% estático. Si aparece ese error, el sitio se creó con el tipo equivocado.</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="border border-line bg-card p-4">
+            <p className="text-[12.5px] font-bold text-warn">Causa</p>
+            <p className="text-[12px] text-ink2 leading-relaxed mt-1.5">
+              El sitio se creó como <strong>PHP Site</strong> (la tarjeta de CloudPanel para Laravel/WordPress).
+              Esa plantilla manda todas las rutas a <code className="font-mono">index.php</code>, que aquí no existe — por eso el mensaje.
+            </p>
+          </div>
+          <div className="border border-ok/40 bg-okbg/40 p-4">
+            <p className="text-[12.5px] font-bold text-ok">Solución (2 minutos)</p>
+            <p className="text-[12px] text-ink2 leading-relaxed mt-1.5">
+              <strong>1.</strong> Sites → tu sitio → Settings → <strong>Delete Site</strong> (no toca tu dominio ni tus DNS).
+              <strong> 2.</strong> Add Site → tarjeta <strong>Static Site</strong> → mismo dominio.
+              <strong> 3.</strong> Vuelve a subir el zip a <code className="font-mono">htdocs/</code> y extrae.
+              <strong> 4.</strong> Verifica que quede <code className="font-mono">htdocs/index.html</code> (no dentro de una subcarpeta <code className="font-mono">dist/</code>).
+            </p>
           </div>
         </div>
       </Card>
