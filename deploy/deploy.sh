@@ -39,7 +39,7 @@ fi
 echo "[2/6] Actualizando código (${TARGET})…"
 # --prune y el refspec de PRs permiten desplegar también un PR sin merge:
 #   bash deploy.sh origin/pr/1/head   → publica el PR #1 tal cual está
-git -C "${REPO}" fetch --all --prune --tags \
+git -C "${REPO}" fetch origin --prune --tags \
   "+refs/pull/*/head:refs/remotes/origin/pr/*"
 git -C "${REPO}" checkout --detach "${TARGET}"
 git -C "${REPO}" clean -fd
