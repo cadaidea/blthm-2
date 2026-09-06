@@ -1,18 +1,31 @@
 #!/usr/bin/env bash
 # ============================================================
 # BLETIA · Provisión inicial del VPS (se ejecuta UNA SOLA VEZ)
-# VPS: OVH Cloud · Ubuntu · 2 núcleos / 4 GB
-# Uso:  bash provision.sh
+# VPS: OVH Cloud · Ubuntu · 2 núcleos / 4 GB · CloudPanel
+#
+# Uso:
+#   bash provision.sh
+#   (te pedirá 3 datos: repo de GitHub, rama y carpeta htdocs)
 # ============================================================
 set -euo pipefail
 
-APP_BASE="/home/ubuntu/bletia"
-REPO_URL="https://github.com/cadaidea/blthm-2.git"
-BRANCH="web"
+APP_BASE="${APP_BASE:-${HOME}/bletia}"
+CONF="${APP_BASE}/deploy.conf"
 
 echo "── BLETIA · Provisión del VPS ─────────────────────────────"
+echo ""
+echo "Necesito 3 datos. Si no los tienes a mano, pulsa Enter para"
+echo "usar el valor sugerido entre corchetes [ ]."
+echo ""
+read -rp "1) URL del repo en GitHub [https://github.com/cadaidea/bletia-web.git]: " REPO_URL
+REPO_URL="${REPO_URL:-https://github.com/cadaidea/bletia-web.git}"
+read -rp "2) Rama que tiene el código [main]: " BRANCH
+BRANCH="${BRANCH:-main}"
+read -rp "3) Carpeta htdocs del sitio (CloudPanel → sitio → Settings → Document Root) [${HOME}/htdocs]: " DOC_ROOT
+DOC_ROOT="${DOC_ROOT:-${HOME}/htdocs}"
 
 # 1) Herramientas base
+echo ""
 echo "[1/5] Instalando git, curl, rsync…"
 sudo apt-get update -qq
 sudo apt-get install -y -qq git curl rsync >/dev/null
@@ -31,10 +44,11 @@ echo "[3/5] Creando estructura en ${APP_BASE}…"
 mkdir -p "${APP_BASE}"/{releases,shared/fonts,backups}
 echo "      ok."
 
-# 4) Clonar el repositorio (rama 'web')
+# 4) Clonar el repositorio
 echo "[4/5] Clonando ${REPO_URL} (rama ${BRANCH})…"
 if [ -d "${APP_BASE}/repo/.git" ]; then
   echo "      El repo ya existe, actualizando…"
+  git -C "${APP_BASE}/repo" remote set-url origin "${REPO_URL}"
   git -C "${APP_BASE}/repo" fetch --all --prune
   git -C "${APP_BASE}/repo" checkout "${BRANCH}"
   git -C "${APP_BASE}/repo" pull origin "${BRANCH}"
@@ -43,33 +57,20 @@ else
 fi
 echo "      ok."
 
-# 5) Configuración de despliegue (document root de CloudPanel)
-echo "[5/5] Creando deploy.conf…"
-CONF="${APP_BASE}/deploy.conf"
-if [ ! -f "${CONF}" ]; then
-  cat > "${CONF}" <<'EOF'
-# BLETIA · configuración de despliegue
-# DOC_ROOT: la carpeta htdocs que CloudPanel muestra en
-#           tu sitio → Settings → Document Root.
-#           Ejemplos: /home/ubuntu/htdocs  ó  /home/bletia_ec-x1y2/htdocs
-DOC_ROOT="/home/ubuntu/htdocs"
-BRANCH="web"
+# 5) Configuración de despliegue
+echo "[5/5] Guardando configuración…"
+cat > "${CONF}" <<EOF
+# BLETIA · configuración de despliegue (generada por provision.sh)
+DOC_ROOT="${DOC_ROOT}"
+BRANCH="${BRANCH}"
 KEEP_RELEASES=5
 EOF
-  echo "      Creado ${CONF}"
-  echo ""
-  echo "  ⚠️  IMPORTANTE: edita ${CONF}"
-  echo "     y pon en DOC_ROOT la ruta exacta que CloudPanel muestra"
-  echo "     en: tu sitio → Settings → Document Root"
-else
-  echo "      Ya existe ${CONF} (se conserva)."
-fi
+echo "      ${CONF}"
 
 echo ""
 echo "✅ Provisión completa."
 echo ""
 echo "Siguiente paso:"
-echo "  1) Edita ${CONF} (DOC_ROOT)"
-echo "  2) Copia tus 3 fuentes Geomanest a ${APP_BASE}/shared/fonts/"
+echo "  1) Copia tus 3 fuentes Geomanest a ${APP_BASE}/shared/fonts/"
 echo "     (Geomanist-Regular.woff2, Geomanist-Medium.woff2, Geomanist-Bold.woff2)"
-echo "  3) Ejecuta el primer despliegue: bash deploy.sh"
+echo "  2) Ejecuta el primer despliegue: bash deploy.sh"

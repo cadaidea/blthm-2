@@ -6,7 +6,7 @@
 # ============================================================
 set -euo pipefail
 
-APP_BASE="/home/ubuntu/bletia"
+APP_BASE="${APP_BASE:-${HOME}/bletia}"
 CONF="${APP_BASE}/deploy.conf"
 REPO="${APP_BASE}/repo"
 

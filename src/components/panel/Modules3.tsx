@@ -569,22 +569,20 @@ npm run build
 # Si prefieres terminal sobre SSH (tu VPS: 54.39.21.79):
 # (la ruta exacta de htdocs la ves en CloudPanel → tu sitio → Settings → Document Root)
 scp -r dist/* cloudpanel@54.39.21.79:/home/cloudpanel/htdocs/`} />
-            <CodeBlock title="Despliegue directo desde GitHub (cadaidea/blthm-2 · PR #1)" code={`# El VPS jala el código directo de GitHub. Publicas en la rama 'web'
-# (tu PR #1). deploy/ tiene: provision.sh · deploy.sh · rollback.sh
+            <CodeBlock title="Despliegue directo desde GitHub (rama 'web')" code={`# ⚠️ NO merges el PR #1 de blthm-2: es de OTRA sesión de IA, no de este proyecto.
+# Este proyecto vive en la rama 'web' del repo que elijas.
+# deploy/ tiene: provision.sh · deploy.sh · rollback.sh
 
-# UNA SOLA VEZ (prepara el VPS: Node 22 + clona blthm-2 + estructura):
-ssh ubuntu@54.39.21.79
-cd /home/ubuntu/bletia && bash provision.sh
-#   → luego edita deploy.conf (DOC_ROOT) y deja tus .woff2 en shared/fonts/
+# UNA SOLA VEZ (te pide 3 datos: repo, rama y carpeta htdocs):
+ssh TU_USUARIO@54.39.21.79
+bash provision.sh
+#   → deja tus 3 .woff2 de Geomanist en ~/bletia/shared/fonts/
 
 # PRIMER DESPLIEGUE (jala la rama web, compila, publica):
-bash deploy.sh
+cd ~/bletia && bash deploy.sh
 
-# CADA MEJORA: mergea tu PR a 'web' en GitHub, y en el VPS:
+# CADA MEJORA: subes el cambio a la rama 'web' en GitHub, y en el VPS:
 bash deploy.sh             # sin caída + respaldo automático previo
-
-# PROBAR EL PR SIN MERGE (revisarlo en el servidor):
-bash deploy.sh origin/pr/1/head
 
 # SI ALGO SALE MAL (vuelve al release anterior en 10 s):
 bash rollback.sh`} />
