@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, VERSION, articuloUrl, autorDe, fmt, fmt2, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type Product, type SeccionHome } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, VERSION, addEmail, addNotif, articuloUrl, autorDe, crearPedidoCliente, fmt, fmt2, getSesionCliente, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type CuentaCliente, type Product, type SeccionHome } from "../data";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
+import { AccountModal } from "./CustomerAccount";
 
 type CartLine = { id: string; qty: number };
 type Step = "datos" | "pago" | "link" | "directo" | "listo";
@@ -21,6 +22,10 @@ export default function Storefront() {
   const [scrolled, setScrolled] = useState(false);
   const [menu, setMenu] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ code: string; track: string } | null>(null);
+
+  /* cuenta del cliente (sesión) y modal de acceso */
+  const [cliente, setCliente] = useState<CuentaCliente | null>(() => getSesionCliente());
+  const [authOpen, setAuthOpen] = useState(false);
 
   /* búsqueda global, cuenta y lista de deseos */
   const [searchOpen, setSearchOpen] = useState(false);
@@ -95,9 +100,33 @@ export default function Storefront() {
   const setQty = (id: string, qty: number) =>
     setCart((c) => (qty <= 0 ? c.filter((l) => l.id !== id) : c.map((l) => (l.id === id ? { ...l, qty: Math.min(qty, 12) } : l))));
 
-  const finishOrder = (code: string) => {
+  const finishOrder = (metodo: "link" | "directo", info: { nombre: string; email: string; ciudad: string; direccion: string }) => {
+    /* vínculo con la cuenta del cliente si está en sesión */
+    const ses = cliente ?? getSesionCliente();
+    const email = ses?.email || info.email;
+    const nombre = ses?.nombre || info.nombre;
+
+    const items = cart.map((l) => {
+      const p = activos.find((x) => x.id === l.id);
+      return { id: l.id, name: p?.name ?? "Pieza", qty: l.qty, price: p?.price ?? 0, img: p?.img ?? IMG.detalle };
+    });
+    const pedido = crearPedidoCliente({
+      email, nombre, items, total, estado: 1, ciudad: info.ciudad,
+      direccion: info.direccion, metodo,
+    });
+
+    /* notificar al personal: nueva orden por revisar */
+    addNotif({ tipo: "pedido", texto: `Nueva orden ${pedido.code} de ${nombre} (${items.reduce((a, i) => a + i.qty, 0)} piezas, ${fmt2(pedido.total)}).`, code: pedido.code });
+
+    /* correo de confirmación al cliente con su link de seguimiento */
+    addEmail({
+      para: email, tipo: "confirmacion", code: pedido.code,
+      asunto: `Tu pedido ${pedido.code} está confirmado`,
+      preview: `Gracias, ${nombre.split(" ")[0]}. Recibimos tu pago y tu pieza ya está en camino. Sigue tu pedido aquí: bletia.ec/#/pedido/${pedido.tracking}`,
+    });
+
     setCart([]);
-    setLastOrder({ code, track: `bletia.ec/t/${randomCode().toLowerCase()}` });
+    setLastOrder({ code: pedido.code, track: pedido.tracking });
   };
 
   /* ---------- Secciones de la portada (textos vienen del panel) ---------- */
@@ -434,13 +463,15 @@ export default function Storefront() {
             <button onClick={() => setSearchOpen(true)} className="p-2.5 hover:bg-paper2 transition-colors" aria-label="Buscar en el sitio">
               <I n="search" s={19} />
             </button>
-            <button onClick={() => setAccountOpen(!accountOpen)} className="p-2.5 hover:bg-paper2 transition-colors" aria-label="Mi cuenta">
-              {cuenta ? (
-                <span className="w-6 h-6 bg-ink text-paper text-[10px] font-bold flex items-center justify-center">{cuenta[0]?.toUpperCase()}</span>
-              ) : (
+            {cliente ? (
+              <a href="#/cuenta" className="p-2.5 hover:bg-paper2 transition-colors flex items-center gap-2" aria-label="Ir a mi cuenta" title={`Mi cuenta: ${cliente.nombre}`}>
+                <span className="w-6 h-6 bg-maroon text-cream text-[10px] font-bold flex items-center justify-center">{cliente.nombre[0]?.toUpperCase()}</span>
+              </a>
+            ) : (
+              <button onClick={() => setAuthOpen(true)} className="p-2.5 hover:bg-paper2 transition-colors" aria-label="Iniciar sesión o crear cuenta">
                 <I n="user" s={19} />
-              )}
-            </button>
+              </button>
+            )}
             <button onClick={() => setWishOpen(true)} className="relative p-2.5 hover:bg-paper2 transition-colors" aria-label="Mis deseos">
               <I n="heart" s={19} />
               {wish.length > 0 && (
@@ -804,10 +835,26 @@ export default function Storefront() {
       {checkout && (
         <CheckoutModal
           total={total} base={base} iva={iva} count={count} lastOrder={lastOrder}
-          onClose={() => { setCheckout(false); }}
+          cliente={cliente}
+          onClose={() => {
+            /* carrito abandonado: cerró el checkout sin terminar la compra */
+            const ses = cliente ?? getSesionCliente();
+            if (cart.length > 0 && ses) {
+              addEmail({
+                para: ses.email, tipo: "abandono",
+                asunto: "Tu carrito te espera en BLETIA",
+                preview: `Hola ${ses.nombre.split(" ")[0]}: dejamos guardadas ${cart.length} pieza(s) en tu carrito. Vuelve cuando quieras, o escríbenos si tienes alguna duda antes de comprar.`,
+              });
+              addNotif({ tipo: "abandono", texto: `${ses.nombre} dejó ${cart.length} pieza(s) en el carrito sin comprar (correo de recuperación enviado).` });
+            }
+            setCheckout(false);
+          }}
           onFinish={finishOrder}
         />
       )}
+
+      {/* modal de acceso (login / registro de cliente) */}
+      <AccountModal open={authOpen} onClose={() => setAuthOpen(false)} onLogged={(c) => setCliente(c)} />
     </div>
   );
 }
@@ -901,13 +948,15 @@ function BusquedaGlobal({ open, onClose, onProduct }: {
 }
 
 /* ------------------------------------------------ */
-function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }: {
+function CheckoutModal({ total, base, iva, count, lastOrder, cliente, onClose, onFinish }: {
   total: number; base: number; iva: number; count: number;
   lastOrder: { code: string; track: string } | null;
-  onClose: () => void; onFinish: (code: string) => void;
+  cliente: CuentaCliente | null;
+  onClose: () => void;
+  onFinish: (metodo: "link" | "directo", info: { nombre: string; email: string; ciudad: string; direccion: string }) => void;
 }) {
   const [step, setStep] = useState<Step>(count > 0 ? "datos" : "listo");
-  const [form, setForm] = useState({ nombre: "", doc: "", tel: "", ciudad: CITIES[0], dir: "" });
+  const [form, setForm] = useState({ nombre: cliente?.nombre ?? "", email: cliente?.email ?? "", doc: "", tel: cliente?.telefono ?? "", ciudad: CITIES[0], dir: "" });
   const [err, setErr] = useState("");
   const site = loadSite();
   const [method, setMethod] = useState<"link" | "directo">(site.pagoLink ? "link" : "directo");
@@ -923,6 +972,7 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
   const docV = detectarDocumento(form.doc);
   const validate = () => {
     if (form.nombre.trim().length < 3) return setErr("Ingresa el nombre completo o razón social.");
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return setErr("Necesitamos un correo válido para enviarte el seguimiento.");
     if (!docV.valido) return setErr(`Documento inválido: ${docV.detalle}`);
     if (form.dir.trim().length < 6) return setErr("Necesitamos una dirección de entrega precisa.");
     setErr("");
@@ -931,7 +981,13 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
 
   const processPay = () => {
     setPayState("proc");
-    setTimeout(() => { setPayState("ok"); setTimeout(() => { onFinish(orderCode); setStep("listo"); }, 700); }, 1900);
+    setTimeout(() => {
+      setPayState("ok");
+      setTimeout(() => {
+        onFinish(method, { nombre: form.nombre.trim(), email: form.email.trim(), ciudad: form.ciudad, direccion: form.dir.trim() });
+        setStep("listo");
+      }, 700);
+    }, 1900);
   };
 
   const done = lastOrder && step === "listo";
@@ -965,9 +1021,13 @@ function CheckoutModal({ total, base, iva, count, lastOrder, onClose, onFinish }
           <div className="fade-in">
             <h3 className="font-display font-medium text-[22px]">¿A dónde lo llevamos?</h3>
             <div className="grid sm:grid-cols-2 gap-4 mt-6">
-              <Field label="Nombre / Razón social" full>
+              <Field label="Nombre / Razón social">
                 <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                   className={inp} placeholder="Ej. María Fernanda Jaramillo" />
+              </Field>
+              <Field label="Correo (seguimiento y factura)">
+                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className={inp} placeholder="tucorreo@ejemplo.com" type="email" />
               </Field>
               <Field label="Cédula o RUC">
                 <input value={form.doc} onChange={(e) => setForm({ ...form, doc: e.target.value })}

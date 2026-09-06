@@ -6,7 +6,7 @@
 
 /* Versión visible de la plataforma: permite verificar a simple vista si el
    servidor sirve la versión nueva (se muestra en login, panel y pie de la tienda). */
-export const VERSION = "v1.1.1";
+export const VERSION = "v1.2.0";
 
 export const IVA = 0.15;
 
@@ -805,3 +805,101 @@ export function loadSite(): SiteConfig {
   return SITE_DEFAULTS;
 }
 export function saveSite(cfg: SiteConfig) { localStorage.setItem("bletia-sitio", JSON.stringify(cfg)); }
+
+/* =========================================================
+   CUENTAS DE CLIENTE · pedidos · notificaciones · correos
+   (Fase 1: persisten en el navegador del cliente y del admin.
+    El envío real de correos y la base compartida llegan en Fase 2.)
+   ========================================================= */
+
+/* ---------- Cuenta del cliente ---------- */
+export type CuentaCliente = {
+  id: string; nombre: string; email: string; pass: string;
+  telefono?: string; creado: string;
+};
+export function loadCuentas(): CuentaCliente[] {
+  try { const s = localStorage.getItem("bletia-cuentas"); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; } } catch { /* vacío */ }
+  return [];
+}
+export function saveCuentas(list: CuentaCliente[]) { localStorage.setItem("bletia-cuentas", JSON.stringify(list)); }
+export function crearCuenta(nombre: string, email: string, pass: string, telefono?: string): CuentaCliente | null {
+  const list = loadCuentas();
+  if (list.some((c) => c.email.toLowerCase() === email.toLowerCase())) return null; // ya existe
+  const c: CuentaCliente = { id: `cli${Date.now()}`, nombre, email, pass, telefono, creado: new Date().toLocaleDateString("es-EC") };
+  saveCuentas([...list, c]);
+  return c;
+}
+export function buscarCuenta(email: string, pass: string): CuentaCliente | null {
+  return loadCuentas().find((c) => c.email.toLowerCase() === email.toLowerCase() && c.pass === pass) || null;
+}
+export function getSesionCliente(): CuentaCliente | null {
+  try { const id = localStorage.getItem("bletia-cliente-sesion"); if (!id) return null; return loadCuentas().find((c) => c.id === id) || null; } catch { return null; }
+}
+export function setSesionCliente(id: string | null) {
+  if (id) localStorage.setItem("bletia-cliente-sesion", id); else localStorage.removeItem("bletia-cliente-sesion");
+}
+
+/* ---------- Pedido del cliente (tienda web) ---------- */
+export type ItemPedido = { id: string; name: string; qty: number; price: number; img: string };
+export type PedidoCliente = {
+  id: string; code: string; email: string; nombre: string;
+  items: ItemPedido[]; total: number; estado: number;
+  ciudad: string; direccion: string; metodo: "link" | "directo";
+  fecha: string; tracking: string;
+  historial: { estado: number; fecha: string }[];
+};
+/* Estados de seguimiento que ve el cliente */
+export const TRACK_STATES = ["Pedido recibido", "Pago confirmado", "En preparación", "En camino", "Entregado"];
+export function loadPedidosCliente(): PedidoCliente[] {
+  try { const s = localStorage.getItem("bletia-pedidos-cliente"); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; } } catch { /* vacío */ }
+  return [];
+}
+export function savePedidosCliente(list: PedidoCliente[]) { localStorage.setItem("bletia-pedidos-cliente", JSON.stringify(list)); }
+export function crearPedidoCliente(p: Omit<PedidoCliente, "id" | "code" | "tracking" | "historial" | "fecha">): PedidoCliente {
+  const list = loadPedidosCliente();
+  const code = `BL-2026-0${160 + list.length}`;
+  const tracking = randomCode().toLowerCase();
+  const nuevo: PedidoCliente = {
+    ...p, id: `pc${Date.now()}`, code, tracking,
+    fecha: new Date().toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" }),
+    historial: [{ estado: 0, fecha: new Date().toLocaleDateString("es-EC") }],
+  };
+  savePedidosCliente([nuevo, ...list]);
+  return nuevo;
+}
+export function avanzarPedidoCliente(id: string): PedidoCliente | null {
+  const list = loadPedidosCliente();
+  const idx = list.findIndex((p) => p.id === id);
+  if (idx < 0) return null;
+  const estado = Math.min(list[idx].estado + 1, TRACK_STATES.length - 1);
+  list[idx] = { ...list[idx], estado, historial: [...list[idx].historial, { estado, fecha: new Date().toLocaleDateString("es-EC") }] };
+  savePedidosCliente(list);
+  return list[idx];
+}
+
+/* ---------- Notificaciones para el personal (panel) ---------- */
+export type NotifAdmin = { id: string; tipo: "pedido" | "pago" | "abandono"; texto: string; fecha: string; leida: boolean; code?: string };
+export function loadNotifs(): NotifAdmin[] {
+  try { const s = localStorage.getItem("bletia-notifs"); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; } } catch { /* vacío */ }
+  return [];
+}
+export function saveNotifs(list: NotifAdmin[]) { localStorage.setItem("bletia-notifs", JSON.stringify(list)); }
+export function addNotif(n: Omit<NotifAdmin, "id" | "fecha" | "leida">) {
+  saveNotifs([{ ...n, id: `nt${Date.now()}${Math.floor(Math.random() * 99)}`, fecha: new Date().toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" }), leida: false }, ...loadNotifs()]);
+}
+export function marcarNotifLeida(id: string) {
+  saveNotifs(loadNotifs().map((n) => (n.id === id ? { ...n, leida: true } : n)));
+}
+
+/* ---------- Centro de correos (simulado en Fase 1) ----------
+   Registra cada correo que se enviaría al cliente. En Fase 2 se
+   conecta a un proveedor real (Brevo/SMTP) y se entregan de verdad. */
+export type EmailLog = { id: string; para: string; asunto: string; preview: string; fecha: string; tipo: "confirmacion" | "estado" | "abandono"; code?: string };
+export function loadEmails(): EmailLog[] {
+  try { const s = localStorage.getItem("bletia-emails"); if (s) { const p = JSON.parse(s); if (Array.isArray(p)) return p; } } catch { /* vacío */ }
+  return [];
+}
+export function saveEmails(list: EmailLog[]) { localStorage.setItem("bletia-emails", JSON.stringify(list)); }
+export function addEmail(e: Omit<EmailLog, "id" | "fecha">) {
+  saveEmails([{ ...e, id: `em${Date.now()}${Math.floor(Math.random() * 99)}`, fecha: new Date().toLocaleString("es-EC", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) }, ...loadEmails()]);
+}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ORDERS, INVOICES, EVENT_TYPES, VERSION, fmt2, seed } from "../../data";
+import { ORDERS, INVOICES, EVENT_TYPES, VERSION, fmt2, loadNotifs, saveNotifs, seed } from "../../data";
 import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
@@ -10,6 +10,7 @@ import { OMS15 } from "./Modules5";
 import { CMS, EditorHome, SitioPublico } from "./Modules6";
 import { Marketing, Stock, Variantes } from "./Modules7";
 import { Compras, RRHH } from "./Modules8";
+import { AdminPedidosWeb } from "../CustomerAccount";
 import { adminCreado } from "../../data";
 import { BletiaMark, LoginScreen, ROLE_LABEL, SetupScreen, useAuth, type Role } from "./auth";
 
@@ -190,7 +191,17 @@ export default function Panel() {
   const [workerLogin, setWorkerLogin] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("bletia-theme") === "dark");
   const [splash, setSplash] = useState(true);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs] = useState(loadNotifs);
   const engine = useEventEngine();
+
+  /* nuevas órdenes de la tienda web → campana de notificaciones */
+  useEffect(() => {
+    const t = setInterval(() => setNotifs(loadNotifs()), 2500);
+    return () => clearInterval(t);
+  }, []);
+  const noLeidas = notifs.filter((n) => !n.leida).length;
+  const leerTodas = () => { saveNotifs(notifs.map((n) => ({ ...n, leida: true }))); setNotifs(loadNotifs()); };
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -301,6 +312,43 @@ export default function Panel() {
               className={`hidden sm:block text-[11px] font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${env === "staging" ? "border-warn/40 text-warn bg-warnbg hover:border-warn" : "border-ok/40 text-ok bg-okbg hover:border-ok"}`}>
               {env}
             </button>
+            {/* campana de notificaciones: nuevas órdenes de la tienda */}
+            <div className="relative">
+              <button onClick={() => setNotifOpen(!notifOpen)} title="Notificaciones de pedidos" aria-label="Notificaciones"
+                className="relative p-2.5 border border-line bg-card hover:border-ink transition-colors">
+                <I n="pulse" s={17} />
+                {noLeidas > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-maroon text-cream text-[9.5px] font-bold flex items-center justify-center tnum">{noLeidas}</span>
+                )}
+              </button>
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-[64]" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-[340px] bg-card border border-line shadow-[0_18px_50px_rgba(20,16,10,0.25)] z-[65] fade-in">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-line">
+                      <p className="text-[12.5px] font-bold">Notificaciones</p>
+                      {noLeidas > 0 && <button onClick={leerTodas} className="text-[11px] font-semibold text-maroon u-grow">Marcar leídas</button>}
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {notifs.length === 0 ? (
+                        <p className="px-4 py-8 text-center text-[12px] text-stone">Aún no hay notificaciones.<br />Cuando entre un pedido de la web, aparecerá aquí.</p>
+                      ) : (
+                        notifs.map((n) => (
+                          <button key={n.id} onClick={() => { saveNotifs(notifs.map((x) => x.id === n.id ? { ...x, leida: true } : x)); setNotifs(loadNotifs()); }}
+                            className={`w-full text-left px-4 py-3 border-b border-line last:border-0 transition-colors hover:bg-paper2 ${n.leida ? "opacity-55" : ""}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${n.tipo === "pedido" ? "bg-maroon" : n.tipo === "abandono" ? "bg-warn" : "bg-ok"}`} />
+                              <p className="text-[10.5px] font-bold uppercase tracking-wider text-stone">{n.tipo === "pedido" ? "Nueva orden" : n.tipo === "abandono" ? "Carrito abandonado" : "Pago"} · {n.fecha}</p>
+                            </div>
+                            <p className="text-[12px] leading-snug mt-1.5">{n.texto}</p>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="relative">
               <button onClick={() => setUserMenu(!userMenu)} title="Sesión y roles"
                 className={`w-8 h-8 text-[11px] font-bold flex items-center justify-center transition-colors ${role === "gerencia" ? "bg-ink text-paper hover:bg-maroon" : "bg-maroon text-cream hover:bg-maroon2"}`}>
@@ -336,7 +384,7 @@ export default function Panel() {
         <main className="p-5 sm:p-8 max-w-[1240px] space-y-6">
           {mod === "vision" && <WelcomeBanner name={session.name} />}
           {mod === "vision" && <Vision engine={engine} go={go} />}
-          {mod === "oms" && <OMS15 />}
+          {mod === "oms" && (<><OMS15 /><AdminPedidosWeb /></>)}
           {mod === "logistica" && <Logistica />}
           {mod === "taller" && <Taller />}
           {mod === "bom" && <BOM />}

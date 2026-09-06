@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Storefront from "./components/Storefront";
 import Panel from "./components/panel/Panel";
 import { ArticuloPage, BlogPage, CategoriaPage, PaginaPage, ProductoPage } from "./components/StorePages";
+import { CuentaPage, PedidoTrackingPage } from "./components/CustomerAccount";
 import { BLOG_CATEGORIAS, slugDe } from "./data";
 
 /* categorías del blog en formato slug — para la ruta /{categoria}/{articulo} */
@@ -48,6 +49,8 @@ export default function App() {
   if (head === "categoria" && a) return <CategoriaPage key={hash} slug={a} />;
   if (head === "articulo" && a) return <ArticuloPage key={hash} slug={a} />;
   if (head === "pagina" && a) return <PaginaPage key={hash} slug={a} />;
+  if (head === "cuenta") return <CuentaPage key={hash} />;
+  if (head === "pedido" && a) return <PedidoTrackingPage key={hash} codigo={a} />;
   if (head === "blog") {
     if (a === "categoria" && b) return <BlogPage key={hash} kind="categoria" value={b} />;
     if (a === "tag" && b) return <BlogPage key={hash} kind="etiqueta" value={b} />;
