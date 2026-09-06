@@ -45,15 +45,25 @@ git -C "${REPO}" checkout --detach "${TARGET}"
 git -C "${REPO}" clean -fd
 echo "      en $(git -C "${REPO}" rev-parse --short HEAD)"
 
-# 3) Compilar
+# 3) Compilar (detecta solo si el código está en la raíz o dentro de una subcarpeta)
 echo "[3/6] Compilando (npm ci + build)…"
-( cd "${REPO}" && npm ci --silent && npm run build --silent )
+if [ -f "${REPO}/package.json" ]; then
+  APP_DIR="${REPO}"
+else
+  APP_DIR="$(dirname "$(find "${REPO}" -mindepth 2 -maxdepth 2 -name package.json -print -quit)")"
+  if [ -z "${APP_DIR}" ] || [ "${APP_DIR}" = "." ]; then
+    echo "❌ No encuentro package.json en el repo. Revisa la estructura en GitHub."
+    exit 1
+  fi
+  echo "      código detectado en subcarpeta: $(basename "${APP_DIR}")/"
+fi
+( cd "${APP_DIR}" && npm ci --silent && npm run build --silent )
 echo "      ok."
 
 # 4) Armar el release (dist + fuentes licenciadas)
 echo "[4/6] Preparando release ${STAMP}…"
 mkdir -p "${RELEASE_DIR}"
-rsync -a "${REPO}/dist/" "${RELEASE_DIR}/"
+rsync -a "${APP_DIR}/dist/" "${RELEASE_DIR}/"
 # Las fuentes Geomanest viven fuera del repo (licencia) y se inyectan aquí.
 if [ -d "${APP_BASE}/shared/fonts" ] && [ "$(ls -A "${APP_BASE}/shared/fonts" 2>/dev/null)" ]; then
   mkdir -p "${RELEASE_DIR}/fonts"
