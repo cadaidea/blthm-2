@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ORDERS, INVOICES, EVENT_TYPES, VERSION, fmt2, loadNotifs, saveNotifs, seed } from "../../data";
+import { ORDERS, INVOICES, VERSION, fmt2, loadNotifs, saveNotifs, loadRealEvents, seed } from "../../data";
 import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
@@ -90,42 +90,27 @@ const ACCESS: Record<Mod, Role[]> = {
   home: ["gerencia"],
 };
 
-/* ---- motor de eventos simulado (Redis + BullMQ en producción) ---- */
+/* ---- motor de eventos REALES (solo muestra lo que realmente pasa) ---- */
 export type LogItem = { t: string; type: string; mod: string };
-const MODS: Record<string, string> = {
-  "pago.payphone.aprobado": "OMS", "pedido.creado": "OMS", "oms.estado.actualizado": "OMS",
-  "pim.precio.sincronizado": "PIM", "crm.cliente.creado": "CRM", "dam.asset.procesado": "DAM",
-  "factura.sri.autorizada": "Conta", "taller.fase.avanzada": "Taller", "link.uso_registrado": "Links",
-  "transporte.gps.ping": "OMS", "inventario.movimiento": "PIM", "sesion.panel.iniciada": "Auth",
-};
 
 function useEventEngine() {
-  const [series, setSeries] = useState<number[]>(() => Array.from({ length: 32 }, () => 40 + Math.random() * 90));
   const [log, setLog] = useState<LogItem[]>([]);
-  const [stress, setStress] = useState(false);
-  const stressRef = useRef(false);
-  stressRef.current = stress;
+  const [eventCount, setEventCount] = useState(0);
 
+  // Cargar eventos reales del localStorage
   useEffect(() => {
-    const push = () => {
-      const type = EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)];
-      setLog((l) => [{ t: new Date().toLocaleTimeString("es-EC"), type, mod: MODS[type] }, ...l].slice(0, 12));
+    const loadEvents = () => {
+      const events = loadRealEvents();
+      setLog(events.map((e) => ({ t: e.timestamp, type: e.type, mod: e.module })).slice(0, 12));
+      setEventCount(events.length);
     };
-    push(); push(); push();
-    const t = setInterval(() => {
-      const stressOn = stressRef.current;
-      setSeries((s) => [...s.slice(1), stressOn ? 2150 + Math.random() * 500 : 40 + Math.random() * 90]);
-      if (Math.random() < (stressOn ? 0.95 : 0.55)) push();
-    }, 650);
+    loadEvents();
+    // Actualizar cada 2 segundos para ver eventos nuevos
+    const t = setInterval(loadEvents, 2000);
     return () => clearInterval(t);
   }, []);
 
-  const startStress = useCallback(() => {
-    setStress(true);
-    setTimeout(() => setStress(false), 7000);
-  }, []);
-
-  return { series, log, stress, startStress, eps: Math.round(series[series.length - 1]) };
+  return { log, eventCount };
 }
 
 /* ---- iconos sol/luna (inline, no dependen de la librería) ---- */
@@ -301,7 +286,7 @@ export default function Panel() {
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <span className="hidden md:inline-flex items-center gap-2 text-[11.5px] font-semibold text-ok bg-okbg px-2.5 py-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-ok pulse-ok" />
-              <span className="tnum">{engine.eps.toLocaleString("es-EC")}</span> ev/s
+              <span className="tnum">{engine.eventCount}</span> eventos
             </span>
             {/* contraste del dash */}
             <button onClick={() => setDark(!dark)} title="Cambiar contraste del panel"
@@ -439,10 +424,7 @@ function Relaciones({ role }: { role: Role }) {
 
 /* ================= Visión general ================= */
 function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go: (m: Mod) => void }) {
-  const { series, log, stress, startStress, eps } = engine;
-  const max = Math.max(...series);
-  const latency = stress ? 19 + Math.round(Math.random() * 9) : 7 + Math.round(Math.random() * 4);
-  const queue = stress ? 210 + Math.round(Math.random() * 90) : 3 + Math.round(Math.random() * 9);
+  const { log, eventCount } = engine;
 
   /* Indicadores calculados de los datos reales (inician en cero con la empresa vacía) */
   const ventas = ORDERS.reduce((a, o) => a + o.total, 0);
@@ -454,7 +436,7 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
       <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Stat label="Ventas registradas" value={fmt2(ventas)} sub={ORDERS.length ? `${ORDERS.length} pedidos` : "Aún sin ventas"} />
         <Stat label="Pedidos activos" value={activos} sub={activos ? "en proceso" : "Sin pedidos en curso"} />
-        <Stat label="Eventos por segundo" value={eps.toLocaleString("es-EC")} live sub={stress ? <span className="text-warn font-semibold">Prueba de carga en curso</span> : <span className="text-stone">Simulación · bus real en Fase 2</span>} />
+        <Stat label="Eventos registrados" value={eventCount} sub={eventCount ? "acciones reales del sistema" : "Sin actividad aún"} />
         <Stat label="Facturado" value={fmt2(facturado)} sub={INVOICES.length ? `${INVOICES.length} facturas SRI` : "Sin facturas emitidas"} />
       </div>
 
@@ -463,56 +445,54 @@ function Vision({ engine, go }: { engine: ReturnType<typeof useEventEngine>; go:
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <div>
               <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2">
-                Bus de eventos
-                <span className="text-[9px] font-bold tracking-[0.16em] uppercase px-2 py-1 bg-warnbg text-warn">Simulación</span>
+                Registro de actividad
+                <span className="text-[9px] font-bold tracking-[0.16em] uppercase px-2 py-1 bg-okbg text-ok">En vivo</span>
               </h3>
               <p className="text-[12px] text-stone mt-1">
-                Maqueta del stack objetivo (Redis + BullMQ). Muestra cómo se comportará la ingesta en producción;
-                los eventos de negocio reales llegarán con la base de datos (Fase 2).
+                Solo muestra acciones reales del sistema: pedidos creados, correos enviados, cambios de estado, etc.
               </p>
             </div>
-            <button onClick={startStress} disabled={stress}
-              className={`${stress ? btnGhost + " opacity-60 cursor-wait" : btnDark}`}>
-              <I n="pulse" s={14} /> {stress ? "Sometiendo al sistema…" : "Simular pico · 2.400 ev/s"}
-            </button>
           </div>
 
-          <div className="flex items-end gap-[3px] h-32 bg-paper2/60 px-3 pt-3 pb-0 overflow-hidden">
-            {series.map((v, i) => (
-              <div key={i} className="flex-1 flex flex-col justify-end h-full">
-                <div className={`bar-in w-full ${v > 500 ? "bg-maroon" : "bg-ink/70"} hover:bg-maroon transition-colors`}
-                  style={{ height: `${Math.max((v / max) * 100, 3)}%`, animationDelay: `${i * 8}ms` }} />
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line mt-5 border border-line">
-            {[
-              ["EPS actual", `${eps.toLocaleString("es-EC")}`, stress ? "text-warn" : "text-ok"],
-              ["Latencia p95", `${latency} ms`, latency > 15 ? "text-warn" : "text-ok"],
-              ["Cola Redis", `${queue} jobs`, queue > 50 ? "text-warn" : "text-ok"],
-              ["Uptime 30 días", "99,98%", "text-ok"],
-            ].map(([k, v, c]) => (
-              <div key={k} className="bg-card p-3.5">
-                <p className="text-[10px] font-bold tracking-[0.14em] uppercase text-stone">{k}</p>
-                <p className={`font-display font-medium text-[19px] mt-1 tnum ${c}`}>{v}</p>
-              </div>
-            ))}
-          </div>
+          {log.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-[13px] text-stone">Aún no hay actividad registrada.</p>
+              <p className="text-[11.5px] text-stone mt-1">Las acciones del sistema aparecerán aquí en tiempo real.</p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {log.map((l, i) => (
+                <div key={l.t + i + l.type} className={`flex items-center gap-2.5 py-2 border-b border-line/60 ${i === 0 ? "anim-feed" : ""}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${i === 0 ? "bg-ok pulse-ok" : "bg-linedark"}`} />
+                  <code className="text-[11.5px] font-mono text-ink2 truncate flex-1">{l.type}</code>
+                  <span className="text-[9.5px] font-bold uppercase tracking-wider text-stone bg-paper2 px-1.5 py-0.5">{l.mod}</span>
+                  <span className="text-[10px] text-stone tnum shrink-0">{l.t}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card className="p-5 sm:p-6 flex flex-col">
-          <h3 className="font-bold text-[15px] tracking-tight">Cola de procesamiento</h3>
-          <p className="text-[12px] text-stone mt-0.5 mb-4">Ejemplo del tráfico que procesarán los workers por módulo.</p>
-          <div className="flex-1 space-y-1 overflow-hidden">
-            {log.map((l, i) => (
-              <div key={l.t + i + l.type} className={`flex items-center gap-2.5 py-1.5 border-b border-line/60 ${i === 0 ? "anim-feed" : ""}`}>
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${i === 0 ? "bg-maroon pulse-maroon" : "bg-linedark"}`} />
-                <code className="text-[11px] font-mono text-ink2 truncate flex-1">{l.type}</code>
-                <span className="text-[9.5px] font-bold uppercase tracking-wider text-stone bg-paper2 px-1.5 py-0.5">{l.mod}</span>
-                <span className="text-[10px] text-stone tnum shrink-0">{l.t}</span>
-              </div>
-            ))}
+          <h3 className="font-bold text-[15px] tracking-tight">Acciones rápidas</h3>
+          <p className="text-[12px] text-stone mt-0.5 mb-4">Accesos directos a los módulos más usados.</p>
+          <div className="space-y-2 flex-1">
+            <button onClick={() => go("oms")} className="w-full text-left px-3.5 py-2.5 border border-line hover:border-ink hover:bg-paper2 transition-colors flex items-center gap-2.5">
+              <I n="box" s={15} className="text-stone" />
+              <span className="text-[12.5px] font-medium">Gestionar pedidos</span>
+            </button>
+            <button onClick={() => go("pim")} className="w-full text-left px-3.5 py-2.5 border border-line hover:border-ink hover:bg-paper2 transition-colors flex items-center gap-2.5">
+              <I n="tag" s={15} className="text-stone" />
+              <span className="text-[12.5px] font-medium">Productos y catálogo</span>
+            </button>
+            <button onClick={() => go("cms")} className="w-full text-left px-3.5 py-2.5 border border-line hover:border-ink hover:bg-paper2 transition-colors flex items-center gap-2.5">
+              <I n="doc" s={15} className="text-stone" />
+              <span className="text-[12.5px] font-medium">Contenido web</span>
+            </button>
+            <button onClick={() => go("infra")} className="w-full text-left px-3.5 py-2.5 border border-line hover:border-ink hover:bg-paper2 transition-colors flex items-center gap-2.5">
+              <I n="server" s={15} className="text-stone" />
+              <span className="text-[12.5px] font-medium">Ajustes y despliegue</span>
+            </button>
           </div>
         </Card>
       </div>

@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 import { TTL_CACHE_MS, detectarDocumento } from "../../utils/sri";
 import {
-  CITIES, CUSTOMERS, ORDER_FLOW, ORDERS, PRODUCTS, SUPPLIERS,
-  fmt, fmt2, loadCategoriasProducto, loadCustomProducts, removeCustomProduct, saveCustomProduct, savePimOverride,
-  type Customer, type Order, type Product,
+  CITIES, CUSTOMERS, ORDER_FLOW, ORDERS, PRODUCTS, SUPPLIERS, VARIANTES_SEED,
+  addProductPhoto, fmt, fmt2, loadCategoriasProducto, loadCustomProducts, loadProductPhotos,
+  loadVariantPhotos, removeCustomProduct, removeProductPhoto, saveCustomProduct, savePimOverride,
+  setMainPhoto, setVariantPhoto, type Customer, type Order, type Product,
 } from "../../data";
 import { I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
@@ -450,6 +451,10 @@ export function PIM() {
   const [openNew, setOpenNew] = useState(false);
   const [np, setNp] = useState({ name: "", sku: "", category: "Sofás", price: "", material: "", dims: "", stock: "", desc: "", img: "", mto: "" });
   const cats = loadCategoriasProducto().filter((c) => c.activa).map((c) => c.nombre);
+  
+  // Estados para galería de fotos
+  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
+  const [variantProduct, setVariantProduct] = useState<Product | null>(null);
 
   const toggle = (id: string) =>
     setList((l) =>
@@ -568,10 +573,20 @@ export function PIM() {
                     </button>
                   </Td>
                   <Td>
-                    <button onClick={() => del(p.id)} title={`Eliminar ${p.name}`}
-                      className="p-2 text-stone hover:text-bad hover:bg-badbg transition-colors">
-                      <I n="close" s={15} />
-                    </button>
+                    <div className="flex gap-1">
+                      <button onClick={() => setGalleryProduct(p)} title="Galería de fotos"
+                        className="p-2 text-stone hover:text-ink hover:bg-paper2 transition-colors">
+                        <I n="image" s={15} />
+                      </button>
+                      <button onClick={() => setVariantProduct(p)} title="Fotos por variante"
+                        className="p-2 text-stone hover:text-ink hover:bg-paper2 transition-colors">
+                        <I n="spark" s={15} />
+                      </button>
+                      <button onClick={() => del(p.id)} title={`Eliminar ${p.name}`}
+                        className="p-2 text-stone hover:text-bad hover:bg-badbg transition-colors">
+                        <I n="close" s={15} />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               ))}
@@ -642,6 +657,178 @@ export function PIM() {
           </p>
         </div>
       </Modal>
+
+      {/* Modal de galería de fotos */}
+      <Modal open={!!galleryProduct} onClose={() => setGalleryProduct(null)} w="max-w-4xl">
+        {galleryProduct && <ProductGallery product={galleryProduct} onClose={() => setGalleryProduct(null)} />}
+      </Modal>
+
+      {/* Modal de fotos por variante */}
+      <Modal open={!!variantProduct} onClose={() => setVariantProduct(null)} w="max-w-4xl">
+        {variantProduct && <VariantPhotos product={variantProduct} onClose={() => setVariantProduct(null)} />}
+      </Modal>
+    </div>
+  );
+}
+
+/* ================= Galería de fotos del producto ================= */
+function ProductGallery({ product, onClose }: { product: Product; onClose: () => void }) {
+  const [photos, setPhotos] = useState(() => loadProductPhotos(product.id));
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setUploading(true);
+    for (const file of Array.from(files)) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = reader.result as string;
+        const newPhoto = addProductPhoto(product.id, url, file.name);
+        setPhotos((p) => [newPhoto, ...p]);
+        toast(`Foto "${file.name}" agregada`, "ok");
+      };
+      reader.readAsDataURL(file);
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const remove = (photoId: string) => {
+    removeProductPhoto(product.id, photoId);
+    setPhotos((p) => p.filter((ph) => ph.id !== photoId));
+    toast("Foto eliminada", "info");
+  };
+
+  const setMain = (photoId: string) => {
+    setMainPhoto(product.id, photoId);
+    setPhotos((p) => p.map((ph) => ({ ...ph, isMain: ph.id === photoId })));
+    toast("Foto principal actualizada", "ok");
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="font-bold text-[17px]">Galería de {product.name}</h3>
+          <p className="text-[12px] text-stone mt-1">Sube fotos adicionales. La primera es la principal.</p>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-paper2"><I n="close" s={18} /></button>
+      </div>
+
+      <div className="mb-4">
+        <label className={`${btnDark} cursor-pointer inline-flex`}>
+          <input type="file" accept="image/*" multiple onChange={handleUpload} disabled={uploading} className="hidden" />
+          <I n="plus" s={14} /> {uploading ? "Subiendo…" : "Agregar fotos"}
+        </label>
+      </div>
+
+      {photos.length === 0 ? (
+        <div className="border border-dashed border-linedark py-12 text-center">
+          <p className="text-[13px] text-stone">Aún no hay fotos. Sube la primera.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {photos.map((ph) => (
+            <div key={ph.id} className="relative group border border-line overflow-hidden">
+              <img src={ph.url} alt={ph.caption || product.name} className="w-full h-40 object-cover" />
+              {ph.isMain && (
+                <span className="absolute top-2 left-2 bg-maroon text-cream text-[10px] font-bold px-2 py-1">Principal</span>
+              )}
+              <div className="absolute inset-0 bg-ink/0 group-hover:bg-ink/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                {!ph.isMain && (
+                  <button onClick={() => setMain(ph.id)} className="bg-card text-ink px-3 py-1.5 text-[11px] font-semibold hover:bg-ok hover:text-paper transition-colors">
+                    Hacer principal
+                  </button>
+                )}
+                <button onClick={() => remove(ph.id)} className="bg-card text-ink px-3 py-1.5 text-[11px] font-semibold hover:bg-bad hover:text-paper transition-colors">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= Fotos por variante ================= */
+function VariantPhotos({ product, onClose }: { product: Product; onClose: () => void }) {
+  const variants = VARIANTES_SEED.filter((v) => v.productoId === product.id);
+  const [variantPhotos, setVariantPhotos] = useState(() => loadVariantPhotos(product.id));
+
+  const handleUpload = async (variantId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setVariantPhoto(product.id, variantId, url);
+      setVariantPhotos((vp) => {
+        const existing = vp.findIndex((p) => p.variantId === variantId);
+        if (existing >= 0) {
+          const updated = [...vp];
+          updated[existing].url = url;
+          return updated;
+        }
+        return [...vp, { variantId, url }];
+      });
+      toast("Foto de variante actualizada", "ok");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h3 className="font-bold text-[17px]">Fotos por variante · {product.name}</h3>
+          <p className="text-[12px] text-stone mt-1">Cada combinación de atributos puede tener su propia foto.</p>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-paper2"><I n="close" s={18} /></button>
+      </div>
+
+      {variants.length === 0 ? (
+        <div className="border border-dashed border-linedark py-12 text-center">
+          <p className="text-[13px] text-stone">Este producto no tiene variantes definidas.</p>
+          <p className="text-[11.5px] text-stone mt-1">Ve a "Variables & variantes" para crearlas.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {variants.map((v) => {
+            const photo = variantPhotos.find((vp) => vp.variantId === v.id);
+            const opciones = Object.entries(v.opciones).map(([aid, oid]) => {
+              const attr = { id: aid }; // Simplificado
+              const opt = { id: oid, valor: oid }; // Simplificado
+              return `${attr.id}: ${opt.valor}`;
+            }).join(" · ");
+            
+            return (
+              <div key={v.id} className="border border-line p-4">
+                <p className="text-[11px] font-bold tracking-[0.14em] uppercase text-stone mb-2">{opciones}</p>
+                <p className="text-[12px] font-semibold mb-3">PVP: {fmt(v.pvp)}</p>
+                {photo ? (
+                  <div className="relative group">
+                    <img src={photo.url} alt={opciones} className="w-full h-32 object-cover border border-line" />
+                    <label className="absolute inset-0 bg-ink/0 group-hover:bg-ink/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer">
+                      <input type="file" accept="image/*" onChange={(e) => handleUpload(v.id, e)} className="hidden" />
+                      <span className="bg-card text-ink px-3 py-1.5 text-[11px] font-semibold">Cambiar foto</span>
+                    </label>
+                  </div>
+                ) : (
+                  <label className="border border-dashed border-linedark h-32 flex items-center justify-center cursor-pointer hover:border-ink transition-colors">
+                    <input type="file" accept="image/*" onChange={(e) => handleUpload(v.id, e)} className="hidden" />
+                    <span className="text-[12px] text-stone flex items-center gap-1.5"><I n="image" s={14} /> Subir foto</span>
+                  </label>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

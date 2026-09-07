@@ -6,7 +6,7 @@
 
 /* Versión visible de la plataforma: permite verificar a simple vista si el
    servidor sirve la versión nueva (se muestra en login, panel y pie de la tienda). */
-export const VERSION = "v1.2.0";
+export const VERSION = "v1.3.0";
 
 export const IVA = 0.15;
 
@@ -902,4 +902,195 @@ export function loadEmails(): EmailLog[] {
 export function saveEmails(list: EmailLog[]) { localStorage.setItem("bletia-emails", JSON.stringify(list)); }
 export function addEmail(e: Omit<EmailLog, "id" | "fecha">) {
   saveEmails([{ ...e, id: `em${Date.now()}${Math.floor(Math.random() * 99)}`, fecha: new Date().toLocaleString("es-EC", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) }, ...loadEmails()]);
+}
+
+/* =========================================================
+   CONFIGURACIÓN SMTP Y PLANTILLA DE CORREO
+   Un solo lugar para configurar el envío de correos y la
+   plantilla con la marca de BLETIA.
+   ========================================================= */
+export type SmtpConfig = {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  from: string;
+  fromName: string;
+  secure: boolean;
+};
+
+export type EmailTemplate = {
+  logo: string;
+  primaryColor: string;
+  footerText: string;
+  showUnsubscribe: boolean;
+};
+
+export const SMTP_DEFAULTS: SmtpConfig = {
+  host: "",
+  port: 587,
+  user: "",
+  pass: "",
+  from: "",
+  fromName: "BLETIA",
+  secure: false,
+};
+
+export const TEMPLATE_DEFAULTS: EmailTemplate = {
+  logo: "",
+  primaryColor: "#800000",
+  footerText: "BLETIA · Mueblería de autor · Cuenca, Ecuador",
+  showUnsubscribe: true,
+};
+
+export function loadSmtp(): SmtpConfig {
+  const s = _ls("bletia-smtp");
+  if (s && typeof s === "object") return { ...SMTP_DEFAULTS, ...s } as SmtpConfig;
+  return SMTP_DEFAULTS;
+}
+export function saveSmtp(cfg: SmtpConfig) { localStorage.setItem("bletia-smtp", JSON.stringify(cfg)); }
+
+export function loadTemplate(): EmailTemplate {
+  const s = _ls("bletia-template");
+  if (s && typeof s === "object") return { ...TEMPLATE_DEFAULTS, ...s } as EmailTemplate;
+  return TEMPLATE_DEFAULTS;
+}
+export function saveTemplate(tpl: EmailTemplate) { localStorage.setItem("bletia-template", JSON.stringify(tpl)); }
+
+/* =========================================================
+   SISTEMA DE EVENTOS REALES (no simulados)
+   Registra acciones reales del sistema: pedidos, correos,
+   cambios de estado, etc. Solo muestra lo que realmente pasa.
+   ========================================================= */
+export type RealEvent = {
+  id: string;
+  type: string;
+  module: string;
+  description: string;
+  timestamp: string;
+  data?: Record<string, unknown>;
+};
+
+export function loadRealEvents(): RealEvent[] {
+  const s = _ls("bletia-real-events");
+  if (Array.isArray(s)) return s as RealEvent[];
+  return [];
+}
+export function saveRealEvents(events: RealEvent[]) {
+  // Mantener solo los últimos 100 eventos
+  const trimmed = events.slice(0, 100);
+  localStorage.setItem("bletia-real-events", JSON.stringify(trimmed));
+}
+export function addRealEvent(type: string, module: string, description: string, data?: Record<string, unknown>) {
+  const events = loadRealEvents();
+  const newEvent: RealEvent = {
+    id: `ev${Date.now()}${Math.floor(Math.random() * 99)}`,
+    type,
+    module,
+    description,
+    timestamp: new Date().toLocaleString("es-EC"),
+    data,
+  };
+  saveRealEvents([newEvent, ...events]);
+  return newEvent;
+}
+
+/* =========================================================
+   FOTOS DE PRODUCTOS (galería y variantes)
+   Cada producto tiene una foto principal, fotos adicionales
+   y cada variante puede tener su propia foto.
+   ========================================================= */
+export type ProductPhoto = {
+  id: string;
+  url: string;
+  caption?: string;
+  isMain: boolean;
+};
+
+export function loadProductPhotos(productId: string): ProductPhoto[] {
+  const s = _ls(`bletia-photos-${productId}`);
+  if (Array.isArray(s)) return s as ProductPhoto[];
+  return [];
+}
+export function saveProductPhotos(productId: string, photos: ProductPhoto[]) {
+  localStorage.setItem(`bletia-photos-${productId}`, JSON.stringify(photos));
+}
+export function addProductPhoto(productId: string, url: string, caption?: string): ProductPhoto {
+  const photos = loadProductPhotos(productId);
+  const newPhoto: ProductPhoto = {
+    id: `ph${Date.now()}`,
+    url,
+    caption,
+    isMain: photos.length === 0, // La primera es la principal
+  };
+  saveProductPhotos(productId, [newPhoto, ...photos]);
+  return newPhoto;
+}
+export function setMainPhoto(productId: string, photoId: string) {
+  const photos = loadProductPhotos(productId).map((p) => ({ ...p, isMain: p.id === photoId }));
+  saveProductPhotos(productId, photos);
+}
+export function removeProductPhoto(productId: string, photoId: string) {
+  const photos = loadProductPhotos(productId).filter((p) => p.id !== photoId);
+  saveProductPhotos(productId, photos);
+}
+
+/* Fotos por variante (cada combinación de atributos puede tener su foto) */
+export type VariantPhoto = {
+  variantId: string;
+  url: string;
+};
+
+export function loadVariantPhotos(productId: string): VariantPhoto[] {
+  const s = _ls(`bletia-variant-photos-${productId}`);
+  if (Array.isArray(s)) return s as VariantPhoto[];
+  return [];
+}
+export function saveVariantPhotos(productId: string, photos: VariantPhoto[]) {
+  localStorage.setItem(`bletia-variant-photos-${productId}`, JSON.stringify(photos));
+}
+export function setVariantPhoto(productId: string, variantId: string, url: string) {
+  const photos = loadVariantPhotos(productId);
+  const existing = photos.findIndex((p) => p.variantId === variantId);
+  if (existing >= 0) {
+    photos[existing].url = url;
+  } else {
+    photos.push({ variantId, url });
+  }
+  saveVariantPhotos(productId, photos);
+}
+export function getVariantPhoto(productId: string, variantId: string): string | null {
+  const photos = loadVariantPhotos(productId);
+  return photos.find((p) => p.variantId === variantId)?.url || null;
+}
+
+/* =========================================================
+   FOTOTECA DAM MEJORADA (subir fotos reales)
+   ========================================================= */
+export function uploadAsset(file: File): Promise<Asset> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const newAsset: Asset = {
+        id: `a${Date.now()}`,
+        name: file.name,
+        img: reader.result as string,
+        kind: "Fotografía",
+        size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+        tags: [],
+        status: "En revisión",
+        uses: 0,
+        date: new Date().toLocaleDateString("es-EC"),
+      };
+      const assets = seed("bletia-assets", ASSETS);
+      saveAssets([newAsset, ...assets]);
+      addRealEvent("asset.uploaded", "DAM", `Foto "${file.name}" subida a la fototeca`);
+      resolve(newAsset);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+export function saveAssets(assets: Asset[]) {
+  localStorage.setItem("bletia-assets", JSON.stringify(assets));
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ASSETS, IMG, PHASES, SUPPLIERS, WORK_ORDERS, type Asset, type WorkOrder } from "../../data";
+import { ASSETS, IMG, PHASES, SUPPLIERS, WORK_ORDERS, uploadAsset, type Asset, type WorkOrder } from "../../data";
 import { CopyBtn, I, Modal, toast } from "../ui";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { StatusChip } from "./Panel";
@@ -169,18 +169,22 @@ export function DAM() {
 
   const shown = filter === "Todo" ? assets : assets.filter((a) => a.kind === filter || a.status === filter);
 
-  const simulateUpload = () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
     setUploading(true);
-    setTimeout(() => {
-      setAssets((a) => [
-        {
-          id: `a${Date.now()}`, name: `nueva-campana_${a.length + 1}.jpg`, img: IMG.detalle,
-          kind: "Campaña", size: "3,3 MB", tags: ["nuevo", "web"], status: "En revisión", uses: 0, date: "hoy",
-        },
-        ...a,
-      ]);
-      setUploading(false);
-    }, 1400);
+    for (const file of Array.from(files)) {
+      try {
+        const newAsset = await uploadAsset(file);
+        setAssets((a) => [newAsset, ...a]);
+        toast(`Foto "${file.name}" subida a la fototeca`, "ok");
+      } catch (err) {
+        toast(`Error al subir "${file.name}"`, "bad");
+      }
+    }
+    setUploading(false);
+    e.target.value = ""; // Reset input
   };
 
   const approve = (id: string) => {
@@ -194,9 +198,10 @@ export function DAM() {
         title="Activos digitales"
         sub="Fotos, renders y fichas en MinIO (S3 open source). Aprobación obligatoria antes de publicar."
         right={
-          <button onClick={simulateUpload} disabled={uploading} className={btnDark}>
-            <I n="plus" s={14} /> {uploading ? "Procesando…" : "Subir archivo"}
-          </button>
+          <label className={`${btnDark} cursor-pointer`}>
+            <input type="file" accept="image/*" multiple onChange={handleFileUpload} disabled={uploading} className="hidden" />
+            <I n="plus" s={14} /> {uploading ? "Subiendo…" : "Subir foto"}
+          </label>
         }
       />
 

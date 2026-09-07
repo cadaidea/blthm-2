@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { CASHFLOW, INVOICES, LINKS_SEED, fmt2, loadSite, randomCode, saveSite, type PayLink } from "../../data";
 import { CodeBlock, CopyBtn, I, toast } from "../ui";
 import { Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
+import { loadSmtp, saveSmtp, loadTemplate, saveTemplate, type SmtpConfig, type EmailTemplate } from "../../data";
 import { StatusChip } from "./Panel";
 
 /* ================= Contabilidad ================= */
@@ -512,13 +513,113 @@ function Respaldo() {
 }
 
 export function Infra() {
+  const [smtp, setSmtp] = useState<SmtpConfig>(loadSmtp);
+  const [template, setTemplate] = useState<EmailTemplate>(loadTemplate);
+  const [smtpSaved, setSmtpSaved] = useState(false);
+  const [tplSaved, setTplSaved] = useState(false);
+
+  const guardarSmtp = () => {
+    saveSmtp(smtp);
+    setSmtpSaved(true);
+    toast("Configuración SMTP guardada", "ok");
+    setTimeout(() => setSmtpSaved(false), 1800);
+  };
+
+  const guardarTemplate = () => {
+    saveTemplate(template);
+    setTplSaved(true);
+    toast("Plantilla de correo guardada", "ok");
+    setTimeout(() => setTplSaved(false), 1800);
+  };
+
   return (
     <div className="fade-in space-y-6">
       <SectionTitle
-        title="Infraestructura & despliegue"
-        sub="Stack 100% open source sobre tu VPS de OVH Cloud. Staging primero, producción después, datos siempre intactos."
+        title="Ajustes & despliegue"
+        sub="Configuración del sistema, correos y despliegue en tu VPS de OVH Cloud."
         right={<Chip tone="ok" dot>VPS OVH · CloudPanel · v1.0.0</Chip>}
       />
+
+      {/* Configuración SMTP y plantilla de correo */}
+      <Card className="p-5 sm:p-6">
+        <h3 className="font-bold text-[15px] tracking-tight flex items-center gap-2 mb-4">
+          <I n="card" s={16} className="text-stone" /> Correo electrónico
+        </h3>
+        <p className="text-[12px] text-stone mb-5">Configura el servidor SMTP y la plantilla de correo con tu marca. Todo en un solo lugar.</p>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* SMTP */}
+          <div>
+            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-stone mb-3">Servidor SMTP</p>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Host</span>
+                <input value={smtp.host} onChange={(e) => setSmtp({ ...smtp, host: e.target.value })} className={inp} placeholder="smtp.zoho.com" />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Puerto</span>
+                  <input type="number" value={smtp.port} onChange={(e) => setSmtp({ ...smtp, port: parseInt(e.target.value) || 587 })} className={inp} />
+                </label>
+                <label className="flex items-end gap-2 pb-2">
+                  <input type="checkbox" checked={smtp.secure} onChange={(e) => setSmtp({ ...smtp, secure: e.target.checked })} className="w-4 h-4" />
+                  <span className="text-[12px]">SSL/TLS</span>
+                </label>
+              </div>
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Usuario</span>
+                <input value={smtp.user} onChange={(e) => setSmtp({ ...smtp, user: e.target.value })} className={inp} placeholder="tu@correo.com" />
+              </label>
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Contraseña</span>
+                <input type="password" value={smtp.pass} onChange={(e) => setSmtp({ ...smtp, pass: e.target.value })} className={inp} />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">De (email)</span>
+                  <input value={smtp.from} onChange={(e) => setSmtp({ ...smtp, from: e.target.value })} className={inp} placeholder="noreply@bletia.ec" />
+                </label>
+                <label className="block">
+                  <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">De (nombre)</span>
+                  <input value={smtp.fromName} onChange={(e) => setSmtp({ ...smtp, fromName: e.target.value })} className={inp} placeholder="BLETIA" />
+                </label>
+              </div>
+              <button onClick={guardarSmtp} className={`${btnDark} w-full mt-2`}>
+                <I n={smtpSaved ? "check" : "doc"} s={14} /> {smtpSaved ? "Guardado" : "Guardar SMTP"}
+              </button>
+            </div>
+          </div>
+
+          {/* Plantilla */}
+          <div>
+            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-stone mb-3">Plantilla de correo</p>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Logo (URL)</span>
+                <input value={template.logo} onChange={(e) => setTemplate({ ...template, logo: e.target.value })} className={inp} placeholder="https://bletia.ec/logo.png" />
+              </label>
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Color principal</span>
+                <div className="flex gap-2">
+                  <input type="color" value={template.primaryColor} onChange={(e) => setTemplate({ ...template, primaryColor: e.target.value })} className="w-12 h-10 border border-line cursor-pointer" />
+                  <input value={template.primaryColor} onChange={(e) => setTemplate({ ...template, primaryColor: e.target.value })} className={`${inp} flex-1 font-mono`} />
+                </div>
+              </label>
+              <label className="block">
+                <span className="block text-[10.5px] font-bold tracking-[0.14em] uppercase text-stone mb-1.5">Texto del pie</span>
+                <input value={template.footerText} onChange={(e) => setTemplate({ ...template, footerText: e.target.value })} className={inp} />
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={template.showUnsubscribe} onChange={(e) => setTemplate({ ...template, showUnsubscribe: e.target.checked })} className="w-4 h-4" />
+                <span className="text-[12px]">Mostrar enlace para cancelar suscripción</span>
+              </label>
+              <button onClick={guardarTemplate} className={`${btnDark} w-full mt-2`}>
+                <I n={tplSaved ? "check" : "doc"} s={14} /> {tplSaved ? "Guardado" : "Guardar plantilla"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Lanzamiento a producción con CloudPanel */}
       <Card className="p-5 sm:p-6 border-maroon/40">
