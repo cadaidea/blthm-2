@@ -45,8 +45,16 @@ cd ..
 npm install
 npm run build
 
+# Copiar a CloudPanel
+echo -e "${YELLOW}[6/6] Copiando a CloudPanel...${NC}"
+HTDOCS_DIR="/home/bletiaec/htdocs/www.bletia.ec"
+SITE_USER="bletiaec"
+cp -r $APP_DIR/dist/* $HTDOCS_DIR/
+chown -R $SITE_USER:$SITE_USER $HTDOCS_DIR/
+chmod -R 755 $HTDOCS_DIR/
+
 # Reiniciar aplicación
-echo -e "${YELLOW}[5/5] Reiniciando aplicación...${NC}"
+echo -e "${YELLOW}[7/7] Reiniciando aplicación...${NC}"
 pm2 restart bletia-backend
 
 echo ""
@@ -55,4 +63,5 @@ echo -e "${GREEN}║              ACTUALIZACIÓN COMPLETADA                     
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${GREEN}✓ Aplicación actualizada correctamente${NC}"
+echo -e "${GREEN}✓ Frontend copiado a CloudPanel${NC}"
 echo -e "${YELLOW}Backup de base de datos: $BACKUP_FILE${NC}"

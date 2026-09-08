@@ -13,6 +13,7 @@ NC='\033[0m'
 
 DOMAIN="bletia.ec"
 APP_DIR="/opt/bletia"
+HTDOCS_DIR="/home/bletiaec/htdocs/www.bletia.ec"
 
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║              BLETIA - Configuración Nginx                 ║${NC}"
