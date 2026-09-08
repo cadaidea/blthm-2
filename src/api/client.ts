@@ -378,6 +378,100 @@ export const orders = {
 };
 
 // ============================================
+// BODEGAS E INVENTARIOS
+// ============================================
+
+export interface Warehouse {
+  id: string;
+  code: string;
+  name: string;
+  address?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    inventoryMoves: number;
+  };
+}
+
+export interface InventoryMove {
+  id: string;
+  productId: string;
+  warehouseId: string;
+  type: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'TRANSFERENCIA';
+  quantity: number;
+  reference?: string;
+  notes?: string;
+  createdAt: string;
+  product?: Product;
+  warehouse?: Warehouse;
+}
+
+export const warehouses = {
+  async getAll(): Promise<Warehouse[]> {
+    const response = await fetch(`${API_URL}/warehouses`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<Warehouse[]>(response);
+  },
+
+  async create(data: { code: string; name: string; address?: string }): Promise<Warehouse> {
+    const response = await fetch(`${API_URL}/warehouses`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Warehouse>(response);
+  },
+
+  async update(id: string, data: Partial<Warehouse>): Promise<Warehouse> {
+    const response = await fetch(`${API_URL}/warehouses/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Warehouse>(response);
+  },
+};
+
+export const inventory = {
+  async getMoves(filters?: { productId?: string; warehouseId?: string; type?: string }): Promise<InventoryMove[]> {
+    const params = new URLSearchParams();
+    if (filters?.productId) params.append('productId', filters.productId);
+    if (filters?.warehouseId) params.append('warehouseId', filters.warehouseId);
+    if (filters?.type) params.append('type', filters.type);
+
+    const response = await fetch(`${API_URL}/inventory-moves?${params}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<InventoryMove[]>(response);
+  },
+
+  async createMove(data: {
+    productId: string;
+    warehouseId: string;
+    type: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'TRANSFERENCIA';
+    quantity: number;
+    reference?: string;
+    notes?: string;
+  }): Promise<InventoryMove> {
+    const response = await fetch(`${API_URL}/inventory-moves`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<InventoryMove>(response);
+  },
+
+  async getProductStock(productId: string): Promise<{ id: string; sku: string; name: string; stock: number; minStock: number }> {
+    const response = await fetch(`${API_URL}/inventory/${productId}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(response);
+  },
+};
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { auth, users, customers, products, orders, type User, type Customer, type Product, type SalesOrder } from '../api/client';
+import { auth, users, customers, products, orders, warehouses, inventory, type User, type Customer, type Product, type SalesOrder, type Warehouse, type InventoryMove } from '../api/client';
 
 // ============================================
 // STORE DE AUTENTICACIÓN
@@ -238,5 +238,85 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
   deleteOrder: async (id) => {
     await orders.delete(id);
     set({ orders: get().orders.filter((o) => o.id !== id) });
+  },
+}));
+
+// ============================================
+// STORE DE BODEGAS
+// ============================================
+
+interface WarehousesState {
+  warehouses: Warehouse[];
+  isLoading: boolean;
+  fetchWarehouses: () => Promise<void>;
+  addWarehouse: (data: { code: string; name: string; address?: string }) => Promise<Warehouse>;
+  updateWarehouse: (id: string, data: Partial<Warehouse>) => Promise<Warehouse>;
+}
+
+export const useWarehousesStore = create<WarehousesState>((set, get) => ({
+  warehouses: [],
+  isLoading: false,
+
+  fetchWarehouses: async () => {
+    set({ isLoading: true });
+    try {
+      const warehousesList = await warehouses.getAll();
+      set({ warehouses: warehousesList, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  addWarehouse: async (data) => {
+    const warehouse = await warehouses.create(data);
+    set({ warehouses: [...get().warehouses, warehouse] });
+    return warehouse;
+  },
+
+  updateWarehouse: async (id, data) => {
+    const warehouse = await warehouses.update(id, data);
+    set({ warehouses: get().warehouses.map((w) => (w.id === id ? warehouse : w)) });
+    return warehouse;
+  },
+}));
+
+// ============================================
+// STORE DE MOVIMIENTOS DE INVENTARIO
+// ============================================
+
+interface InventoryState {
+  moves: InventoryMove[];
+  isLoading: boolean;
+  fetchMoves: (filters?: { productId?: string; warehouseId?: string; type?: string }) => Promise<void>;
+  addMove: (data: {
+    productId: string;
+    warehouseId: string;
+    type: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'TRANSFERENCIA';
+    quantity: number;
+    reference?: string;
+    notes?: string;
+  }) => Promise<InventoryMove>;
+}
+
+export const useInventoryStore = create<InventoryState>((set, get) => ({
+  moves: [],
+  isLoading: false,
+
+  fetchMoves: async (filters) => {
+    set({ isLoading: true });
+    try {
+      const movesList = await inventory.getMoves(filters);
+      set({ moves: movesList, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  addMove: async (data) => {
+    const move = await inventory.createMove(data);
+    set({ moves: [move, ...get().moves] });
+    return move;
   },
 }));

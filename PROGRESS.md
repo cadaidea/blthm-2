@@ -238,30 +238,75 @@ El script `backend/src/seed.ts` crea:
 
 ---
 
-## 🎉 Última Sesión: Migración del OMS a API
+## 🎉 Última Sesión: Migración del Stock a API
 
 ### ✅ Completado
-- ✅ Creado `OMSReal.tsx` conectado a PostgreSQL
-- ✅ CRUD completo de órdenes de venta
-- ✅ Endpoints backend: GET/POST /api/orders, PUT /api/orders/:id/status, DELETE /api/orders/:id
-- ✅ Cálculo automático de subtotal, IVA 15% y total
-- ✅ Estados de orden: PENDIENTE, CONFIRMADO, EN_PRODUCCION, LISTO, ENVIADO, ENTREGADO, CANCELADO
-- ✅ Filtros por estado
-- ✅ Estadísticas: total, pendientes, en producción, entregados
-- ✅ Modal de nueva orden con selección de cliente y productos
-- ✅ Modal de detalle con cambio de estado
+- ✅ Creado `StockReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de bodegas
+- ✅ CRUD completo de movimientos de inventario
+- ✅ Endpoints backend: 
+  - GET/POST/PUT /api/warehouses
+  - GET/POST /api/inventory-moves
+  - GET /api/inventory/:productId
+- ✅ Actualización automática de stock al registrar movimientos
+- ✅ 4 tipos de movimiento: ENTRADA, SALIDA, AJUSTE, TRANSFERENCIA
+- ✅ Validación de stock suficiente para salidas
+- ✅ Transacciones atómicas (movimiento + actualización de stock)
+- ✅ Filtros por producto, bodega y tipo
+- ✅ Pestañas: Bodegas y Movimientos
+- ✅ Modales para crear bodega y movimiento
 - ✅ Integración con botón de alternancia localStorage/API
-- ✅ Indicador visual "API" en sidebar para OMS
-- ✅ Store Zustand para órdenes (useOrdersStore)
-- ✅ Build exitoso (54 módulos, 531 KB)
+- ✅ Indicador visual "API" en sidebar para Stock
+- ✅ Store Zustand para bodegas (useWarehousesStore)
+- ✅ Store Zustand para movimientos (useInventoryStore)
+- ✅ Build exitoso (55 módulos, 541 KB)
 
 ### Archivos Creados/Modificados
-- `src/components/panel/OMSReal.tsx` (nuevo) - Módulo OMS conectado a API
-- `src/components/panel/Panel.tsx` (modificado) - Integración de OMSReal y indicador API
-- `src/api/client.ts` (actualizado) - Agregados tipos SalesOrder, SalesOrderItem y funciones orders.*
-- `src/store/index.ts` (actualizado) - Agregado useOrdersStore
-- `backend/src/index.ts` (actualizado) - Agregados endpoints de órdenes
+- `src/components/panel/StockReal.tsx` (nuevo) - Módulo Stock conectado a API
+- `src/components/panel/Panel.tsx` (modificado) - Integración de StockReal y indicador API
+- `src/api/client.ts` (actualizado) - Agregados tipos Warehouse, InventoryMove y funciones warehouses.*, inventory.*
+- `src/store/index.ts` (actualizado) - Agregados useWarehousesStore y useInventoryStore
+- `backend/src/index.ts` (actualizado) - Agregados endpoints de bodegas e inventarios
 - `PROGRESS.md` (actualizado) - Documentación de progreso
+
+### Cómo Probar
+1. Levantar backend: `cd backend && npm run dev`
+2. Levantar frontend: `npm run dev`
+3. Acceder a: `http://localhost:5173/#/dash`
+4. Activar modo API: clic en el botón de servidor (arriba a la derecha)
+5. Ir a "Stock & bodegas" - verás el indicador "API" en el sidebar
+6. Probar:
+   - ✅ Crear nueva bodega
+   - ✅ Registrar movimiento de entrada
+   - ✅ Registrar movimiento de salida
+   - ✅ Verificar que el stock se actualice automáticamente
+   - ✅ Filtrar movimientos por producto, bodega o tipo
+   - ✅ Verificar que los cambios se reflejen en PostgreSQL
+
+### Verificar en PostgreSQL
+```bash
+docker-compose exec postgres psql -U bletia -d bletia_db
+SELECT * FROM "Warehouse";
+SELECT * FROM "InventoryMove";
+SELECT * FROM "Product"; -- Ver stock actualizado
+```
+
+## 📝 Historial de Sesiones Anteriores
+
+### Migración del OMS a API
+- ✅ Creado `OMSReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de órdenes de venta
+- ✅ Build exitoso (54 módulos, 531 KB)
+
+### Migración del PIM a API
+- ✅ Creado `PIMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de productos con galería y variantes
+- ✅ Build exitoso (53 módulos, 517 KB)
+
+### Migración del CRM a API
+- ✅ Creado `CRMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de clientes
+- ✅ Build exitoso (52 módulos, 504 KB)
 
 ### Cómo Probar
 1. Levantar backend: `cd backend && npm run dev`
@@ -286,16 +331,16 @@ SELECT * FROM "SalesOrderItem";
 
 ## 📊 Estado Actual de Migración
 
-### Módulos Migrados a API (3/17)
+### Módulos Migrados a API (4/17)
 1. ✅ **CRM** (clientes) - completado
 2. ✅ **PIM** (productos) - completado
 3. ✅ **OMS** (órdenes de venta) - completado
+4. ✅ **Stock** (inventarios y bodegas) - completado
 
-### Módulos Pendientes de Migración (14/17)
+### Módulos Pendientes de Migración (13/17)
 - 🚧 Logística
 - 🚧 Taller
 - 🚧 BOM
-- 🚧 Stock
 - 🚧 Cobros
 - 🚧 Compras
 - 🚧 Contabilidad
@@ -309,7 +354,7 @@ SELECT * FROM "SalesOrderItem";
 
 ### Progreso Total
 - **Fase 1**: ✅ 100% (Frontend completo)
-- **Fase 2**: 🚧 60% (Backend + 3 módulos migrados)
+- **Fase 2**: 🚧 65% (Backend + 4 módulos migrados)
 - **Fase 3**: ⏳ 0% (Integraciones reales)
 
 ---

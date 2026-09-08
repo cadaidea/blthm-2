@@ -866,6 +866,237 @@ fastify.delete('/api/orders/:id', { preHandler: [authenticate] }, async (request
 });
 
 // ============================================
+// RUTAS: INVENTARIOS Y BODEGAS
+// ============================================
+
+const createWarehouseSchema = z.object({
+  code: z.string().min(1),
+  name: z.string().min(2),
+  address: z.string().optional(),
+});
+
+const createInventoryMoveSchema = z.object({
+  productId: z.string(),
+  warehouseId: z.string(),
+  type: z.enum(['ENTRADA', 'SALIDA', 'AJUSTE', 'TRANSFERENCIA']),
+  quantity: z.number().int(),
+  reference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Listar bodegas
+fastify.get('/api/warehouses', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const warehouses = await prisma.warehouse.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { inventoryMoves: true },
+        },
+      },
+    });
+    return warehouses;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Crear bodega
+fastify.post('/api/warehouses', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = createWarehouseSchema.parse(request.body);
+    const warehouse = await prisma.warehouse.create({ data });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user?.id,
+        action: 'CREATE',
+        entity: 'Warehouse',
+        entityId: warehouse.id,
+        newValue: data,
+      },
+    });
+
+    return reply.status(201).send(warehouse);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar bodega
+fastify.put('/api/warehouses/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const data = createWarehouseSchema.partial().parse(request.body);
+    
+    const existing = await prisma.warehouse.findUnique({ where: { id } });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Bodega no encontrada' });
+    }
+
+    const warehouse = await prisma.warehouse.update({
+      where: { id },
+      data,
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user?.id,
+        action: 'UPDATE',
+        entity: 'Warehouse',
+        entityId: id,
+        oldValue: existing,
+        newValue: data,
+      },
+    });
+
+    return warehouse;
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Listar movimientos de inventario
+fastify.get('/api/inventory-moves', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { productId, warehouseId, type } = request.query as {
+      productId?: string;
+      warehouseId?: string;
+      type?: string;
+    };
+
+    const where: any = {};
+    if (productId) where.productId = productId;
+    if (warehouseId) where.warehouseId = warehouseId;
+    if (type) where.type = type;
+
+    const moves = await prisma.inventoryMove.findMany({
+      where,
+      include: {
+        product: true,
+        warehouse: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+    return moves;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Crear movimiento de inventario (actualiza stock automáticamente)
+fastify.post('/api/inventory-moves', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = createInventoryMoveSchema.parse(request.body);
+
+    // Verificar que el producto existe
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId, deletedAt: null },
+    });
+    if (!product) {
+      return reply.status(404).send({ error: 'Producto no encontrado' });
+    }
+
+    // Verificar que la bodega existe
+    const warehouse = await prisma.warehouse.findUnique({
+      where: { id: data.warehouseId },
+    });
+    if (!warehouse) {
+      return reply.status(404).send({ error: 'Bodega no encontrada' });
+    }
+
+    // Calcular nuevo stock
+    let newStock = product.stock;
+    if (data.type === 'ENTRADA' || data.type === 'AJUSTE') {
+      newStock += data.quantity;
+    } else if (data.type === 'SALIDA') {
+      newStock -= data.quantity;
+      if (newStock < 0) {
+        return reply.status(400).send({ error: 'Stock insuficiente' });
+      }
+    }
+
+    // Crear movimiento y actualizar stock en una transacción
+    const [move] = await prisma.$transaction([
+      prisma.inventoryMove.create({
+        data: {
+          productId: data.productId,
+          warehouseId: data.warehouseId,
+          type: data.type,
+          quantity: data.quantity,
+          reference: data.reference,
+          notes: data.notes,
+        },
+        include: {
+          product: true,
+          warehouse: true,
+        },
+      }),
+      prisma.product.update({
+        where: { id: data.productId },
+        data: { stock: newStock },
+      }),
+    ]);
+
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user?.id,
+        action: 'CREATE',
+        entity: 'InventoryMove',
+        entityId: move.id,
+        newValue: data,
+      },
+    });
+
+    return reply.status(201).send(move);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Consultar stock de un producto por bodega
+fastify.get('/api/inventory/:productId', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { productId } = request.params as { productId: string };
+    
+    const product = await prisma.product.findUnique({
+      where: { id: productId, deletedAt: null },
+      select: {
+        id: true,
+        sku: true,
+        name: true,
+        stock: true,
+        minStock: true,
+      },
+    });
+
+    if (!product) {
+      return reply.status(404).send({ error: 'Producto no encontrado' });
+    }
+
+    return product;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 

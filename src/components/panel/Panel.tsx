@@ -6,6 +6,7 @@ import { CRM, PIM } from "./Modules";
 import { CRMReal } from "./CRMReal";
 import { PIMReal } from "./PIMReal";
 import { OMSReal } from "./OMSReal";
+import { StockReal } from "./StockReal";
 import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
@@ -30,7 +31,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName; api
     { id: "logistica", label: "Logística & guías SRI", icon: "truck" },
     { id: "taller", label: "Taller & fabricación", icon: "hammer" },
     { id: "bom", label: "BOM & materiales", icon: "tag" },
-    { id: "stock", label: "Stock & bodegas", icon: "box" },
+    { id: "stock", label: "Stock & bodegas", icon: "box", api: true },
   ]},
   { group: "Relaciones", items: [
     { id: "relaciones", label: "Clientes & proveedores", icon: "users" },
@@ -393,7 +394,7 @@ export default function Panel() {
           {mod === "pim" && (useAPI ? <PIMReal /> : <PIM />)}
           {mod === "variantes" && <Variantes />}
           {mod === "dam" && <DAM />}
-          {mod === "stock" && <Stock />}
+          {mod === "stock" && (useAPI ? <StockReal /> : <Stock />)}
           {mod === "conta" && <Contabilidad />}
           {mod === "compras" && <Compras />}
           {mod === "rrhh" && <RRHH />}
