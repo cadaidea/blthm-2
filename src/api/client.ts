@@ -46,6 +46,9 @@ export interface Product {
   stock: number;
   minStock: number;
   active: boolean;
+  material?: string;
+  dims?: string;
+  img?: string;
   images: ProductImage[];
   variants: ProductVariant[];
   createdAt: string;

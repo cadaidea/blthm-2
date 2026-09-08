@@ -4,6 +4,7 @@ import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
 import { CRMReal } from "./CRMReal";
+import { PIMReal } from "./PIMReal";
 import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
@@ -21,7 +22,7 @@ export type Mod =
   | "conta" | "rrhh" | "seguridad" | "infra" | "sitio" | "cms" | "marketing" | "home";
 
 /* Estructura de TALLER UNO (rama ac8f5) — 15 módulos en 6 grupos */
-const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] }[] = [
+const NAV: { group: string; items: { id: Mod; label: string; icon: IconName; api?: boolean }[] }[] = [
   { group: "Operación", items: [
     { id: "vision", label: "Panel de control", icon: "grid" },
     { id: "oms", label: "Pedidos · OMS", icon: "box" },
@@ -36,7 +37,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName }[] 
     { id: "compras", label: "Compras · OC proveedores", icon: "truck" },
   ]},
   { group: "Producto & activos", items: [
-    { id: "pim", label: "Productos · PIM", icon: "tag" },
+    { id: "pim", label: "Productos · PIM", icon: "tag", api: true },
     { id: "variantes", label: "Variables & variantes", icon: "spark" },
     { id: "dam", label: "Fototeca · DAM", icon: "image" },
   ]},
@@ -261,6 +262,7 @@ export default function Panel() {
                   {mod === it.id && <span className="absolute left-0 top-1.5 bottom-1.5 w-[2.5px] bg-maroon" />}
                   <I n={it.icon} s={16} className={mod === it.id ? "text-maroon" : ""} />
                   <span className="truncate">{it.label}</span>
+                  {it.api && useAPI && <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 bg-okbg text-ok">API</span>}
                   {it.id === "oms" && <span className="ml-auto text-[10px] font-bold bg-maroon text-cream px-1.5 py-0.5 tnum">3</span>}
                 </button>
               ))}
@@ -387,7 +389,7 @@ export default function Panel() {
           {mod === "bom" && <BOM />}
           {mod === "relaciones" && <Relaciones role={role} useAPI={useAPI} />}
           {mod === "cobros" && <Cobros />}
-          {mod === "pim" && <PIM />}
+          {mod === "pim" && (useAPI ? <PIMReal /> : <PIM />)}
           {mod === "variantes" && <Variantes />}
           {mod === "dam" && <DAM />}
           {mod === "stock" && <Stock />}

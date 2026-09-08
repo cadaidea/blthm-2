@@ -238,6 +238,50 @@ El script `backend/src/seed.ts` crea:
 
 ---
 
+## 🎉 Última Sesión: Migración del PIM a API
+
+### ✅ Completado
+- ✅ Creado `PIMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de productos (crear, leer, actualizar, eliminar)
+- ✅ Galería de fotos con upload por URL
+- ✅ Fotos por variante (tapiz, acabado, etc.)
+- ✅ Estados de publicación (publicado/borrador)
+- ✅ Categorías dinámicas desde la base de datos
+- ✅ Stock y alertas de reposición
+- ✅ Integración con botón de alternancia localStorage/API
+- ✅ Indicador visual "API" en sidebar para PIM
+- ✅ Build exitoso (53 módulos, 517 KB)
+
+### Archivos Creados/Modificados
+- `src/components/panel/PIMReal.tsx` (nuevo) - Módulo PIM conectado a API
+- `src/components/panel/Panel.tsx` (modificado) - Integración de PIMReal y indicador API
+- `src/api/client.ts` (actualizado) - Agregadas propiedades: material, dims, img
+- `PROGRESS.md` (actualizado) - Documentación de progreso
+
+### Cómo Probar
+1. Levantar backend: `cd backend && npm run dev`
+2. Levantar frontend: `npm run dev`
+3. Acceder a: `http://localhost:5173/#/dash`
+4. Activar modo API: clic en el botón de servidor (arriba a la derecha)
+5. Ir a "Productos · PIM" - verás el indicador "API" en el sidebar
+6. Probar:
+   - ✅ Crear nuevo producto
+   - ✅ Editar producto existente
+   - ✅ Eliminar producto
+   - ✅ Agregar fotos a la galería
+   - ✅ Publicar/ocultar producto
+   - ✅ Verificar que los cambios se reflejen en PostgreSQL
+
+### Verificar en PostgreSQL
+```bash
+docker-compose exec postgres psql -U bletia -d bletia_db
+SELECT * FROM "Product";
+SELECT * FROM "ProductImage";
+SELECT * FROM "ProductVariant";
+```
+
+---
+
 ## 🆘 Soporte
 
 - **Documentación**: README.md
