@@ -3,6 +3,8 @@ import Storefront from "./components/Storefront";
 import Panel from "./components/panel/Panel";
 import { ArticuloPage, BlogPage, CategoriaPage, PaginaPage, ProductoPage } from "./components/StorePages";
 import { CuentaPage, PedidoTrackingPage } from "./components/CustomerAccount";
+import { LoginAPI } from "./components/LoginAPI";
+import { CRMAPI } from "./components/panel/CRMAPI";
 import { BLOG_CATEGORIAS, slugDe } from "./data";
 
 /* categorías del blog en formato slug — para la ruta /{categoria}/{articulo} */
@@ -51,6 +53,8 @@ export default function App() {
   if (head === "pagina" && a) return <PaginaPage key={hash} slug={a} />;
   if (head === "cuenta") return <CuentaPage key={hash} />;
   if (head === "pedido" && a) return <PedidoTrackingPage key={hash} codigo={a} />;
+  if (head === "login-api") return <LoginAPI key={hash} />;
+  if (head === "crm-api") return <CRMAPI key={hash} />;
   if (head === "blog") {
     if (a === "categoria" && b) return <BlogPage key={hash} kind="categoria" value={b} />;
     if (a === "tag" && b) return <BlogPage key={hash} kind="etiqueta" value={b} />;

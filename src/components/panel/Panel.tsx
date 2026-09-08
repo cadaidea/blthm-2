@@ -3,6 +3,7 @@ import { ORDERS, INVOICES, VERSION, fmt2, loadNotifs, saveNotifs, loadRealEvents
 import { I, ToastHost, type IconName } from "../ui";
 import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
+import { CRMReal } from "./CRMReal";
 import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
@@ -176,6 +177,7 @@ export default function Panel() {
   const [workerLogin, setWorkerLogin] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("bletia-theme") === "dark");
   const [splash, setSplash] = useState(true);
+  const [useAPI, setUseAPI] = useState(() => localStorage.getItem("bletia-use-api") === "true");
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState(loadNotifs);
   const engine = useEventEngine();
@@ -192,6 +194,10 @@ export default function Panel() {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("bletia-theme", dark ? "dark" : "light");
   }, [dark]);
+
+  useEffect(() => {
+    localStorage.setItem("bletia-use-api", useAPI ? "true" : "false");
+  }, [useAPI]);
 
   /* splash de arranque (firma de TALLER UNO) */
   useEffect(() => {
@@ -293,6 +299,12 @@ export default function Panel() {
               className="p-2.5 border border-line bg-card hover:border-ink transition-colors" aria-label="Cambiar contraste">
               {dark ? <SunIcon /> : <MoonIcon />}
             </button>
+            {/* alternar entre localStorage y API */}
+            <button onClick={() => setUseAPI(!useAPI)} title={useAPI ? "Usando API (PostgreSQL)" : "Usando localStorage"}
+              className={`p-2.5 border transition-colors ${useAPI ? "border-ok bg-okbg text-ok" : "border-line bg-card hover:border-ink"}`}
+              aria-label="Alternar fuente de datos">
+              <I n={useAPI ? "server" : "doc"} s={16} />
+            </button>
             <button onClick={() => setEnv(env === "staging" ? "producción" : "staging")}
               className={`hidden sm:block text-[11px] font-bold tracking-wide uppercase px-3 py-1.5 border transition-colors ${env === "staging" ? "border-warn/40 text-warn bg-warnbg hover:border-warn" : "border-ok/40 text-ok bg-okbg hover:border-ok"}`}>
               {env}
@@ -373,7 +385,7 @@ export default function Panel() {
           {mod === "logistica" && <Logistica />}
           {mod === "taller" && <Taller />}
           {mod === "bom" && <BOM />}
-          {mod === "relaciones" && <Relaciones role={role} />}
+          {mod === "relaciones" && <Relaciones role={role} useAPI={useAPI} />}
           {mod === "cobros" && <Cobros />}
           {mod === "pim" && <PIM />}
           {mod === "variantes" && <Variantes />}
@@ -395,7 +407,7 @@ export default function Panel() {
 }
 
 /* ---- Clientes & proveedores: un módulo, dos áreas (CRM + SRM intactos) ---- */
-function Relaciones({ role }: { role: Role }) {
+function Relaciones({ role, useAPI }: { role: Role; useAPI: boolean }) {
   const veClientes = role === "gerencia" || role === "ventas";
   const veProv = role === "gerencia" || role === "taller" || role === "logistica";
   const [tab, setTab] = useState<"clientes" | "proveedores">(veClientes ? "clientes" : "proveedores");
@@ -407,7 +419,7 @@ function Relaciones({ role }: { role: Role }) {
         {veClientes && (
           <button onClick={() => setTab("clientes")}
             className={`px-4 py-2.5 text-[12.5px] font-semibold border transition-colors flex items-center gap-2 ${activo === "clientes" ? "bg-ink text-paper border-ink" : "border-linedark text-ink2 hover:border-ink"}`}>
-            <I n="users" s={14} /> Clientes · CRM
+            <I n="users" s={14} /> Clientes · CRM {useAPI && <span className="text-[9px] font-bold px-1.5 py-0.5 bg-okbg text-ok">API</span>}
           </button>
         )}
         {veProv && (
@@ -417,7 +429,7 @@ function Relaciones({ role }: { role: Role }) {
           </button>
         )}
       </div>
-      {activo === "clientes" ? <CRM /> : <Proveedores />}
+      {activo === "clientes" ? (useAPI ? <CRMReal /> : <CRM />) : <Proveedores />}
     </div>
   );
 }
