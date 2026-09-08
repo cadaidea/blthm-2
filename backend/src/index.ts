@@ -5,10 +5,6 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 
-// ============================================
-// CONFIGURACIÓN
-// ============================================
-
 const prisma = new PrismaClient();
 
 const fastify = Fastify({
@@ -24,10 +20,6 @@ const fastify = Fastify({
   },
 });
 
-// ============================================
-// PLUGINS
-// ============================================
-
 await fastify.register(cors, {
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
@@ -37,10 +29,6 @@ await fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'cambia-este-secret-en-produccion',
 });
 
-// ============================================
-// MIDDLEWARE: AUTENTICACIÓN
-// ============================================
-
 async function authenticate(request: any, reply: any) {
   try {
     await request.jwtVerify();
@@ -48,10 +36,6 @@ async function authenticate(request: any, reply: any) {
     reply.status(401).send({ error: 'No autorizado' });
   }
 }
-
-// ============================================
-// SCHEMAS DE VALIDACIÓN (Zod)
-// ============================================
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -85,17 +69,11 @@ const createProductSchema = z.object({
   minStock: z.number().int().min(0).default(0),
 });
 
-// ============================================
-// RUTAS: AUTENTICACIÓN
-// ============================================
-
+// RUTAS DE AUTENTICACIÓN
 fastify.post('/api/auth/login', async (request, reply) => {
   try {
     const { email, password } = loginSchema.parse(request.body);
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.active) {
       return reply.status(401).send({ error: 'Credenciales inválidas' });
@@ -158,9 +136,7 @@ fastify.post('/api/auth/logout', { preHandler: [authenticate] }, async (request,
   try {
     const token = request.headers.authorization?.replace('Bearer ', '');
     if (token) {
-      await prisma.session.deleteMany({
-        where: { token },
-      });
+      await prisma.session.deleteMany({ where: { token } });
     }
     return { success: true };
   } catch (err) {
@@ -173,13 +149,7 @@ fastify.get('/api/auth/me', { preHandler: [authenticate] }, async (request, repl
   try {
     const user = await prisma.user.findUnique({
       where: { id: request.user.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        lastLoginAt: true,
-      },
+      select: { id: true, email: true, name: true, role: true, lastLoginAt: true },
     });
     return user;
   } catch (err) {
@@ -188,26 +158,14 @@ fastify.get('/api/auth/me', { preHandler: [authenticate] }, async (request, repl
   }
 });
 
-// ============================================
-// RUTAS: USUARIOS
-// ============================================
-
+// RUTAS DE USUARIOS
 fastify.get('/api/users', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     if (!['ADMIN', 'GERENCIA'].includes(request.user.role)) {
       return reply.status(403).send({ error: 'Sin permisos' });
     }
-
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        active: true,
-        lastLoginAt: true,
-        createdAt: true,
-      },
+      select: { id: true, email: true, name: true, role: true, active: true, lastLoginAt: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return users;
@@ -222,35 +180,16 @@ fastify.post('/api/users', { preHandler: [authenticate] }, async (request, reply
     if (!['ADMIN', 'GERENCIA'].includes(request.user.role)) {
       return reply.status(403).send({ error: 'Sin permisos' });
     }
-
     const data = createUserSchema.parse(request.body);
-
-    const existing = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
       return reply.status(400).send({ error: 'El email ya está registrado' });
     }
-
     const passwordHash = await bcrypt.hash(data.password, 10);
-
     const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        passwordHash,
-        name: data.name,
-        role: data.role,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        active: true,
-        createdAt: true,
-      },
+      data: { email: data.email, passwordHash, name: data.name, role: data.role },
+      select: { id: true, email: true, name: true, role: true, active: true, createdAt: true },
     });
-
     await prisma.auditLog.create({
       data: {
         userId: request.user.id,
@@ -260,7 +199,6 @@ fastify.post('/api/users', { preHandler: [authenticate] }, async (request, reply
         newValue: { email: user.email, name: user.name, role: user.role },
       },
     });
-
     return reply.status(201).send(user);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -271,10 +209,7 @@ fastify.post('/api/users', { preHandler: [authenticate] }, async (request, reply
   }
 });
 
-// ============================================
-// RUTAS: CLIENTES
-// ============================================
-
+// RUTAS DE CLIENTES
 fastify.get('/api/customers', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const customers = await prisma.customer.findMany({
@@ -288,42 +223,14 @@ fastify.get('/api/customers', { preHandler: [authenticate] }, async (request, re
   }
 });
 
-fastify.get('/api/customers/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const customer = await prisma.customer.findUnique({
-      where: { id, deletedAt: null },
-      include: {
-        orders: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-      },
-    });
-    if (!customer) {
-      return reply.status(404).send({ error: 'Cliente no encontrado' });
-    }
-    return customer;
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
 fastify.post('/api/customers', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const data = createCustomerSchema.parse(request.body);
-
     const count = await prisma.customer.count();
     const code = `CLI-${String(count + 1).padStart(5, '0')}`;
-
     const customer = await prisma.customer.create({
-      data: {
-        code,
-        ...data,
-      },
+      data: { code, ...data },
     });
-
     await prisma.auditLog.create({
       data: {
         userId: request.user.id,
@@ -333,46 +240,7 @@ fastify.post('/api/customers', { preHandler: [authenticate] }, async (request, r
         newValue: data,
       },
     });
-
     return reply.status(201).send(customer);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
-    }
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-fastify.put('/api/customers/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const data = createCustomerSchema.partial().parse(request.body);
-
-    const existing = await prisma.customer.findUnique({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      return reply.status(404).send({ error: 'Cliente no encontrado' });
-    }
-
-    const customer = await prisma.customer.update({
-      where: { id },
-      data,
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        userId: request.user.id,
-        action: 'UPDATE',
-        entity: 'Customer',
-        entityId: customer.id,
-        oldValue: existing,
-        newValue: data,
-      },
-    });
-
-    return customer;
   } catch (err) {
     if (err instanceof z.ZodError) {
       return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
@@ -385,19 +253,14 @@ fastify.put('/api/customers/:id', { preHandler: [authenticate] }, async (request
 fastify.delete('/api/customers/:id', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
-
-    const existing = await prisma.customer.findUnique({
-      where: { id, deletedAt: null },
-    });
+    const existing = await prisma.customer.findUnique({ where: { id, deletedAt: null } });
     if (!existing) {
       return reply.status(404).send({ error: 'Cliente no encontrado' });
     }
-
     await prisma.customer.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
-
     await prisma.auditLog.create({
       data: {
         userId: request.user.id,
@@ -407,7 +270,6 @@ fastify.delete('/api/customers/:id', { preHandler: [authenticate] }, async (requ
         oldValue: existing,
       },
     });
-
     return { success: true };
   } catch (err) {
     request.log.error(err);
@@ -415,20 +277,12 @@ fastify.delete('/api/customers/:id', { preHandler: [authenticate] }, async (requ
   }
 });
 
-// ============================================
-// RUTAS: PRODUCTOS
-// ============================================
-
+// RUTAS DE PRODUCTOS
 fastify.get('/api/products', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const products = await prisma.product.findMany({
       where: { deletedAt: null },
-      include: {
-        images: {
-          orderBy: { order: 'asc' },
-        },
-        variants: true,
-      },
+      include: { images: { orderBy: { order: 'asc' } }, variants: true },
       orderBy: { createdAt: 'desc' },
     });
     return products;
@@ -438,40 +292,13 @@ fastify.get('/api/products', { preHandler: [authenticate] }, async (request, rep
   }
 });
 
-fastify.get('/api/products/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const product = await prisma.product.findUnique({
-      where: { id, deletedAt: null },
-      include: {
-        images: {
-          orderBy: { order: 'asc' },
-        },
-        variants: true,
-      },
-    });
-    if (!product) {
-      return reply.status(404).send({ error: 'Producto no encontrado' });
-    }
-    return product;
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
 fastify.post('/api/products', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const data = createProductSchema.parse(request.body);
-
     const product = await prisma.product.create({
       data,
-      include: {
-        images: true,
-        variants: true,
-      },
+      include: { images: true, variants: true },
     });
-
     await prisma.auditLog.create({
       data: {
         userId: request.user.id,
@@ -481,50 +308,7 @@ fastify.post('/api/products', { preHandler: [authenticate] }, async (request, re
         newValue: data,
       },
     });
-
     return reply.status(201).send(product);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
-    }
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-fastify.put('/api/products/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const data = createProductSchema.partial().parse(request.body);
-
-    const existing = await prisma.product.findUnique({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      return reply.status(404).send({ error: 'Producto no encontrado' });
-    }
-
-    const product = await prisma.product.update({
-      where: { id },
-      data,
-      include: {
-        images: true,
-        variants: true,
-      },
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        userId: request.user.id,
-        action: 'UPDATE',
-        entity: 'Product',
-        entityId: product.id,
-        oldValue: existing,
-        newValue: data,
-      },
-    });
-
-    return product;
   } catch (err) {
     if (err instanceof z.ZodError) {
       return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
@@ -537,19 +321,14 @@ fastify.put('/api/products/:id', { preHandler: [authenticate] }, async (request,
 fastify.delete('/api/products/:id', { preHandler: [authenticate] }, async (request, reply) => {
   try {
     const { id } = request.params as { id: string };
-
-    const existing = await prisma.product.findUnique({
-      where: { id, deletedAt: null },
-    });
+    const existing = await prisma.product.findUnique({ where: { id, deletedAt: null } });
     if (!existing) {
       return reply.status(404).send({ error: 'Producto no encontrado' });
     }
-
     await prisma.product.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
-
     await prisma.auditLog.create({
       data: {
         userId: request.user.id,
@@ -559,7 +338,6 @@ fastify.delete('/api/products/:id', { preHandler: [authenticate] }, async (reque
         oldValue: existing,
       },
     });
-
     return { success: true };
   } catch (err) {
     request.log.error(err);
@@ -567,23 +345,16 @@ fastify.delete('/api/products/:id', { preHandler: [authenticate] }, async (reque
   }
 });
 
-// ============================================
 // HEALTH CHECK
-// ============================================
-
 fastify.get('/health', async () => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
 
-// ============================================
 // INICIAR SERVIDOR
-// ============================================
-
 const start = async () => {
   try {
     const port = Number(process.env.PORT) || 3000;
     const host = process.env.HOST || '0.0.0.0';
-
     await fastify.listen({ port, host });
     fastify.log.info(`Servidor corriendo en http://${host}:${port}`);
   } catch (err) {
@@ -594,10 +365,7 @@ const start = async () => {
 
 start();
 
-// ============================================
 // SHUTDOWN GRACEFUL
-// ============================================
-
 const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
 signals.forEach((signal) => {
   process.on(signal, async () => {
