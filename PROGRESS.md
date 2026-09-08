@@ -238,25 +238,93 @@ El script `backend/src/seed.ts` crea:
 
 ---
 
-## 🎉 Última Sesión: Migración del PIM a API
+## 🎉 Última Sesión: Migración del OMS a API
 
 ### ✅ Completado
-- ✅ Creado `PIMReal.tsx` conectado a PostgreSQL
-- ✅ CRUD completo de productos (crear, leer, actualizar, eliminar)
-- ✅ Galería de fotos con upload por URL
-- ✅ Fotos por variante (tapiz, acabado, etc.)
-- ✅ Estados de publicación (publicado/borrador)
-- ✅ Categorías dinámicas desde la base de datos
-- ✅ Stock y alertas de reposición
+- ✅ Creado `OMSReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de órdenes de venta
+- ✅ Endpoints backend: GET/POST /api/orders, PUT /api/orders/:id/status, DELETE /api/orders/:id
+- ✅ Cálculo automático de subtotal, IVA 15% y total
+- ✅ Estados de orden: PENDIENTE, CONFIRMADO, EN_PRODUCCION, LISTO, ENVIADO, ENTREGADO, CANCELADO
+- ✅ Filtros por estado
+- ✅ Estadísticas: total, pendientes, en producción, entregados
+- ✅ Modal de nueva orden con selección de cliente y productos
+- ✅ Modal de detalle con cambio de estado
 - ✅ Integración con botón de alternancia localStorage/API
-- ✅ Indicador visual "API" en sidebar para PIM
-- ✅ Build exitoso (53 módulos, 517 KB)
+- ✅ Indicador visual "API" en sidebar para OMS
+- ✅ Store Zustand para órdenes (useOrdersStore)
+- ✅ Build exitoso (54 módulos, 531 KB)
 
 ### Archivos Creados/Modificados
-- `src/components/panel/PIMReal.tsx` (nuevo) - Módulo PIM conectado a API
-- `src/components/panel/Panel.tsx` (modificado) - Integración de PIMReal y indicador API
-- `src/api/client.ts` (actualizado) - Agregadas propiedades: material, dims, img
+- `src/components/panel/OMSReal.tsx` (nuevo) - Módulo OMS conectado a API
+- `src/components/panel/Panel.tsx` (modificado) - Integración de OMSReal y indicador API
+- `src/api/client.ts` (actualizado) - Agregados tipos SalesOrder, SalesOrderItem y funciones orders.*
+- `src/store/index.ts` (actualizado) - Agregado useOrdersStore
+- `backend/src/index.ts` (actualizado) - Agregados endpoints de órdenes
 - `PROGRESS.md` (actualizado) - Documentación de progreso
+
+### Cómo Probar
+1. Levantar backend: `cd backend && npm run dev`
+2. Levantar frontend: `npm run dev`
+3. Acceder a: `http://localhost:5173/#/dash`
+4. Activar modo API: clic en el botón de servidor (arriba a la derecha)
+5. Ir a "Pedidos · OMS" - verás el indicador "API" en el sidebar
+6. Probar:
+   - ✅ Crear nueva orden
+   - ✅ Seleccionar cliente y productos
+   - ✅ Cambiar estado de orden
+   - ✅ Eliminar orden
+   - ✅ Filtrar por estado
+   - ✅ Verificar que los cambios se reflejen en PostgreSQL
+
+### Verificar en PostgreSQL
+```bash
+docker-compose exec postgres psql -U bletia -d bletia_db
+SELECT * FROM "SalesOrder";
+SELECT * FROM "SalesOrderItem";
+```
+
+## 📊 Estado Actual de Migración
+
+### Módulos Migrados a API (3/17)
+1. ✅ **CRM** (clientes) - completado
+2. ✅ **PIM** (productos) - completado
+3. ✅ **OMS** (órdenes de venta) - completado
+
+### Módulos Pendientes de Migración (14/17)
+- 🚧 Logística
+- 🚧 Taller
+- 🚧 BOM
+- 🚧 Stock
+- 🚧 Cobros
+- 🚧 Compras
+- 🚧 Contabilidad
+- 🚧 RRHH
+- 🚧 Seguridad
+- 🚧 Infraestructura
+- 🚧 Sitio Público
+- 🚧 CMS
+- 🚧 Marketing
+- 🚧 Variantes
+
+### Progreso Total
+- **Fase 1**: ✅ 100% (Frontend completo)
+- **Fase 2**: 🚧 60% (Backend + 3 módulos migrados)
+- **Fase 3**: ⏳ 0% (Integraciones reales)
+
+---
+
+## 📝 Historial de Sesiones Anteriores
+
+### Migración del PIM a API
+- ✅ Creado `PIMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de productos con galería y variantes
+- ✅ Build exitoso (53 módulos, 517 KB)
+
+### Migración del CRM a API
+- ✅ Creado `CRMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de clientes
+- ✅ Build exitoso (52 módulos, 504 KB)
 
 ### Cómo Probar
 1. Levantar backend: `cd backend && npm run dev`

@@ -72,6 +72,30 @@ export interface ProductVariant {
   attributes?: Record<string, any>;
 }
 
+export interface SalesOrder {
+  id: string;
+  code: string;
+  customerId: string;
+  status: 'PENDIENTE' | 'CONFIRMADO' | 'EN_PRODUCCION' | 'LISTO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
+  subtotal: number;
+  tax: number;
+  total: number;
+  notes?: string;
+  customer: Customer;
+  items: SalesOrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SalesOrderItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  product: Product;
+}
+
 // ============================================
 // HELPERS
 // ============================================
@@ -292,6 +316,60 @@ export const products = {
 
   async deleteImage(productId: string, imageId: string): Promise<void> {
     const response = await fetch(`${API_URL}/products/${productId}/images/${imageId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(response);
+  },
+};
+
+// ============================================
+// ÓRDENES DE VENTA
+// ============================================
+
+export const orders = {
+  async getAll(): Promise<SalesOrder[]> {
+    const response = await fetch(`${API_URL}/orders`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<SalesOrder[]>(response);
+  },
+
+  async getById(id: string): Promise<SalesOrder> {
+    const response = await fetch(`${API_URL}/orders/${id}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<SalesOrder>(response);
+  },
+
+  async create(data: {
+    customerId: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    notes?: string;
+  }): Promise<SalesOrder> {
+    const response = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<SalesOrder>(response);
+  },
+
+  async updateStatus(id: string, status: SalesOrder['status']): Promise<SalesOrder> {
+    const response = await fetch(`${API_URL}/orders/${id}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    return handleResponse<SalesOrder>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/orders/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });

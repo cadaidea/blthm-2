@@ -5,6 +5,7 @@ import { Card, Chip, Stat, Td, Th, btnDark, btnGhost } from "./pui";
 import { CRM, PIM } from "./Modules";
 import { CRMReal } from "./CRMReal";
 import { PIMReal } from "./PIMReal";
+import { OMSReal } from "./OMSReal";
 import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
@@ -25,7 +26,7 @@ export type Mod =
 const NAV: { group: string; items: { id: Mod; label: string; icon: IconName; api?: boolean }[] }[] = [
   { group: "Operación", items: [
     { id: "vision", label: "Panel de control", icon: "grid" },
-    { id: "oms", label: "Pedidos · OMS", icon: "box" },
+    { id: "oms", label: "Pedidos · OMS", icon: "box", api: true },
     { id: "logistica", label: "Logística & guías SRI", icon: "truck" },
     { id: "taller", label: "Taller & fabricación", icon: "hammer" },
     { id: "bom", label: "BOM & materiales", icon: "tag" },
@@ -383,7 +384,7 @@ export default function Panel() {
         <main className="p-5 sm:p-8 max-w-[1240px] space-y-6">
           {mod === "vision" && <WelcomeBanner name={session.name} />}
           {mod === "vision" && <Vision engine={engine} go={go} />}
-          {mod === "oms" && (<><OMS15 /><AdminPedidosWeb /></>)}
+          {mod === "oms" && (useAPI ? <OMSReal /> : <><OMS15 /><AdminPedidosWeb /></>)}
           {mod === "logistica" && <Logistica />}
           {mod === "taller" && <Taller />}
           {mod === "bom" && <BOM />}

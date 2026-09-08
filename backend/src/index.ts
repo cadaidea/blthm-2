@@ -659,6 +659,213 @@ fastify.delete('/api/products/:id/images/:imageId', { preHandler: [authenticate]
 });
 
 // ============================================
+// RUTAS: ÓRDENES DE VENTA
+// ============================================
+
+const createOrderSchema = z.object({
+  customerId: z.string(),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+    unitPrice: z.number().positive(),
+  })),
+  notes: z.string().optional(),
+});
+
+fastify.get('/api/orders', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const orders = await prisma.salesOrder.findMany({
+      where: { deletedAt: null },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return orders;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+fastify.get('/api/orders/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const order = await prisma.salesOrder.findUnique({
+      where: { id, deletedAt: null },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        payments: true,
+        invoices: true,
+      },
+    });
+    if (!order) {
+      return reply.status(404).send({ error: 'Orden no encontrada' });
+    }
+    return order;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+fastify.post('/api/orders', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = createOrderSchema.parse(request.body);
+
+    // Calcular totales
+    const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const tax = subtotal * 0.15; // IVA 15%
+    const total = subtotal + tax;
+
+    // Generar código único
+    const count = await prisma.salesOrder.count();
+    const code = `ORD-${String(count + 1).padStart(5, '0')}`;
+
+    const order = await prisma.salesOrder.create({
+      data: {
+        code,
+        customerId: data.customerId,
+        status: 'PENDIENTE',
+        subtotal,
+        tax,
+        total,
+        notes: data.notes,
+        items: {
+          create: data.items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.quantity * item.unitPrice,
+          })),
+        },
+      },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    // Registrar en auditoría
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user!.id,
+        action: 'CREATE',
+        entity: 'SalesOrder',
+        entityId: order.id,
+        newValue: { code, total, customerId: data.customerId },
+      },
+    });
+
+    return reply.status(201).send(order);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+fastify.put('/api/orders/:id/status', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const { status } = request.body as { status: string };
+
+    const validStatuses = ['PENDIENTE', 'CONFIRMADO', 'EN_PRODUCCION', 'LISTO', 'ENVIADO', 'ENTREGADO', 'CANCELADO'];
+    if (!validStatuses.includes(status)) {
+      return reply.status(400).send({ error: 'Estado inválido' });
+    }
+
+    const existing = await prisma.salesOrder.findUnique({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Orden no encontrada' });
+    }
+
+    const order = await prisma.salesOrder.update({
+      where: { id },
+      data: { status: status as any },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    // Registrar en auditoría
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user!.id,
+        action: 'UPDATE',
+        entity: 'SalesOrder',
+        entityId: id,
+        oldValue: { status: existing.status },
+        newValue: { status },
+      },
+    });
+
+    return order;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+fastify.delete('/api/orders/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+
+    const existing = await prisma.salesOrder.findUnique({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Orden no encontrada' });
+    }
+
+    // Soft delete
+    await prisma.salesOrder.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    // Registrar en auditoría
+    await prisma.auditLog.create({
+      data: {
+        userId: request.user!.id,
+        action: 'DELETE',
+        entity: 'SalesOrder',
+        entityId: id,
+        oldValue: existing,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 

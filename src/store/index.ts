@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { auth, users, customers, products, type User, type Customer, type Product } from '../api/client';
+import { auth, users, customers, products, orders, type User, type Customer, type Product, type SalesOrder } from '../api/client';
 
 // ============================================
 // STORE DE AUTENTICACIÓN
@@ -184,5 +184,59 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
         p.id === productId ? { ...p, images: p.images.filter((img) => img.id !== imageId) } : p
       ),
     });
+  },
+}));
+
+// ============================================
+// STORE DE ÓRDENES
+// ============================================
+
+interface OrdersState {
+  orders: SalesOrder[];
+  isLoading: boolean;
+  fetchOrders: () => Promise<void>;
+  addOrder: (data: {
+    customerId: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    notes?: string;
+  }) => Promise<SalesOrder>;
+  updateOrderStatus: (id: string, status: SalesOrder['status']) => Promise<SalesOrder>;
+  deleteOrder: (id: string) => Promise<void>;
+}
+
+export const useOrdersStore = create<OrdersState>((set, get) => ({
+  orders: [],
+  isLoading: false,
+
+  fetchOrders: async () => {
+    set({ isLoading: true });
+    try {
+      const ordersList = await orders.getAll();
+      set({ orders: ordersList, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  addOrder: async (data) => {
+    const order = await orders.create(data);
+    set({ orders: [order, ...get().orders] });
+    return order;
+  },
+
+  updateOrderStatus: async (id, status) => {
+    const order = await orders.updateStatus(id, status);
+    set({ orders: get().orders.map((o) => (o.id === id ? order : o)) });
+    return order;
+  },
+
+  deleteOrder: async (id) => {
+    await orders.delete(id);
+    set({ orders: get().orders.filter((o) => o.id !== id) });
   },
 }));
