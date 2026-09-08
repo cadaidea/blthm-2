@@ -1,0 +1,455 @@
+// Esquema de base de datos PostgreSQL para BLETIA
+// Seguridad bancaria: todas las tablas con auditoría, soft delete, y relaciones estrictas
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          Role      @default(VENTAS)
+  active        Boolean   @default(true)
+  
+  // Auditoría
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  
+  // Relaciones
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Session {
+  id            String    @id @default(cuid())
+  userId        String
+  token         String    @unique
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([userId])
+}
+
+enum Role {
+  GERENCIA
+  VENTAS
+  TALLER
+  LOGISTICA
+  CONTABILIDAD
+  ADMIN
+}
+
+// ============================================
+// CLIENTES (CRM)
+// ============================================
+
+model Customer {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  email           String?
+  phone           String?
+  taxId           String?   // Cédula o RUC
+  address         String?
+  city            String?
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relaciones
+  orders          SalesOrder[]
+  quotes          Quote[]
+  
+  @@index([code])
+  @@index([email])
+  @@index([deletedAt])
+}
+
+// ============================================
+// PRODUCTOS (PIM)
+// ============================================
+
+model Product {
+  id              String    @id @default(cuid())
+  sku             String    @unique
+  name            String
+  description     String?
+  category        String
+  price           Decimal   @db.Decimal(10, 2)
+  cost            Decimal   @db.Decimal(10, 2)
+  stock           Int       @default(0)
+  minStock        Int       @default(0)
+  active          Boolean   @default(true)
+  
+  // Galería de fotos
+  images          ProductImage[]
+  
+  // Variantes
+  variants        ProductVariant[]
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relaciones
+  orderItems      SalesOrderItem[]
+  inventoryMoves  InventoryMove[]
+  
+  @@index([sku])
+  @@index([category])
+  @@index([active])
+}
+
+model ProductImage {
+  id              String    @id @default(cuid())
+  productId       String
+  url             String
+  order           Int       @default(0)
+  isPrimary       Boolean   @default(false)
+  
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@index([productId])
+}
+
+model ProductVariant {
+  id              String    @id @default(cuid())
+  productId       String
+  name            String    // Ej: "Tapiz Beige - Lado Derecho"
+  sku             String    @unique
+  price           Decimal   @db.Decimal(10, 2)
+  stock           Int       @default(0)
+  imageUrl        String?
+  attributes      Json?     // { color: "beige", lado: "derecho" }
+  
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([productId])
+  @@index([sku])
+}
+
+// ============================================
+// VENTAS (OMS)
+// ============================================
+
+model SalesOrder {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  customerId      String
+  status          OrderStatus @default(PENDIENTE)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  tax             Decimal   @db.Decimal(10, 2)
+  total           Decimal   @db.Decimal(10, 2)
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relaciones
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  items           SalesOrderItem[]
+  payments        Payment[]
+  invoices        Invoice[]
+  
+  @@index([code])
+  @@index([customerId])
+  @@index([status])
+}
+
+model SalesOrderItem {
+  id              String    @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  unitPrice       Decimal   @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  
+  order           SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id])
+  
+  @@index([orderId])
+}
+
+enum OrderStatus {
+  PENDIENTE
+  CONFIRMADO
+  EN_PRODUCCION
+  LISTO
+  ENVIADO
+  ENTREGADO
+  CANCELADO
+}
+
+// ============================================
+// PAGOS
+// ============================================
+
+model Payment {
+  id              String    @id @default(cuid())
+  orderId         String
+  amount          Decimal   @db.Decimal(10, 2)
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDIENTE)
+  reference       String?   // Referencia externa (PayPhone, transferencia, etc.)
+  paidAt          DateTime?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  order           SalesOrder @relation(fields: [orderId], references: [id])
+  
+  @@index([orderId])
+  @@index([status])
+}
+
+enum PaymentMethod {
+  PAYPHONE
+  TRANSFERENCIA
+  EFECTIVO
+  TARJETA
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  REEMBOLSADO
+}
+
+// ============================================
+// FACTURACIÓN (SRI)
+// ============================================
+
+model Invoice {
+  id              String    @id @default(cuid())
+  orderId         String
+  number          String    @unique
+  authorizationCode String? @unique
+  xmlContent      String?
+  status          InvoiceStatus @default(BORRADOR)
+  total           Decimal   @db.Decimal(10, 2)
+  tax             Decimal   @db.Decimal(10, 2)
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  authorizedAt    DateTime?
+  
+  // Relaciones
+  order           SalesOrder @relation(fields: [orderId], references: [id])
+  
+  @@index([number])
+  @@index([orderId])
+}
+
+enum InvoiceStatus {
+  BORRADOR
+  AUTORIZADA
+  ANULADA
+  ERROR
+}
+
+// ============================================
+// INVENTARIOS
+// ============================================
+
+model Warehouse {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  address         String?
+  active          Boolean   @default(true)
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relaciones
+  inventoryMoves  InventoryMove[]
+  
+  @@index([code])
+}
+
+model InventoryMove {
+  id              String    @id @default(cuid())
+  productId       String
+  warehouseId     String
+  type            MoveType
+  quantity        Int
+  reference       String?   // Orden de compra, venta, ajuste, etc.
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  
+  // Relaciones
+  product         Product   @relation(fields: [productId], references: [id])
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id])
+  
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([type])
+}
+
+enum MoveType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+  TRANSFERENCIA
+}
+
+// ============================================
+// COMPRAS
+// ============================================
+
+model PurchaseOrder {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  supplierId      String
+  status          PurchaseStatus @default(BORRADOR)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  tax             Decimal   @db.Decimal(10, 2)
+  total           Decimal   @db.Decimal(10, 2)
+  expectedDate    DateTime?
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relaciones
+  supplier        Supplier  @relation(fields: [supplierId], references: [id])
+  items           PurchaseOrderItem[]
+  
+  @@index([code])
+  @@index([supplierId])
+}
+
+model PurchaseOrderItem {
+  id              String    @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  unitCost        Decimal   @db.Decimal(10, 2)
+  subtotal        Decimal   @db.Decimal(10, 2)
+  
+  order           PurchaseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+}
+
+enum PurchaseStatus {
+  BORRADOR
+  ENVIADA
+  PARCIAL
+  RECIBIDA
+  CANCELADA
+}
+
+model Supplier {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  email           String?
+  phone           String?
+  taxId           String?
+  address         String?
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  
+  // Relaciones
+  purchaseOrders  PurchaseOrder[]
+  
+  @@index([code])
+  @@index([email])
+}
+
+// ============================================
+// PRODUCCIÓN (MRP)
+// ============================================
+
+model ProductionOrder {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  productId       String
+  quantity        Int
+  status          ProductionStatus @default(PLANIFICADA)
+  startDate       DateTime?
+  endDate         DateTime?
+  notes           String?
+  
+  // Auditoría
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([code])
+  @@index([productId])
+  @@index([status])
+}
+
+enum ProductionStatus {
+  PLANIFICADA
+  EN_PROCESO
+  COMPLETADA
+  CANCELADA
+}
+
+// ============================================
+// AUDITORÍA
+// ============================================
+
+model AuditLog {
+  id              String    @id @default(cuid())
+  userId          String?
+  action          String    // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity          String    // Customer, Product, SalesOrder, etc.
+  entityId        String?
+  oldValue        Json?
+  newValue        Json?
+  ipAddress       String?
+  userAgent       String?
+  
+  createdAt       DateTime  @default(now())
+  
+  user            User?     @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([entity])
+  @@index([action])
+  @@index([createdAt])
+}
