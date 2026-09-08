@@ -1136,7 +1136,7 @@ fastify.post('/api/suppliers', { preHandler: [authenticate] }, async (request, r
     const supplier = await prisma.supplier.create({ data });
 
     await prisma.auditLog.create({
-       {
+      data: {
         userId: request.user?.id,
         action: 'CREATE',
         entity: 'Supplier',
@@ -1172,7 +1172,7 @@ fastify.put('/api/suppliers/:id', { preHandler: [authenticate] }, async (request
     });
 
     await prisma.auditLog.create({
-       {
+      data: {
         userId: request.user?.id,
         action: 'UPDATE',
         entity: 'Supplier',
@@ -1204,11 +1204,11 @@ fastify.delete('/api/suppliers/:id', { preHandler: [authenticate] }, async (requ
 
     await prisma.supplier.update({
       where: { id },
-       { deletedAt: new Date() },
+      data: { deletedAt: new Date() },
     });
 
     await prisma.auditLog.create({
-       {
+      data: {
         userId: request.user?.id,
         action: 'DELETE',
         entity: 'Supplier',
@@ -1276,7 +1276,7 @@ fastify.post('/api/purchase-orders', { preHandler: [authenticate] }, async (requ
     const code = `OC-${String(count + 1).padStart(5, '0')}`;
 
     const order = await prisma.purchaseOrder.create({
-       {
+      data: {
         code,
         supplierId: data.supplierId,
         status: 'BORRADOR',
@@ -1305,7 +1305,7 @@ fastify.post('/api/purchase-orders', { preHandler: [authenticate] }, async (requ
     });
 
     await prisma.auditLog.create({
-       {
+      data: {
         userId: request.user?.id,
         action: 'CREATE',
         entity: 'PurchaseOrder',
@@ -1339,7 +1339,7 @@ fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, a
 
     const order = await prisma.purchaseOrder.update({
       where: { id },
-       { status },
+      data: { status },
       include: {
         supplier: true,
         items: {
@@ -1360,7 +1360,7 @@ fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, a
       for (const item of items) {
         await prisma.product.update({
           where: { id: item.productId },
-           {
+          data: {
             stock: {
               increment: item.quantity,
             },
@@ -1369,7 +1369,7 @@ fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, a
 
         // Registrar movimiento de inventario
         await prisma.inventoryMove.create({
-           {
+          data: {
             productId: item.productId,
             warehouseId: (await prisma.warehouse.findFirst())?.id || '',
             type: 'ENTRADA',
@@ -1382,7 +1382,7 @@ fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, a
     }
 
     await prisma.auditLog.create({
-       {
+      data: {
         userId: request.user?.id,
         action: 'UPDATE',
         entity: 'PurchaseOrder',
@@ -1411,201 +1411,12 @@ fastify.delete('/api/purchase-orders/:id', { preHandler: [authenticate] }, async
 
     await prisma.purchaseOrder.update({
       where: { id },
-       { deletedAt: new Date() },
-    });
-
-    await prisma.auditLog.create({
-       {
-        userId: request.user?.id,
-        action: 'DELETE',
-        entity: 'PurchaseOrder',
-        entityId: id,
-        oldValue: existing,
-      },
-    });
-
-    return { success: true };
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-// ============================================
-// RUTAS: COMPRAS (ÓRDENES DE COMPRA)
-// ============================================
-
-const createPurchaseOrderSchema = z.object({
-  supplierId: z.string(),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().int().positive(),
-    unitCost: z.number().positive(),
-  })),
-  expectedDate: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-// Listar órdenes de compra
-fastify.get('/api/purchase-orders', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const orders = await prisma.purchaseOrder.findMany({
-      where: { deletedAt: null },
-      include: {
-        supplier: true,
-        items: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return orders;
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-// Obtener orden de compra por ID
-fastify.get('/api/purchase-orders/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const order = await prisma.purchaseOrder.findUnique({
-      where: { id, deletedAt: null },
-      include: {
-        supplier: true,
-        items: true,
-      },
-    });
-    if (!order) {
-      return reply.status(404).send({ error: 'Orden de compra no encontrada' });
-    }
-    return order;
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-// Crear orden de compra
-fastify.post('/api/purchase-orders', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const data = createPurchaseOrderSchema.parse(request.body);
-
-    // Generar código único
-    const count = await prisma.purchaseOrder.count();
-    const code = `OC-${String(count + 1).padStart(5, '0')}`;
-
-    // Calcular totales
-    const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
-    const tax = subtotal * 0.15; // IVA 15%
-    const total = subtotal + tax;
-
-    const order = await prisma.purchaseOrder.create({
-      data: {
-        code,
-        supplierId: data.supplierId,
-        subtotal,
-        tax,
-        total,
-        expectedDate: data.expectedDate ? new Date(data.expectedDate) : null,
-        notes: data.notes,
-        items: {
-          create: data.items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitCost: item.unitCost,
-            subtotal: item.quantity * item.unitCost,
-          })),
-        },
-      },
-      include: {
-        supplier: true,
-        items: true,
-      },
-    });
-
-    // Registrar en auditoría
-    await prisma.auditLog.create({
-      data: {
-        userId: request.user!.id,
-        action: 'CREATE',
-        entity: 'PurchaseOrder',
-        entityId: order.id,
-        newValue: data,
-      },
-    });
-
-    return reply.status(201).send(order);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
-    }
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-// Actualizar estado de orden de compra
-fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-    const { status } = request.body as { status: 'BORRADOR' | 'ENVIADA' | 'PARCIAL' | 'RECIBIDA' | 'CANCELADA' };
-
-    const existing = await prisma.purchaseOrder.findUnique({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      return reply.status(404).send({ error: 'Orden de compra no encontrada' });
-    }
-
-    const order = await prisma.purchaseOrder.update({
-      where: { id },
-      data: { status },
-      include: {
-        supplier: true,
-        items: true,
-      },
-    });
-
-    // Registrar en auditoría
-    await prisma.auditLog.create({
-      data: {
-        userId: request.user!.id,
-        action: 'UPDATE',
-        entity: 'PurchaseOrder',
-        entityId: id,
-        oldValue: { status: existing.status },
-        newValue: { status },
-      },
-    });
-
-    return order;
-  } catch (err) {
-    request.log.error(err);
-    return reply.status(500).send({ error: 'Error interno del servidor' });
-  }
-});
-
-// Eliminar orden de compra (soft delete)
-fastify.delete('/api/purchase-orders/:id', { preHandler: [authenticate] }, async (request, reply) => {
-  try {
-    const { id } = request.params as { id: string };
-
-    const existing = await prisma.purchaseOrder.findUnique({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      return reply.status(404).send({ error: 'Orden de compra no encontrada' });
-    }
-
-    await prisma.purchaseOrder.update({
-      where: { id },
       data: { deletedAt: new Date() },
     });
 
-    // Registrar en auditoría
     await prisma.auditLog.create({
       data: {
-        userId: request.user!.id,
+        userId: request.user?.id,
         action: 'DELETE',
         entity: 'PurchaseOrder',
         entityId: id,
