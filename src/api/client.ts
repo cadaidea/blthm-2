@@ -430,7 +430,7 @@ export const suppliers = {
     return handleResponse<Supplier[]>(response);
   },
 
-  async create( {
+  async create(data: {
     code: string;
     name: string;
     email?: string;
@@ -447,7 +447,7 @@ export const suppliers = {
     return handleResponse<Supplier>(response);
   },
 
-  async update(id: string,  Partial<Supplier>): Promise<Supplier> {
+  async update(id: string, data: Partial<Supplier>): Promise<Supplier> {
     const response = await fetch(`${API_URL}/suppliers/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
@@ -473,7 +473,7 @@ export const purchaseOrders = {
     return handleResponse<PurchaseOrder[]>(response);
   },
 
-  async create( {
+  async create(data: {
     supplierId: string;
     items: Array<{
       productId: string;

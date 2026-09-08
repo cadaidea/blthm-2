@@ -238,36 +238,79 @@ El script `backend/src/seed.ts` crea:
 
 ---
 
-## 🎉 Última Sesión: Migración del Stock a API
+## 🎉 Última Sesión: Migración del Compras a API
 
 ### ✅ Completado
-- ✅ Creado `StockReal.tsx` conectado a PostgreSQL
-- ✅ CRUD completo de bodegas
-- ✅ CRUD completo de movimientos de inventario
+- ✅ Creado `ComprasReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de órdenes de compra
+- ✅ CRUD completo de proveedores
 - ✅ Endpoints backend: 
-  - GET/POST/PUT /api/warehouses
-  - GET/POST /api/inventory-moves
-  - GET /api/inventory/:productId
-- ✅ Actualización automática de stock al registrar movimientos
-- ✅ 4 tipos de movimiento: ENTRADA, SALIDA, AJUSTE, TRANSFERENCIA
-- ✅ Validación de stock suficiente para salidas
-- ✅ Transacciones atómicas (movimiento + actualización de stock)
-- ✅ Filtros por producto, bodega y tipo
-- ✅ Pestañas: Bodegas y Movimientos
-- ✅ Modales para crear bodega y movimiento
+  - GET/POST/PUT/DELETE /api/purchase-orders
+  - PUT /api/purchase-orders/:id/status
+  - GET/POST/PUT/DELETE /api/suppliers
+- ✅ Cálculo automático de subtotal, IVA 15% y total
+- ✅ 5 estados de orden: BORRADOR, ENVIADA, PARCIAL, RECIBIDA, CANCELADA
+- ✅ Filtros por estado
+- ✅ Estadísticas: total órdenes, pendientes, recibidas, monto total
+- ✅ Modal de nueva orden con selección de proveedor y productos
+- ✅ Cambio de estado de orden con un clic
 - ✅ Integración con botón de alternancia localStorage/API
-- ✅ Indicador visual "API" en sidebar para Stock
-- ✅ Store Zustand para bodegas (useWarehousesStore)
-- ✅ Store Zustand para movimientos (useInventoryStore)
-- ✅ Build exitoso (55 módulos, 541 KB)
+- ✅ Indicador visual "API" en sidebar para Compras
+- ✅ Store Zustand para órdenes de compra (usePurchaseOrdersStore)
+- ✅ Store Zustand para proveedores (useSuppliersStore)
+- ✅ Build exitoso (56 módulos, 550 KB)
 
 ### Archivos Creados/Modificados
-- `src/components/panel/StockReal.tsx` (nuevo) - Módulo Stock conectado a API
-- `src/components/panel/Panel.tsx` (modificado) - Integración de StockReal y indicador API
-- `src/api/client.ts` (actualizado) - Agregados tipos Warehouse, InventoryMove y funciones warehouses.*, inventory.*
-- `src/store/index.ts` (actualizado) - Agregados useWarehousesStore y useInventoryStore
-- `backend/src/index.ts` (actualizado) - Agregados endpoints de bodegas e inventarios
+- `src/components/panel/ComprasReal.tsx` (nuevo) - Módulo Compras conectado a API
+- `src/components/panel/Panel.tsx` (modificado) - Integración de ComprasReal y indicador API
+- `src/api/client.ts` (actualizado) - Agregados tipos PurchaseOrder, Supplier y funciones purchaseOrders.*, suppliers.*
+- `src/store/index.ts` (actualizado) - Agregados usePurchaseOrdersStore y useSuppliersStore
+- `backend/src/index.ts` (actualizado) - Agregados endpoints de órdenes de compra y proveedores
 - `PROGRESS.md` (actualizado) - Documentación de progreso
+
+### Cómo Probar
+1. Levantar backend: `cd backend && npm run dev`
+2. Levantar frontend: `npm run dev`
+3. Acceder a: `http://localhost:5173/#/dash`
+4. Activar modo API: clic en el botón de servidor (arriba a la derecha)
+5. Ir a "Compras" - verás el indicador "API" en el sidebar
+6. Probar:
+   - ✅ Crear nueva orden de compra
+   - ✅ Seleccionar proveedor y productos
+   - ✅ Cambiar estado de orden (Enviar, Parcial, Recibir)
+   - ✅ Eliminar orden
+   - ✅ Filtrar por estado
+   - ✅ Verificar que los cambios se reflejen en PostgreSQL
+
+### Verificar en PostgreSQL
+```bash
+docker-compose exec postgres psql -U bletia -d bletia_db
+SELECT * FROM "PurchaseOrder";
+SELECT * FROM "PurchaseOrderItem";
+SELECT * FROM "Supplier";
+```
+
+## 📝 Historial de Sesiones Anteriores
+
+### Migración del Stock a API
+- ✅ Creado `StockReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de bodegas e inventarios
+- ✅ Build exitoso (55 módulos, 541 KB)
+
+### Migración del OMS a API
+- ✅ Creado `OMSReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de órdenes de venta
+- ✅ Build exitoso (54 módulos, 531 KB)
+
+### Migración del PIM a API
+- ✅ Creado `PIMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de productos con galería y variantes
+- ✅ Build exitoso (53 módulos, 517 KB)
+
+### Migración del CRM a API
+- ✅ Creado `CRMReal.tsx` conectado a PostgreSQL
+- ✅ CRUD completo de clientes
+- ✅ Build exitoso (52 módulos, 504 KB)
 
 ### Cómo Probar
 1. Levantar backend: `cd backend && npm run dev`
@@ -331,18 +374,18 @@ SELECT * FROM "SalesOrderItem";
 
 ## 📊 Estado Actual de Migración
 
-### Módulos Migrados a API (4/17)
+### Módulos Migrados a API (5/17)
 1. ✅ **CRM** (clientes) - completado
 2. ✅ **PIM** (productos) - completado
 3. ✅ **OMS** (órdenes de venta) - completado
 4. ✅ **Stock** (inventarios y bodegas) - completado
+5. ✅ **Compras** (órdenes de compra y proveedores) - completado
 
-### Módulos Pendientes de Migración (13/17)
+### Módulos Pendientes de Migración (12/17)
 - 🚧 Logística
 - 🚧 Taller
 - 🚧 BOM
 - 🚧 Cobros
-- 🚧 Compras
 - 🚧 Contabilidad
 - 🚧 RRHH
 - 🚧 Seguridad
@@ -354,7 +397,7 @@ SELECT * FROM "SalesOrderItem";
 
 ### Progreso Total
 - **Fase 1**: ✅ 100% (Frontend completo)
-- **Fase 2**: 🚧 65% (Backend + 4 módulos migrados)
+- **Fase 2**: 🚧 70% (Backend + 5 módulos migrados)
 - **Fase 3**: ⏳ 0% (Integraciones reales)
 
 ---

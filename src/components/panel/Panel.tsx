@@ -7,6 +7,7 @@ import { CRMReal } from "./CRMReal";
 import { PIMReal } from "./PIMReal";
 import { OMSReal } from "./OMSReal";
 import { StockReal } from "./StockReal";
+import { ComprasReal } from "./ComprasReal";
 import { DAM, Proveedores, Taller } from "./Modules2";
 import { Contabilidad, Infra } from "./Modules3";
 import { BOM, Cobros, Logistica, Seguridad } from "./Modules4";
@@ -36,7 +37,7 @@ const NAV: { group: string; items: { id: Mod; label: string; icon: IconName; api
   { group: "Relaciones", items: [
     { id: "relaciones", label: "Clientes & proveedores", icon: "users" },
     { id: "cobros", label: "Cobros PayPhone", icon: "card" },
-    { id: "compras", label: "Compras · OC proveedores", icon: "truck" },
+    { id: "compras", label: "Compras · OC proveedores", icon: "truck", api: true },
   ]},
   { group: "Producto & activos", items: [
     { id: "pim", label: "Productos · PIM", icon: "tag", api: true },
@@ -396,7 +397,7 @@ export default function Panel() {
           {mod === "dam" && <DAM />}
           {mod === "stock" && (useAPI ? <StockReal /> : <Stock />)}
           {mod === "conta" && <Contabilidad />}
-          {mod === "compras" && <Compras />}
+          {mod === "compras" && (useAPI ? <ComprasReal /> : <Compras />)}
           {mod === "rrhh" && <RRHH />}
           {mod === "seguridad" && <Seguridad />}
           {mod === "infra" && <Infra />}
