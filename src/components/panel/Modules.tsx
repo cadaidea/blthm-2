@@ -7,6 +7,7 @@ import {
   setMainPhoto, setVariantPhoto, type Customer, type Order, type Product,
 } from "../../data";
 import { I, Modal, toast } from "../ui";
+import { confirm } from "../ConfirmModal";
 import { Bar, Card, Chip, SectionTitle, Stat, Td, Th, btnDark, btnGhost, inp } from "./pui";
 import { StatusChip } from "./Panel";
 
@@ -470,10 +471,12 @@ export function PIM() {
   const del = (id: string) => {
     const p = list.find((x) => x.id === id);
     if (!p) return;
-    if (!window.confirm(`¿Eliminar «${p.name}»? Esta acción no se puede deshacer.`)) return;
-    removeCustomProduct(id);
-    setList((l) => l.filter((x) => x.id !== id));
-    toast(`«${p.name}» eliminado`, "bad");
+    
+    confirm.deleteProduct(p.name, () => {
+      removeCustomProduct(id);
+      setList((l) => l.filter((x) => x.id !== id));
+      toast(`«${p.name}» eliminado`, "bad");
+    });
   };
 
   const add = () => {

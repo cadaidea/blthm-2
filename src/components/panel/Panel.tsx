@@ -16,6 +16,7 @@ import { CMS, EditorHome, SitioPublico } from "./Modules6";
 import { Marketing, Stock, Variantes } from "./Modules7";
 import { Compras, RRHH } from "./Modules8";
 import { AdminPedidosWeb } from "../CustomerAccount";
+import { ConfirmModalHost } from "../ConfirmModal";
 import { adminCreado } from "../../data";
 import { BletiaMark, LoginScreen, ROLE_LABEL, SetupScreen, useAuth, type Role } from "./auth";
 
@@ -407,6 +408,7 @@ export default function Panel() {
           {mod === "marketing" && <Marketing />}
         </main>
       </div>
+      <ConfirmModalHost />
     </div>
   );
 }

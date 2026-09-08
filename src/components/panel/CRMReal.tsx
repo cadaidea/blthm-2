@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useCustomersStore } from '../../store';
 import { I, Modal, toast } from '../ui';
+import { confirm } from '../ConfirmModal';
 import { Card, SectionTitle, Td, Th, btnDark, btnGhost, inp } from './pui';
 import type { Customer } from '../../api/client';
 
@@ -51,15 +52,18 @@ export function CRMReal() {
   };
 
   const deleteCustomerHandler = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+    const customer = customers.find(c => c.id === id);
+    if (!customer) return;
     
-    try {
-      await deleteCustomer(id);
-      toast('Cliente eliminado', 'ok');
-      setSel(null);
-    } catch (error) {
-      toast(`Error al eliminar: ${error instanceof Error ? error.message : 'Error desconocido'}`, 'bad');
-    }
+    confirm.deleteCustomer(customer.name, async () => {
+      try {
+        await deleteCustomer(id);
+        toast('Cliente eliminado', 'ok');
+        setSel(null);
+      } catch (error) {
+        toast(`Error al eliminar: ${error instanceof Error ? error.message : 'Error desconocido'}`, 'bad');
+      }
+    });
   };
 
   return (

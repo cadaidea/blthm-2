@@ -5,6 +5,7 @@ import { ArticuloPage, BlogPage, CategoriaPage, PaginaPage, ProductoPage } from 
 import { CuentaPage, PedidoTrackingPage } from "./components/CustomerAccount";
 import { LoginAPI } from "./components/LoginAPI";
 import { CRMAPI } from "./components/panel/CRMAPI";
+import { ConfirmModalHost } from "./components/ConfirmModal";
 import { BLOG_CATEGORIAS, slugDe } from "./data";
 
 /* categorías del blog en formato slug — para la ruta /{categoria}/{articulo} */
@@ -64,5 +65,10 @@ export default function App() {
   /* artículo: /{categoría}/{slug-del-artículo} — igual que en bletia.ec */
   if (CAT_SLUGS.includes(head) && a) return <ArticuloPage key={hash} slug={a} />;
 
-  return <Storefront />;
+  return (
+    <>
+      {<Storefront />}
+      <ConfirmModalHost />
+    </>
+  );
 }

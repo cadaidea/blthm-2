@@ -201,3 +201,13 @@ body {
   background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
 .dark .shimmer { background: linear-gradient(90deg, #232323 25%, #2c2c2c 50%, #232323 75%);
   background-size: 800px 100%; }
+
+/* ---------- Modal de confirmación ---------- */
+@keyframes anim-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.anim-fadeIn { animation: anim-fadeIn 0.2s ease-out both; }
+
+@keyframes anim-slideUp { 
+  from { opacity: 0; transform: translateY(20px) scale(0.95); } 
+  to { opacity: 1; transform: translateY(0) scale(1); } 
+}
+.anim-slideUp { animation: anim-slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }

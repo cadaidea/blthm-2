@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usePurchaseOrdersStore, useSuppliersStore, useProductsStore } from '../../store';
 import { I, toast } from '../ui';
+import { confirm } from '../ConfirmModal';
 import { Card, SectionTitle, Td, Th, btnDark, btnGhost, inp } from './pui';
 import type { PurchaseOrder } from '../../api/client';
 
@@ -49,13 +50,22 @@ export function ComprasReal() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Eliminar esta orden de compra?')) return;
-    try {
-      await deleteOrder(id);
-      toast('Orden eliminada', 'ok');
-    } catch (error) {
-      toast('Error al eliminar orden', 'bad');
-    }
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+    
+    confirm.generic(
+      'Eliminar orden de compra',
+      `¿Estás seguro de que deseas eliminar la orden de compra "${order.code}"? Esta acción no se puede deshacer.`,
+      async () => {
+        try {
+          await deleteOrder(id);
+          toast('Orden eliminada', 'ok');
+        } catch (error) {
+          toast('Error al eliminar orden', 'bad');
+        }
+      },
+      'danger'
+    );
   };
 
   const addItem = () => {

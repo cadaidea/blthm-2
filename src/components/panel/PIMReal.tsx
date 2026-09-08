@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useProductsStore } from '../../store';
 import { I, Modal, toast } from '../ui';
+import { confirm } from '../ConfirmModal';
 import { Card, SectionTitle, Stat, Td, Th, btnDark, inp } from './pui';
 import { StatusChip } from './Panel';
 import type { Product } from '../../api/client';
@@ -31,13 +32,15 @@ export function PIMReal() {
   const del = async (id: string) => {
     const p = products.find((x) => x.id === id);
     if (!p) return;
-    if (!window.confirm(`¿Eliminar «${p.name}»? Esta acción no se puede deshacer.`)) return;
-    try {
-      await deleteProduct(id);
-      toast(`«${p.name}» eliminado`, 'bad');
-    } catch (err) {
-      toast('Error al eliminar', 'bad');
-    }
+    
+    confirm.deleteProduct(p.name, async () => {
+      try {
+        await deleteProduct(id);
+        toast(`«${p.name}» eliminado`, 'bad');
+      } catch (err) {
+        toast('Error al eliminar', 'bad');
+      }
+    });
   };
 
   const add = async () => {

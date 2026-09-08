@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useOrdersStore, useCustomersStore, useProductsStore } from '../../store';
 import { I, toast } from '../ui';
+import { confirm } from '../ConfirmModal';
 import { Card, SectionTitle, Td, Th, btnDark, btnGhost, inp } from './pui';
 import type { SalesOrder } from '../../api/client';
 
@@ -110,13 +111,17 @@ export function OMSReal() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta orden?')) return;
-    try {
-      await deleteOrder(id);
-      toast('Orden eliminada', 'ok');
-    } catch (error) {
-      toast('Error al eliminar la orden', 'bad');
-    }
+    const order = orders.find(o => o.id === id);
+    if (!order) return;
+    
+    confirm.deleteOrder(order.code, async () => {
+      try {
+        await deleteOrder(id);
+        toast('Orden eliminada', 'ok');
+      } catch (error) {
+        toast('Error al eliminar la orden', 'bad');
+      }
+    });
   };
 
   return (
