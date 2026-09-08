@@ -378,6 +378,138 @@ export const orders = {
 };
 
 // ============================================
+// PROVEEDORES Y ÓRDENES DE COMPRA
+// ============================================
+
+export interface Supplier {
+  id: string;
+  code: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  taxId?: string;
+  address?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    purchaseOrders: number;
+  };
+}
+
+export interface PurchaseOrder {
+  id: string;
+  code: string;
+  supplierId: string;
+  status: 'BORRADOR' | 'ENVIADA' | 'PARCIAL' | 'RECIBIDA' | 'CANCELADA';
+  subtotal: number;
+  tax: number;
+  total: number;
+  expectedDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  supplier?: Supplier;
+  items: PurchaseOrderItem[];
+}
+
+export interface PurchaseOrderItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  unitCost: number;
+  subtotal: number;
+  product?: Product;
+}
+
+export const suppliers = {
+  async getAll(): Promise<Supplier[]> {
+    const response = await fetch(`${API_URL}/suppliers`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<Supplier[]>(response);
+  },
+
+  async create( {
+    code: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    taxId?: string;
+    address?: string;
+    notes?: string;
+  }): Promise<Supplier> {
+    const response = await fetch(`${API_URL}/suppliers`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Supplier>(response);
+  },
+
+  async update(id: string,  Partial<Supplier>): Promise<Supplier> {
+    const response = await fetch(`${API_URL}/suppliers/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<Supplier>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/suppliers/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(response);
+  },
+};
+
+export const purchaseOrders = {
+  async getAll(): Promise<PurchaseOrder[]> {
+    const response = await fetch(`${API_URL}/purchase-orders`, {
+      headers: getHeaders(),
+    });
+    return handleResponse<PurchaseOrder[]>(response);
+  },
+
+  async create( {
+    supplierId: string;
+    items: Array<{
+      productId: string;
+      quantity: number;
+      unitCost: number;
+    }>;
+    expectedDate?: string;
+    notes?: string;
+  }): Promise<PurchaseOrder> {
+    const response = await fetch(`${API_URL}/purchase-orders`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse<PurchaseOrder>(response);
+  },
+
+  async updateStatus(id: string, status: PurchaseOrder['status']): Promise<PurchaseOrder> {
+    const response = await fetch(`${API_URL}/purchase-orders/${id}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    return handleResponse<PurchaseOrder>(response);
+  },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/purchase-orders/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    await handleResponse(response);
+  },
+};
+
+// ============================================
 // BODEGAS E INVENTARIOS
 // ============================================
 

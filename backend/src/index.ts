@@ -1097,6 +1097,341 @@ fastify.get('/api/inventory/:productId', { preHandler: [authenticate] }, async (
 });
 
 // ============================================
+// RUTAS: PROVEEDORES
+// ============================================
+
+const createSupplierSchema = z.object({
+  code: z.string().min(1),
+  name: z.string().min(2),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  taxId: z.string().optional(),
+  address: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Listar proveedores
+fastify.get('/api/suppliers', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const suppliers = await prisma.supplier.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        _count: {
+          select: { purchaseOrders: true },
+        },
+      },
+    });
+    return suppliers;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Crear proveedor
+fastify.post('/api/suppliers', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = createSupplierSchema.parse(request.body);
+    const supplier = await prisma.supplier.create({ data });
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'CREATE',
+        entity: 'Supplier',
+        entityId: supplier.id,
+        newValue: data,
+      },
+    });
+
+    return reply.status(201).send(supplier);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar proveedor
+fastify.put('/api/suppliers/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const data = createSupplierSchema.partial().parse(request.body);
+    
+    const existing = await prisma.supplier.findUnique({ where: { id, deletedAt: null } });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Proveedor no encontrado' });
+    }
+
+    const supplier = await prisma.supplier.update({
+      where: { id },
+      data,
+    });
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'UPDATE',
+        entity: 'Supplier',
+        entityId: id,
+        oldValue: existing,
+        newValue: data,
+      },
+    });
+
+    return supplier;
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar proveedor (soft delete)
+fastify.delete('/api/suppliers/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    
+    const existing = await prisma.supplier.findUnique({ where: { id, deletedAt: null } });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Proveedor no encontrado' });
+    }
+
+    await prisma.supplier.update({
+      where: { id },
+       { deletedAt: new Date() },
+    });
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'DELETE',
+        entity: 'Supplier',
+        entityId: id,
+        oldValue: existing,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// ============================================
+// RUTAS: ÓRDENES DE COMPRA
+// ============================================
+
+const createPurchaseOrderSchema = z.object({
+  supplierId: z.string(),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().int().positive(),
+    unitCost: z.number().positive(),
+  })),
+  expectedDate: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+// Listar órdenes de compra
+fastify.get('/api/purchase-orders', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const orders = await prisma.purchaseOrder.findMany({
+      where: { deletedAt: null },
+      include: {
+        supplier: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return orders;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Crear orden de compra
+fastify.post('/api/purchase-orders', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const data = createPurchaseOrderSchema.parse(request.body);
+
+    // Calcular totales
+    const subtotal = data.items.reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+    const tax = subtotal * 0.15; // IVA 15%
+    const total = subtotal + tax;
+
+    // Generar código único
+    const count = await prisma.purchaseOrder.count();
+    const code = `OC-${String(count + 1).padStart(5, '0')}`;
+
+    const order = await prisma.purchaseOrder.create({
+       {
+        code,
+        supplierId: data.supplierId,
+        status: 'BORRADOR',
+        subtotal,
+        tax,
+        total,
+        expectedDate: data.expectedDate ? new Date(data.expectedDate) : null,
+        notes: data.notes,
+        items: {
+          create: data.items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitCost: item.unitCost,
+            subtotal: item.quantity * item.unitCost,
+          })),
+        },
+      },
+      include: {
+        supplier: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'CREATE',
+        entity: 'PurchaseOrder',
+        entityId: order.id,
+        newValue: { code, supplierId: data.supplierId, total },
+      },
+    });
+
+    return reply.status(201).send(order);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return reply.status(400).send({ error: 'Datos inválidos', details: err.errors });
+    }
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Actualizar estado de orden de compra
+fastify.put('/api/purchase-orders/:id/status', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    const { status } = request.body as { status: 'BORRADOR' | 'ENVIADA' | 'PARCIAL' | 'RECIBIDA' | 'CANCELADA' };
+
+    const existing = await prisma.purchaseOrder.findUnique({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Orden de compra no encontrada' });
+    }
+
+    const order = await prisma.purchaseOrder.update({
+      where: { id },
+       { status },
+      include: {
+        supplier: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    // Si la orden fue recibida, actualizar inventario
+    if (status === 'RECIBIDA') {
+      const items = await prisma.purchaseOrderItem.findMany({
+        where: { orderId: id },
+      });
+
+      // Actualizar stock de cada producto
+      for (const item of items) {
+        await prisma.product.update({
+          where: { id: item.productId },
+           {
+            stock: {
+              increment: item.quantity,
+            },
+          },
+        });
+
+        // Registrar movimiento de inventario
+        await prisma.inventoryMove.create({
+           {
+            productId: item.productId,
+            warehouseId: (await prisma.warehouse.findFirst())?.id || '',
+            type: 'ENTRADA',
+            quantity: item.quantity,
+            reference: `OC-${order.code}`,
+            notes: `Recepción de orden de compra ${order.code}`,
+          },
+        });
+      }
+    }
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'UPDATE',
+        entity: 'PurchaseOrder',
+        entityId: id,
+        oldValue: { status: existing.status },
+        newValue: { status },
+      },
+    });
+
+    return order;
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// Eliminar orden de compra (soft delete)
+fastify.delete('/api/purchase-orders/:id', { preHandler: [authenticate] }, async (request, reply) => {
+  try {
+    const { id } = request.params as { id: string };
+    
+    const existing = await prisma.purchaseOrder.findUnique({ where: { id, deletedAt: null } });
+    if (!existing) {
+      return reply.status(404).send({ error: 'Orden de compra no encontrada' });
+    }
+
+    await prisma.purchaseOrder.update({
+      where: { id },
+       { deletedAt: new Date() },
+    });
+
+    await prisma.auditLog.create({
+       {
+        userId: request.user?.id,
+        action: 'DELETE',
+        entity: 'PurchaseOrder',
+        entityId: id,
+        oldValue: existing,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: 'Error interno del servidor' });
+  }
+});
+
+// ============================================
 // HEALTH CHECK
 // ============================================
 
