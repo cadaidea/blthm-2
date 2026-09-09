@@ -1,7 +1,18 @@
 // Cliente API para conectar frontend con backend
 // Reemplaza localStorage con llamadas HTTP reales
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || '';
+
+// Productos de fallback para cuando la API no está disponible
+const FALLBACK_PRODUCTS: Product[] = [
+  { id: '1', sku: 'BLT-001', name: 'Butaca Aura', slug: 'butaca-aura', category: 'Sillones', price: 1190, cost: 640, stock: 6, minStock: 2, active: true, material: 'Nogal americano · Bouclé crudo', dims: '78 × 82 × 74 cm', img: '/assets/img/hero.jpg', description: 'Curva continua tallada en nogal, cojín en bouclé de lana. Ensamble de espiga a la vista, sin herrajes. Serie numerada y firmada por el maestro de taller.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '2', sku: 'BLT-002', name: 'Sofá Nudo', slug: 'sofa-nudo', category: 'Sofás', price: 2890, cost: 1310, stock: 4, minStock: 2, active: true, material: 'Lino avena · Patas de nogal', dims: '228 × 95 × 80 cm', img: '/assets/img/sofa.jpg', description: 'Tres cuerpos, plumón recuperado y espuma de alta densidad. Funda removible lavable. Estructura garantizada por 10 años.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '3', sku: 'BLT-003', name: 'Mesa Raíz', slug: 'mesa-raiz', category: 'Mesas', price: 1750, cost: 850, stock: 3, minStock: 2, active: true, material: 'Roble europeo ahumado', dims: '200 × 100 × 75 cm', img: '/assets/img/mesa.jpg', description: 'Tablero monolítico de roble ahumado con aceite natural. Patas cónicas torneadas a mano. Admite extensión a 260 cm bajo pedido.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '4', sku: 'BLT-004', name: 'Estantería Trama', slug: 'estanteria-trama', category: 'Almacenaje', price: 1320, cost: 650, stock: 8, minStock: 2, active: true, material: 'Nogal · Entrepaños de 18 mm', dims: '160 × 32 × 190 cm', img: '/assets/img/estanteria.jpg', description: 'Sistema modular de entrepaños flotantes. Soporta 40 kg por nivel. Anclaje antisísmico incluido para pared.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '5', sku: 'BLT-005', name: 'Silla Vela', slug: 'silla-vela', category: 'Sillas', price: 420, cost: 150, stock: 24, minStock: 5, active: true, material: 'Nogal · Asiento de cuero vegetalizado', dims: '46 × 52 × 81 cm', img: '/assets/img/silla.jpg', description: 'Respaldo curvado al vapor, una sola pieza. Cuero de curtiembre local con sello ambiental. Apilable de a dos.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '6', sku: 'BLT-006', name: 'Cama Duna', slug: 'cama-duna', category: 'Descanso', price: 2140, cost: 1050, stock: 5, minStock: 2, active: true, material: 'Nogal · Cabecero tapizado marfil', dims: '205 × 190 × 95 cm', img: '/assets/img/cama.jpg', description: 'Plataforma baja sin boxspring. Cabecero flotante tapizado en lino marfil. Ensamble sin herramientas en 10 minutos.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '7', sku: 'BLT-007', name: 'Centro Nube', slug: 'centro-nube', category: 'Centros', price: 940, cost: 450, stock: 7, minStock: 2, active: true, material: 'Nogal americano · Base cilíndrica', dims: '90 × 90 × 35 cm', img: '/assets/img/centro.jpg', description: 'Mesa de centro de nogal con base escultórica torneada en una sola pieza. Borde biselado a mano y acabado al aceite.', images: [], variants: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+];
 
 // ============================================
 // TIPOS
@@ -274,10 +285,21 @@ export const customers = {
 
 export const products = {
   async getAll(): Promise<Product[]> {
-    const response = await fetch(`${API_URL}/products`, {
-      headers: getHeaders(),
-    });
-    return handleResponse<Product[]>(response);
+    // Si no hay API configurada, usar productos de fallback
+    if (!API_URL) {
+      return FALLBACK_PRODUCTS;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/products`, {
+        headers: getHeaders(),
+      });
+      return handleResponse<Product[]>(response);
+    } catch (error) {
+      // Si la API falla, usar productos de fallback
+      console.warn('API no disponible, usando productos de fallback');
+      return FALLBACK_PRODUCTS;
+    }
   },
 
   async getById(id: string): Promise<Product> {
