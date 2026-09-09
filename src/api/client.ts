@@ -39,6 +39,7 @@ export interface Product {
   id: string;
   sku: string;
   name: string;
+  slug?: string;
   description?: string;
   category: string;
   price: number;
@@ -53,6 +54,13 @@ export interface Product {
   variants: ProductVariant[];
   createdAt: string;
   updatedAt: string;
+  // Propiedades adicionales para compatibilidad con frontend
+  state?: string;
+  origin?: string;
+  lead?: string;
+  desc?: string;
+  channels?: string[];
+  mto?: string;
 }
 
 export interface ProductImage {

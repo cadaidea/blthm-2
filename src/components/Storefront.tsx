@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, VERSION, addEmail, addNotif, articuloUrl, autorDe, crearPedidoCliente, fmt, fmt2, getSesionCliente, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type CuentaCliente, type Product, type SeccionHome } from "../data";
+import { ATRIBUTOS, BLOG_CATEGORIAS, CITIES, IMG, PRODUCTS, VERSION, addEmail, addNotif, articuloUrl, autorDe, crearPedidoCliente, fmt, fmt2, getSesionCliente, loadCMS, loadSecciones, loadSite, minutosLectura, productosActivos, randomCode, saveWebSuscriptor, slugDe, tagTexto, tagUrl, variantesDe, type CuentaCliente, type SeccionHome } from "../data";
+import { useProductsStore } from "../store";
+import type { Product } from "../api/client";
 import { detectarDocumento } from "../utils/sri";
 import { I, Modal, Reveal } from "./ui";
 import { AccountModal } from "./CustomerAccount";
@@ -50,8 +52,17 @@ export default function Storefront() {
   const [posts] = useState(() => loadCMS().filter((p) => p.estado === "Publicado"));
   const [blogCat, setBlogCat] = useState("Todo");
   const postsFiltrados = blogCat === "Todo" ? posts : posts.filter((p) => p.tag === blogCat);
-  const activos = useMemo(() => productosActivos(), []);
-  const destacado = activos.find((p) => p.id === site.destacadoId) ?? activos[0];
+  
+  /* Usar el store de productos conectado a PostgreSQL */
+  const { products: storeProducts, fetchProducts, isLoading: productsLoading } = useProductsStore();
+  
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+  
+  /* Filtrar solo productos publicados */
+  const activos = useMemo(() => storeProducts.filter((p) => p.active), [storeProducts]);
+  const destacado: Product | undefined = activos.find((p) => p.id === site.destacadoId) ?? activos[0];
   const catActivas = CATS.filter((c) => c === "Todo" || site.colecciones[c] !== false);
 
   useEffect(() => { localStorage.setItem("bletia-cart", JSON.stringify(cart)); }, [cart]);
@@ -79,13 +90,13 @@ export default function Storefront() {
   }, []);
 
   const count = cart.reduce((a, l) => a + l.qty, 0);
-  const lines = cart.map((l) => ({ ...l, p: productosActivos().find((p) => p.id === l.id)! })).filter((l) => l.p);
+  const lines = cart.map((l) => ({ ...l, p: activos.find((p) => p.id === l.id)! })).filter((l) => l.p);
   const total = lines.reduce((a, l) => a + l.p.price * l.qty, 0);
   const base = total / 1.15;
   const iva = total - base;
 
   const catFinal = catActivas.includes(cat) ? cat : "Todo";
-  const visibles = useMemo(() => productosActivos().filter((p) => site.colecciones[p.category] !== false), [site]);
+  const visibles = useMemo(() => activos.filter((p) => site.colecciones[p.category] !== false), [site, activos]);
   const shown = useMemo(
     () => (catFinal === "Todo" ? visibles : visibles.filter((p) => p.category === catFinal)),
     [catFinal, visibles],
@@ -169,7 +180,7 @@ export default function Storefront() {
             <div className="relative h-[420px] sm:h-[520px] lg:h-full overflow-hidden bg-paper2">
               <img src={IMG.hero} alt="Mueblería BLETIA" className="kenburns w-full h-full object-cover" />
               {destacado && (
-                <button onClick={() => setQuick(destacado)}
+                <button onClick={() => setQuick(destacado ?? null)}
                   className="group absolute bottom-5 left-5 right-5 sm:right-auto sm:w-[300px] bg-card/95 backdrop-blur border border-line p-4 flex items-center gap-4 text-left hover:border-maroon/50 transition-all duration-300 hover:-translate-y-0.5">
                   <div className="w-12 h-14 overflow-hidden shrink-0">
                     <img src={destacado.img} alt="" className="w-full h-full object-cover" />
@@ -564,7 +575,7 @@ export default function Storefront() {
               ) : (
                 <ul className="space-y-5">
                   {wish.map((id) => {
-                    const p = productosActivos().find((x) => x.id === id);
+                    const p = activos.find((x) => x.id === id);
                     if (!p) return null;
                     return (
                       <li key={id} className="flex gap-4 fade-in">
@@ -871,6 +882,8 @@ function BusquedaGlobal({ open, onClose, onProduct }: {
   open: boolean; onClose: () => void; onProduct: (p: Product) => void;
 }) {
   const [q, setQ] = useState("");
+  const { products: storeProducts } = useProductsStore();
+  
   useEffect(() => {
     if (open) setQ("");
   }, [open]);
@@ -878,8 +891,8 @@ function BusquedaGlobal({ open, onClose, onProduct }: {
 
   const t = q.trim().toLowerCase();
   const posts = loadCMS().filter((p) => p.estado === "Publicado");
-  const prods = t ? productosActivos().filter((p) =>
-    [p.name, p.category, p.material, p.sku, p.desc].join(" ").toLowerCase().includes(t)) : [];
+  const prods = t ? storeProducts.filter((p) => p.active &&
+    [p.name, p.category, p.material, p.sku, p.description].join(" ").toLowerCase().includes(t)) : [];
   const notas = t ? posts.filter((p) => (p.titulo + " " + p.tag).toLowerCase().includes(t)) : [];
   const secciones = t ? SECCIONES.filter((s) => s.label.toLowerCase().includes(t)) : [];
   const vacio = t && prods.length === 0 && notas.length === 0 && secciones.length === 0;
